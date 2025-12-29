@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: college-mgmt-test
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # REPLACE THIS with your actual Git repository URL
+    repoURL: https://github.com/your-username/CollegeManagement.git # Change this
+    targetRevision: HEAD
+    path: k8s/overlays/test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: college-mgmt-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: college-mgmt-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # REPLACE THIS with your actual Git repository URL
+    repoURL: https://github.com/your-username/CollegeManagement.git # Change this
+    targetRevision: HEAD
+    path: k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: college-mgmt-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

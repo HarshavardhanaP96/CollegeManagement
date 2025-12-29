@@ -1,0 +1,104 @@
+import { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { login, type LoginRequest } from '../api/auth';
+import { getErrorMessage } from '../api/client';
+import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
+
+const loginSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+export function LoginPage() {
+  const navigate = useNavigate();
+  const authLogin = useAuthStore((s) => s.login);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (values: LoginRequest) => login(values),
+    onSuccess: (data) => {
+      authLogin(data);
+      navigate('/', { replace: true });
+    },
+    onError: (error) => {
+      const { message } = getErrorMessage(error);
+      setServerError(message);
+    },
+  });
+
+  const onSubmit = (values: LoginFormValues) => {
+    setServerError(null);
+    mutation.mutate(values);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8">
+        <h1 className="text-2xl font-semibold mb-6 text-center">College Management Login</h1>
+
+        {serverError && (
+          <div className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {serverError}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="username">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              {...register('username')}
+            />
+            {errors.username && (
+              <p className="mt-1 text-xs text-red-600">{errors.username.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={mutation.isPending}
+            className="mt-2 w-full rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {mutation.isPending ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+

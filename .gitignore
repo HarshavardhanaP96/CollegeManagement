@@ -1,0 +1,9 @@
+prompt.txt
+.idea/
+.cursor/
+.vscode/
+node_modules/
+build/
+.classpath
+.project
+.settings
