@@ -46,23 +46,67 @@ export interface CollegeResponse {
   timestamp: string;
 }
 
+export interface CollegeDetail extends CollegeListItem {
+  address: string;
+  departments?: Array<{
+    deptId: number;
+    deptName: string;
+    deptCode: string;
+    hodName?: string;
+  }>;
+  courses?: Array<{
+    courseId: number;
+    courseName: string;
+    courseCode: string;
+  }>;
+  statistics?: {
+    totalDepartments: number;
+    totalTeachers: number;
+    totalStudents: number;
+    totalClasses: number;
+  };
+}
+
+export interface CollegeDetailResponse {
+  success: boolean;
+  message: string;
+  data: CollegeDetail;
+  timestamp: string;
+}
+
 export async function getColleges(params: {
   page?: number;
   size?: number;
   search?: string;
+  sort?: string;
 }): Promise<PagedResponse<CollegeListItem>> {
-  const { data } = await apiClient.get<PagedResponse<CollegeListItem>>('/admin/colleges', {
+  const { data } = await apiClient.get<PagedResponse<CollegeListItem>>('/colleges', {
     params,
   });
+  return data;
+}
+
+export async function getCollegeById(collegeId: number): Promise<CollegeDetailResponse> {
+  const { data } = await apiClient.get<CollegeDetailResponse>(`/colleges/${collegeId}`);
   return data;
 }
 
 export async function createCollege(
   payload: CollegeCreateRequest,
 ): Promise<CollegeResponse> {
-  const { data } = await apiClient.post<CollegeResponse>('/admin/colleges', payload);
+  const { data } = await apiClient.post<CollegeResponse>('/colleges', payload);
   return data;
 }
 
+export async function updateCollege(
+  collegeId: number,
+  payload: CollegeUpdateRequest,
+): Promise<CollegeResponse> {
+  const { data } = await apiClient.put<CollegeResponse>(`/colleges/${collegeId}`, payload);
+  return data;
+}
 
-
+export async function deleteCollege(collegeId: number): Promise<{ success: boolean; message: string; data: null; timestamp: string }> {
+  const { data } = await apiClient.delete<{ success: boolean; message: string; data: null; timestamp: string }>(`/colleges/${collegeId}`);
+  return data;
+}

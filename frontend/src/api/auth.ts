@@ -23,8 +23,26 @@ export interface LoginResponse {
     accessToken: string;
     tokenType: string;
     expiresIn: number;
+    refreshToken: string;
     user: AuthUser;
   };
+  timestamp: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
   timestamp: string;
 }
 
@@ -33,5 +51,17 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   return data;
 }
 
+export async function logout(): Promise<ApiResponse<null>> {
+  const { data } = await apiClient.post<ApiResponse<null>>('/auth/logout');
+  return data;
+}
 
+export async function changePassword(payload: ChangePasswordRequest): Promise<ApiResponse<null>> {
+  const { data } = await apiClient.post<ApiResponse<null>>('/auth/change-password', payload);
+  return data;
+}
 
+export async function refreshToken(payload: RefreshTokenRequest): Promise<ApiResponse<{ accessToken: string; tokenType: string; expiresIn: number }>> {
+  const { data } = await apiClient.post<ApiResponse<{ accessToken: string; tokenType: string; expiresIn: number }>>('/auth/refresh-token', payload);
+  return data;
+}

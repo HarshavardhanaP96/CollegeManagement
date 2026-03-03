@@ -28,9 +28,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/teachers/attendance")
+@RequestMapping("/attendance")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('TEACHER')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'TEACHER')")
 @Tag(name = "Teacher - Attendance", description = "Attendance management for teachers")
 public class AttendanceController {
 

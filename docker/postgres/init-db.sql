@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
 
 -- Seed Data
 INSERT INTO user_roles (role_id, role_name, role_description) VALUES
-(1, 'ADMIN', 'System Administrator with full access'),
-(2, 'COLLEGE_ADMIN', 'Administrator for a specific college'),
+(1, 'SUPERADMIN', 'System Super Administrator with full access'),
+(2, 'COLLEGEADMIN', 'Administrator for a specific college'),
 (3, 'HOD', 'Head of Department'),
 (4, 'TEACHER', 'Faculty Member'),
 (5, 'STUDENT', 'Enrolled Student');
@@ -122,15 +122,15 @@ INSERT INTO colleges (college_name, college_code, address, contact_email, is_act
 ('Global Institute of Technology', 'GIT001', '123 Tech Park, Silicon Valley', 'info@git.edu', true);
 
 -- Password for all users: password123
--- Hash: $2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2
+-- Hash: $2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm
 
 -- Admin User
 INSERT INTO users (college_id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 1, 'admin', 'admin@git.edu', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'System Admin', '1234567890');
+(1, 1, 'admin', 'admin@git.edu', '$2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm', 'System Admin', '1234567890');
 
 -- College Admin
 INSERT INTO users (college_id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 2, 'cadmin', 'cadmin@git.edu', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'College Admin', '1234567891');
+(1, 2, 'cadmin', 'cadmin@git.edu', '$2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm', 'College Admin', '1234567891');
 
 -- Departments
 INSERT INTO departments (college_id, dept_name, dept_code) VALUES
@@ -139,13 +139,13 @@ INSERT INTO departments (college_id, dept_name, dept_code) VALUES
 
 -- HOD
 INSERT INTO users (college_id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 3, 'hod_cse', 'hod_cse@git.edu', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'HOD CSE', '1234567892');
+(1, 3, 'hod_cse', 'hod_cse@git.edu', '$2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm', 'HOD CSE', '1234567892');
 
 UPDATE departments SET dept_head_user_id = (SELECT user_id FROM users WHERE username = 'hod_cse') WHERE dept_code = 'CSE';
 
 -- Teacher
 INSERT INTO users (college_id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 4, 'teacher1', 'teacher1@git.edu', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'John Doe', '1234567893');
+(1, 4, 'teacher1', 'teacher1@git.edu', '$2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm', 'John Doe', '1234567893');
 
 INSERT INTO teacher_profiles (teacher_user_id, employee_id, dept_id, hire_date, specialization, qualification) VALUES
 ((SELECT user_id FROM users WHERE username = 'teacher1'), 'EMP001', (SELECT dept_id FROM departments WHERE dept_code = 'CSE'), '2023-01-01', 'Machine Learning', 'PhD in CS');
@@ -156,7 +156,7 @@ INSERT INTO courses (dept_id, course_name, course_code, total_semesters) VALUES
 
 -- Student
 INSERT INTO users (college_id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 5, 'student1', 'student1@git.edu', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'Jane Smith', '1234567894');
+(1, 5, 'student1', 'student1@git.edu', '$2a$10$syRJoiww4WVnp0huDhfLteltJM22w9UbUhCncwmAE0ClcP5wBicTm', 'Jane Smith', '1234567894');
 
 INSERT INTO student_profiles (student_user_id, roll_number, dept_id, course_id, admission_year, current_semester, parent_phone) VALUES
 ((SELECT user_id FROM users WHERE username = 'student1'), 'ROLL001', (SELECT dept_id FROM departments WHERE dept_code = 'CSE'), (SELECT course_id FROM courses WHERE course_code = 'BT-CS'), 2023, 1, '9876543210');

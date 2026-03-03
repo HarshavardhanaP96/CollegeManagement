@@ -1,4 +1,3 @@
-// src/main/java/com/collegeManagement/dto/request/teacher/TeacherCreateRequest.java
 package com.collegeManagement.production.dto.request.teacher;
 
 import jakarta.validation.constraints.Email;
@@ -33,4 +32,5 @@ public class TeacherCreateRequest {
 
     private String specialization;
     private String qualification;
+    private Integer deptId;
 }

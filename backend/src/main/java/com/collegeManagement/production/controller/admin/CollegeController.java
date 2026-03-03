@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
  */
 @Slf4j
 @RestController
-@RequestMapping("/admin/colleges")
+@RequestMapping("/colleges")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('SUPERADMIN')")
 @Tag(name = "SuperAdmin - Colleges", description = "College management APIs for SuperAdmin")

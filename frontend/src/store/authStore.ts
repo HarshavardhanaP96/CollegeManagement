@@ -7,15 +7,20 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (response: LoginResponse) => void;
   logout: () => void;
+  initializeFromStorage: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
   isAuthenticated: false,
+
   login: (response: LoginResponse) => {
-    const { accessToken, user } = response.data;
+    const { accessToken, refreshToken, user } = response.data;
     localStorage.setItem('accessToken', accessToken);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(user));
     set({
       user,
@@ -23,8 +28,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: true,
     });
   },
+
   logout: () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     set({
       user: null,
@@ -32,7 +39,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: false,
     });
   },
+
+  // Restore auth state from localStorage on page reload
+  initializeFromStorage: () => {
+    const token = localStorage.getItem('accessToken');
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr) as AuthUser;
+        set({
+          user,
+          accessToken: token,
+          isAuthenticated: true,
+        });
+      } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      }
+    }
+  },
 }));
-
-
-
+// Automatically initialize on load
+useAuthStore.getState().initializeFromStorage();

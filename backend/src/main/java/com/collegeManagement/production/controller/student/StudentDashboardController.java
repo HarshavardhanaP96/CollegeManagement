@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/students/dashboard")
+@RequestMapping("/dashboard/student")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('STUDENT')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'STUDENT')")
 @Tag(name = "Student - Dashboard", description = "Student dashboard")
 public class StudentDashboardController {
 

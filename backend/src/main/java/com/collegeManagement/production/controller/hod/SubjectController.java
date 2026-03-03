@@ -23,9 +23,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/hod/subjects")
+@RequestMapping("/subjects")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('HOD')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN', 'HOD')")
 @Tag(name = "HOD - Subjects", description = "Subject management for HOD")
 public class SubjectController {
 

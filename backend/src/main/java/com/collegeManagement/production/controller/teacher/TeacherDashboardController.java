@@ -1,31 +1,30 @@
-// ============================================
-// src/main/java/com/collegeManagement/controller/teacher/TeacherDashboardController.java
-// ============================================
-
 package com.collegeManagement.production.controller.teacher;
 
+import com.collegeManagement.production.dto.response.ApiResponse;
+import com.collegeManagement.production.dto.response.teacher.TeacherDashboardDTO;
+import com.collegeManagement.production.service.teacher.TeacherDashboardService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-
-// TODO: TeacherDashboardService needs to be created
-/*
 @RestController
-@RequestMapping("/teachers/dashboard")
+@RequestMapping("/dashboard/teacher")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('TEACHER')")
-@Tag(name = "Teacher - Dashboard", description = "Teacher dashboard")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'TEACHER')")
+@Tag(name = "Teacher - Dashboard", description = "Teacher dashboard endpoints")
 public class TeacherDashboardController {
 
     private final TeacherDashboardService teacherDashboardService;
 
     @GetMapping
-    @Operation(summary = "Get teacher dashboard", description = "Get dashboard data for logged-in teacher")
+    @Operation(summary = "Get teacher dashboard", description = "Get dashboard statistics and overview for logged-in teacher")
     public ResponseEntity<ApiResponse<TeacherDashboardDTO>> getDashboard() {
         TeacherDashboardDTO dashboard = teacherDashboardService.getDashboard();
         return ResponseEntity.ok(ApiResponse.success(dashboard, "Dashboard data retrieved successfully"));
     }
-}
-*/
-
-// Empty class to prevent compilation errors
-public class TeacherDashboardController {
 }

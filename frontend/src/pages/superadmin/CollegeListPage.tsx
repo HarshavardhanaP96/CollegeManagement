@@ -1,296 +1,101 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getColleges, type CollegeListItem } from '../../api/college';
+import { Card, Button, DataTable, Loading } from '../../components/common';
 import type { ColumnDef } from '@tanstack/react-table';
-import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createCollege, getColleges, type CollegeListItem } from '../../api/college';
-import { getErrorMessage } from '../../api/client';
-
-const createCollegeSchema = z.object({
-  collegeName: z.string().min(1, 'College name is required'),
-  collegeCode: z.string().min(1, 'College code is required'),
-  address: z.string().min(1, 'Address is required'),
-  contactEmail: z.string().email('Invalid email format'),
-  contactPhone: z.string().min(5, 'Contact phone is required'),
-});
-
-type CreateCollegeFormValues = z.infer<typeof createCollegeSchema>;
 
 export function CollegeListPage() {
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(0);
-  const [size] = useState(10);
-  const [search, setSearch] = useState('');
-  const [serverError, setServerError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['colleges', { page, size, search }],
-    queryFn: () => getColleges({ page, size, search: search || undefined }),
-    placeholderData: keepPreviousData,
+    queryKey: ['colleges'],
+    queryFn: () => getColleges({ page: 0, size: 100 }),
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreateCollegeFormValues>({
-    resolver: zodResolver(createCollegeSchema),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createCollege,
-    onSuccess: () => {
-      reset();
-      setServerError(null);
-      queryClient.invalidateQueries({ queryKey: ['colleges'] });
-    },
-    onError: (error) => {
-      const { message } = getErrorMessage(error);
-      setServerError(message);
-    },
-  });
-
-  const onSubmit = (values: CreateCollegeFormValues) => {
-    setServerError(null);
-    createMutation.mutate(values);
-  };
+  const colleges = data?.data?.content || [];
 
   const columns: ColumnDef<CollegeListItem>[] = [
     {
-      header: 'Name',
       accessorKey: 'collegeName',
+      header: 'Institution',
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors">{row.original.collegeName}</span>
+          <span className="text-[10px] items-center text-slate-400 gap-1 flex font-black uppercase tracking-widest">
+            ID: {row.original.collegeId}
+          </span>
+        </div>
+      ),
     },
     {
-      header: 'Code',
       accessorKey: 'collegeCode',
+      header: 'Code',
+      enableSorting: true,
+      cell: ({ row }) => (
+        <span className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700 shadow-sm ring-1 ring-inset ring-slate-700/10 uppercase tracking-widest">
+          {row.original.collegeCode}
+        </span>
+      ),
     },
     {
-      header: 'Email',
       accessorKey: 'contactEmail',
+      header: 'Primary Contact',
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="text-[13px] font-bold text-slate-700">{row.original.contactEmail}</span>
+          <span className="text-[11px] text-slate-500 font-bold tracking-tighter">{row.original.contactPhone}</span>
+        </div>
+      ),
     },
     {
-      header: 'Phone',
-      accessorKey: 'contactPhone',
-    },
-    {
-      header: 'Departments',
-      accessorKey: 'totalDepartments',
-    },
-    {
-      header: 'Students',
       accessorKey: 'totalStudents',
+      header: 'Capacity',
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="text-[13px] font-black text-slate-900">{row.original.totalStudents || 0} Scholars</span>
+          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">{row.original.totalDepartments || 0} Academic Units</span>
+        </div>
+      ),
     },
     {
-      header: 'Teachers',
-      accessorKey: 'totalTeachers',
+      id: 'actions',
+      cell: ({ row }) => (
+        <div className="text-right pr-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/colleges/${row.original.collegeId}`)} className="font-black uppercase text-[10px] tracking-widest hover:bg-slate-100 h-8">
+            Profile
+          </Button>
+        </div>
+      ),
     },
   ];
 
-  const table = useReactTable({
-    data: data?.data.content ?? [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const totalPages = data?.data.pageable.totalPages ?? 0;
-
   return (
-    <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Colleges</h1>
-          <p className="text-sm text-slate-600">
-            Manage colleges (SuperAdmin only). Backend validation and error responses are shown
-            inline.
-          </p>
+    <div className="flex flex-col h-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+      <header className="flex items-center justify-between px-2 shrink-0">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Institutions</h1>
         </div>
+        <Button onClick={() => navigate('/colleges/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+          Register
+        </Button>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-[2fr,1fr]">
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or code"
-              className="w-64 rounded border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b bg-slate-50">
-                    {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-3 py-2 text-left font-semibold">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={columns.length} className="px-3 py-4 text-center text-slate-500">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0 hover:bg-slate-50">
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-3 py-2">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={columns.length} className="px-3 py-4 text-center text-slate-500">
-                      No colleges found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-              <span>
-                Page {page + 1} of {totalPages}
-              </span>
-              <div className="space-x-2">
-                <button
-                  type="button"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(p - 1, 0))}
-                  className="rounded border px-2 py-1 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="rounded border px-2 py-1 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">Create College</h2>
-
-          {serverError && (
-            <div className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-              {serverError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 text-sm">
-            <div>
-              <label className="mb-1 block font-medium" htmlFor="collegeName">
-                College Name
-              </label>
-              <input
-                id="collegeName"
-                type="text"
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                {...register('collegeName')}
-              />
-              {errors.collegeName && (
-                <p className="mt-1 text-xs text-red-600">{errors.collegeName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block font-medium" htmlFor="collegeCode">
-                College Code
-              </label>
-              <input
-                id="collegeCode"
-                type="text"
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                {...register('collegeCode')}
-              />
-              {errors.collegeCode && (
-                <p className="mt-1 text-xs text-red-600">{errors.collegeCode.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block font-medium" htmlFor="address">
-                Address
-              </label>
-              <textarea
-                id="address"
-                rows={3}
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                {...register('address')}
-              />
-              {errors.address && (
-                <p className="mt-1 text-xs text-red-600">{errors.address.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block font-medium" htmlFor="contactEmail">
-                Contact Email
-              </label>
-              <input
-                id="contactEmail"
-                type="email"
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                {...register('contactEmail')}
-              />
-              {errors.contactEmail && (
-                <p className="mt-1 text-xs text-red-600">{errors.contactEmail.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block font-medium" htmlFor="contactPhone">
-                Contact Phone
-              </label>
-              <input
-                id="contactPhone"
-                type="tel"
-                className="w-full rounded border border-slate-300 px-3 py-2 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                {...register('contactPhone')}
-              />
-              {errors.contactPhone && (
-                <p className="mt-1 text-xs text-red-600">{errors.contactPhone.message}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="mt-1 w-full rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {createMutation.isPending ? 'Creating...' : 'Create College'}
-            </button>
-          </form>
-        </div>
-      </section>
+      <div className="flex-1 min-h-0">
+        {isLoading ? (
+          <Card className="h-full flex items-center justify-center">
+             <Loading size="lg" text="Synchronizing..." />
+          </Card>
+        ) : (
+          <DataTable 
+            columns={columns} 
+            data={colleges} 
+            searchKey="collegeName" 
+            searchPlaceholder="Filter registry..."
+          />
+        )}
+      </div>
     </div>
   );
 }
-
-

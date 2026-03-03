@@ -23,9 +23,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/college-admin/courses")
+@RequestMapping("/courses")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('COLLEGEADMIN')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN')")
 @Tag(name = "CollegeAdmin - Courses", description = "Course management for CollegeAdmin")
 public class CourseController {
 

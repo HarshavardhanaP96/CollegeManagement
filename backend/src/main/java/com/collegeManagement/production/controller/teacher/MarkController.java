@@ -22,9 +22,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/teachers/marks")
+@RequestMapping("/marks")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('TEACHER')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'TEACHER')")
 @Tag(name = "Teacher - Mark", description = "Mark management for teachers")
 public class MarkController {
 

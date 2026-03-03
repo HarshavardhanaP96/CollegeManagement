@@ -36,18 +36,18 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.getUsername())
-                .orElseThrow(() -> new AuthenticationException("Invalid username or password"));
+                .orElseThrow(() -> new AuthenticationException("No account found with the provided username or email"));
 
         if (!user.getIsActive()) {
-            throw new AuthenticationException("Account is inactive");
+            throw new AuthenticationException("Your account is currently inactive. Please contact the administrator.");
         }
 
         if (user.getIsDeleted()) {
-            throw new AuthenticationException("Account has been deleted");
+            throw new AuthenticationException("This account has been deleted. Please contact the administrator.");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new AuthenticationException("Invalid username or password");
+            throw new AuthenticationException("Wrong password. Please check your credentials and try again.");
         }
 
         String accessToken = jwtTokenUtil.generateToken(user);

@@ -1,6 +1,6 @@
 # College Management System - API Documentation
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Base URL:** `https://college.example.com/api/v1`  
 **Authentication:** JWT Bearer Token
 
@@ -8,13 +8,32 @@
 
 ## Table of Contents
 1. [Authentication APIs](#1-authentication-apis)
-2. [SuperAdmin APIs](#2-superadmin-apis)
-3. [CollegeAdmin APIs](#3-collegeadmin-apis)
-4. [HOD APIs](#4-hod-apis)
-5. [Teacher APIs](#5-teacher-apis)
-6. [Student APIs](#6-student-apis)
-7. [Common Response Codes](#7-common-response-codes)
-8. [Error Handling](#8-error-handling)
+2. [College APIs](#2-college-apis)
+3. [Department APIs](#3-department-apis)
+4. [Course APIs](#4-course-apis)
+5. [Subject APIs](#5-subject-apis)
+6. [Class APIs](#6-class-apis)
+7. [Teacher Management APIs](#7-teacher-management-apis)
+8. [Teacher Assignment APIs](#8-teacher-assignment-apis)
+9. [Enrollment APIs](#9-enrollment-apis)
+10. [Attendance APIs (Teacher)](#10-attendance-apis-teacher)
+11. [Attendance APIs (Student)](#11-attendance-apis-student)
+12. [Marks APIs (Teacher)](#12-marks-apis-teacher)
+13. [Marks APIs (Student)](#13-marks-apis-student)
+14. [Profile APIs](#14-profile-apis)
+15. [Dashboard APIs](#15-dashboard-apis)
+16. [Student Management APIs](#19-student-management-apis)
+17. [Common Response Codes](#17-common-response-codes)
+18. [Error Handling](#18-error-handling)
+
+---
+
+## API Design Principles
+
+1. **Resource-based URLs** — Endpoints are named by resource, NOT by role. Roles are enforced server-side via JWT claims.
+2. **Role hierarchy** — `SUPERADMIN > COLLEGEADMIN > HOD > TEACHER | STUDENT`. Higher roles inherit access to lower role endpoints.
+3. **Data scoping** — Each user sees only data within their college/department, enforced by `TenantContext` extracted from the JWT token.
+4. **JWT-secured** — All endpoints except `/auth/login` and `/auth/refresh-token` require a valid Bearer token.
 
 ---
 
@@ -42,15 +61,18 @@
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
     "expiresIn": 86400000,
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "userId": 123,
       "username": "john.doe",
       "email": "john.doe@example.com",
       "fullName": "John Doe",
       "roleId": 4,
-      "roleName": "Teacher",
+      "roleName": "TEACHER",
       "collegeId": 5,
-      "collegeName": "ABC Institute of Technology"
+      "collegeName": "ABC Institute of Technology",
+      "isActive": true,
+      "createdAt": "2024-01-15T10:00:00"
     }
   },
   "timestamp": "2024-12-12T10:30:00"
@@ -67,9 +89,23 @@
 }
 ```
 
+**JWT Token Claims:**
+The access token payload contains:
+```json
+{
+  "sub": "john.doe",
+  "userId": 123,
+  "collegeId": 5,
+  "roleId": 4,
+  "roleName": "TEACHER",
+  "iat": 1702375800,
+  "exp": 1702462200
+}
+```
+
 ### 1.2 Refresh Token
 **Endpoint:** `POST /auth/refresh-token`  
-**Access:** Authenticated  
+**Access:** Public  
 **Description:** Refresh expired JWT token
 
 **Request Body:**
@@ -87,7 +123,9 @@
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
-    "expiresIn": 86400000
+    "expiresIn": 86400000,
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": { ... }
   },
   "timestamp": "2024-12-12T10:35:00"
 }
@@ -126,19 +164,34 @@
 ```json
 {
   "success": true,
-  "message": "Password changed successfully",
+  "message": "Password changed successfully. Please login with new password.",
   "data": null,
   "timestamp": "2024-12-12T10:45:00"
 }
 ```
 
+### 1.5 Validate Token
+**Endpoint:** `GET /auth/validate-token`  
+**Access:** Authenticated  
+**Headers:** `Authorization: Bearer {token}`
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Token is valid",
+  "data": true,
+  "timestamp": "2024-12-12T10:46:00"
+}
+```
+
 ---
 
-## 2. SuperAdmin APIs
+## 2. College APIs
 
 ### 2.1 Create College
-**Endpoint:** `POST /admin/colleges`  
-**Access:** SuperAdmin only  
+**Endpoint:** `POST /colleges`  
+**Access:** SUPERADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -172,22 +225,9 @@
 }
 ```
 
-**Validation Errors (400 Bad Request):**
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": {
-    "collegeCode": "College code must be unique",
-    "contactEmail": "Invalid email format"
-  },
-  "timestamp": "2024-12-12T10:50:00"
-}
-```
-
 ### 2.2 Get All Colleges
-**Endpoint:** `GET /admin/colleges`  
-**Access:** SuperAdmin only  
+**Endpoint:** `GET /colleges`  
+**Access:** SUPERADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
 **Query Parameters:**
@@ -196,7 +236,7 @@
 - `sort` (optional, default: "collegeName,asc")
 - `search` (optional) - Search by name or code
 
-**Example:** `GET /admin/colleges?page=0&size=10&search=ABC`
+**Example:** `GET /colleges?page=0&size=10&search=ABC`
 
 **Success Response (200 OK):**
 ```json
@@ -230,52 +270,13 @@
 ```
 
 ### 2.3 Get College by ID
-**Endpoint:** `GET /admin/colleges/{collegeId}`  
-**Access:** SuperAdmin only  
+**Endpoint:** `GET /colleges/{collegeId}`  
+**Access:** SUPERADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "College retrieved successfully",
-  "data": {
-    "collegeId": 1,
-    "collegeName": "ABC Institute of Technology",
-    "collegeCode": "ABC-IT",
-    "address": "123 Main Street, City, State - 12345",
-    "contactEmail": "admin@abc-it.edu",
-    "contactPhone": "+1-234-567-8900",
-    "departments": [
-      {
-        "deptId": 1,
-        "deptName": "Computer Science and Engineering",
-        "deptCode": "CSE",
-        "hodName": "Dr. Jane Smith"
-      }
-    ],
-    "courses": [
-      {
-        "courseId": 1,
-        "courseName": "Bachelor of Technology",
-        "courseCode": "B.Tech"
-      }
-    ],
-    "statistics": {
-      "totalDepartments": 5,
-      "totalTeachers": 85,
-      "totalStudents": 1250,
-      "totalClasses": 48
-    },
-    "createdAt": "2024-12-12T10:50:00"
-  },
-  "timestamp": "2024-12-12T11:05:00"
-}
-```
-
 ### 2.4 Update College
-**Endpoint:** `PUT /admin/colleges/{collegeId}`  
-**Access:** SuperAdmin only  
+**Endpoint:** `PUT /colleges/{collegeId}`  
+**Access:** SUPERADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -288,47 +289,23 @@
 }
 ```
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "College updated successfully",
-  "data": {
-    "collegeId": 1,
-    "collegeName": "ABC Institute of Technology and Management",
-    "collegeCode": "ABC-IT",
-    "address": "456 New Address, City, State - 12345",
-    "contactEmail": "newadmin@abc-it.edu",
-    "contactPhone": "+1-234-567-8901",
-    "updatedAt": "2024-12-12T11:10:00",
-    "updatedBy": 1
-  },
-  "timestamp": "2024-12-12T11:10:00"
-}
-```
-
 ### 2.5 Delete College (Soft Delete)
-**Endpoint:** `DELETE /admin/colleges/{collegeId}`  
-**Access:** SuperAdmin only  
+**Endpoint:** `DELETE /colleges/{collegeId}`  
+**Access:** SUPERADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "College deleted successfully",
-  "data": null,
-  "timestamp": "2024-12-12T11:15:00"
-}
-```
+### 2.6 Get College Statistics
+**Endpoint:** `GET /colleges/{collegeId}/statistics`  
+**Access:** SUPERADMIN  
+**Headers:** `Authorization: Bearer {token}`
 
 ---
 
-## 3. CollegeAdmin APIs
+## 3. Department APIs
 
 ### 3.1 Create Department
-**Endpoint:** `POST /college-admin/departments`  
-**Access:** CollegeAdmin only  
+**Endpoint:** `POST /departments`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -359,38 +336,26 @@
 ```
 
 ### 3.2 Get All Departments
-**Endpoint:** `GET /college-admin/departments`  
-**Access:** CollegeAdmin only  
+**Endpoint:** `GET /departments`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Departments retrieved successfully",
-  "data": [
-    {
-      "deptId": 1,
-      "deptName": "Computer Science and Engineering",
-      "deptCode": "CSE",
-      "deptHeadUserId": 10,
-      "deptHeadName": "Dr. Jane Smith",
-      "totalTeachers": 15,
-      "totalStudents": 250,
-      "totalSubjects": 32,
-      "createdAt": "2024-12-12T11:20:00"
-    }
-  ],
-  "timestamp": "2024-12-12T11:25:00"
-}
-```
-
-### 3.3 Assign HOD to Department
-**Endpoint:** `PUT /college-admin/departments/{deptId}/assign-hod`  
-**Access:** CollegeAdmin only  
+### 3.3 Get Department by ID
+**Endpoint:** `GET /departments/{deptId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
-**Request Body (Option 1: Create New HOD):**
+### 3.4 Update Department
+**Endpoint:** `PUT /departments/{deptId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
+
+### 3.5 Assign HOD to Department
+**Endpoint:** `POST /departments/{deptId}/assign-hod`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
+
+**Request Body (Create New HOD):**
 ```json
 {
   "createNew": true,
@@ -402,7 +367,7 @@
 }
 ```
 
-**Request Body (Option 2: Assign Existing User):**
+**Request Body (Assign Existing User):**
 ```json
 {
   "createNew": false,
@@ -410,25 +375,18 @@
 }
 ```
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "HOD assigned successfully",
-  "data": {
-    "deptId": 1,
-    "deptName": "Computer Science and Engineering",
-    "deptHeadUserId": 10,
-    "deptHeadName": "Dr. Jane Smith",
-    "updatedAt": "2024-12-12T11:30:00"
-  },
-  "timestamp": "2024-12-12T11:30:00"
-}
-```
+### 3.6 Delete Department
+**Endpoint:** `DELETE /departments/{deptId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
 
-### 3.4 Create Course
-**Endpoint:** `POST /college-admin/courses`  
-**Access:** CollegeAdmin only  
+---
+
+## 4. Course APIs
+
+### 4.1 Create Course
+**Endpoint:** `POST /courses`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -441,56 +399,33 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Course created successfully",
-  "data": {
-    "courseId": 1,
-    "collegeId": 1,
-    "courseName": "Bachelor of Technology",
-    "courseCode": "B.Tech",
-    "durationYears": 4,
-    "totalSemesters": 8,
-    "createdAt": "2024-12-12T11:35:00"
-  },
-  "timestamp": "2024-12-12T11:35:00"
-}
-```
-
-### 3.5 Get All Courses
-**Endpoint:** `GET /college-admin/courses`  
-**Access:** CollegeAdmin only  
+### 4.2 Get All Courses
+**Endpoint:** `GET /courses`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
 **Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Courses retrieved successfully",
-  "data": [
-    {
-      "courseId": 1,
-      "courseName": "Bachelor of Technology",
-      "courseCode": "B.Tech",
-      "durationYears": 4,
-      "totalSemesters": 8,
-      "totalStudents": 1000,
-      "createdAt": "2024-12-12T11:35:00"
-    }
-  ],
-  "timestamp": "2024-12-12T11:40:00"
-}
-```
+### 4.3 Get Course by ID
+**Endpoint:** `GET /courses/{courseId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
+
+### 4.4 Update Course
+**Endpoint:** `PUT /courses/{courseId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
+
+### 4.5 Delete Course
+**Endpoint:** `DELETE /courses/{courseId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN  
+**Headers:** `Authorization: Bearer {token}`
 
 ---
 
-## 4. HOD APIs
+## 5. Subject APIs
 
-### 4.1 Create Subject
-**Endpoint:** `POST /hod/subjects`  
-**Access:** HOD only  
+### 5.1 Create Subject
+**Endpoint:** `POST /subjects`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -503,99 +438,33 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Subject created successfully",
-  "data": {
-    "subjectId": 1,
-    "deptId": 1,
-    "subjectCode": "CS301",
-    "subjectName": "Data Structures and Algorithms",
-    "credits": 3,
-    "subjectType": "Theory",
-    "createdAt": "2024-12-12T11:45:00"
-  },
-  "timestamp": "2024-12-12T11:45:00"
-}
-```
-
-### 4.2 Get All Subjects
-**Endpoint:** `GET /hod/subjects`  
-**Access:** HOD only  
+### 5.2 Get All Subjects
+**Endpoint:** `GET /subjects`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Subjects retrieved successfully",
-  "data": [
-    {
-      "subjectId": 1,
-      "subjectCode": "CS301",
-      "subjectName": "Data Structures and Algorithms",
-      "credits": 3,
-      "subjectType": "Theory",
-      "totalClasses": 3,
-      "totalTeachersAssigned": 2,
-      "createdAt": "2024-12-12T11:45:00"
-    }
-  ],
-  "timestamp": "2024-12-12T11:50:00"
-}
-```
-
-### 4.3 Create Teacher
-**Endpoint:** `POST /hod/teachers`  
-**Access:** HOD only  
+### 5.3 Get Subject by ID
+**Endpoint:** `GET /subjects/{subjectId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
-**Request Body:**
-```json
-{
-  "username": "prof.kumar",
-  "email": "kumar@abc-it.edu",
-  "fullName": "Prof. Rajesh Kumar",
-  "phone": "+1-234-567-8920",
-  "password": "TempPassword123!",
-  "employeeId": "EMP001",
-  "qualification": "M.Tech, Ph.D",
-  "specialization": "Machine Learning",
-  "hireDate": "2024-01-15"
-}
-```
+### 5.4 Update Subject
+**Endpoint:** `PUT /subjects/{subjectId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Teacher created successfully",
-  "data": {
-    "userId": 20,
-    "username": "prof.kumar",
-    "email": "kumar@abc-it.edu",
-    "fullName": "Prof. Rajesh Kumar",
-    "phone": "+1-234-567-8920",
-    "roleId": 4,
-    "roleName": "Teacher",
-    "teacherProfile": {
-      "employeeId": "EMP001",
-      "deptId": 1,
-      "qualification": "M.Tech, Ph.D",
-      "specialization": "Machine Learning",
-      "hireDate": "2024-01-15"
-    },
-    "createdAt": "2024-12-12T12:00:00"
-  },
-  "timestamp": "2024-12-12T12:00:00"
-}
-```
+### 5.5 Delete Subject
+**Endpoint:** `DELETE /subjects/{subjectId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
 
-### 4.4 Create Class
-**Endpoint:** `POST /hod/classes`  
-**Access:** HOD only  
+---
+
+## 6. Class APIs
+
+### 6.1 Create Class
+**Endpoint:** `POST /classes`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -609,31 +478,19 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Class created successfully",
-  "data": {
-    "classId": 1,
-    "deptId": 1,
-    "courseId": 1,
-    "courseName": "Bachelor of Technology",
-    "academicYear": "2024-2025",
-    "semester": 3,
-    "section": "A",
-    "className": "B.Tech CSE 3rd Sem A 2024-25",
-    "totalStudents": 0,
-    "totalSubjects": 0,
-    "createdAt": "2024-12-12T12:05:00"
-  },
-  "timestamp": "2024-12-12T12:05:00"
-}
-```
+### 6.2 Get All Classes
+**Endpoint:** `GET /classes`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
 
-### 4.5 Add Subject to Class
-**Endpoint:** `POST /hod/classes/{classId}/subjects`  
-**Access:** HOD only  
+### 6.3 Get Class by ID
+**Endpoint:** `GET /classes/{classId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
+
+### 6.4 Add Subject to Class
+**Endpoint:** `POST /classes/{classId}/subjects`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -643,28 +500,62 @@
 }
 ```
 
-**Success Response (201 Created):**
+### 6.5 Delete Class
+**Endpoint:** `DELETE /classes/{classId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
+
+---
+
+## 7. Teacher Management APIs
+
+These endpoints provide full faculty lifecycle management.
+
+### 7.1 Create Teacher
+**Endpoint:** `POST /teachers`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Headers:** `Authorization: Bearer {token}`
+
+**Request Body:**
 ```json
 {
-  "success": true,
-  "message": "Subject added to class successfully",
-  "data": {
-    "classSubjectId": 1,
-    "classId": 1,
-    "subjectId": 1,
-    "subjectCode": "CS301",
-    "subjectName": "Data Structures and Algorithms",
-    "credits": 3,
-    "assignedTeachers": [],
-    "createdAt": "2024-12-12T12:10:00"
-  },
-  "timestamp": "2024-12-12T12:10:00"
+  "username": "prof.kumar",
+  "email": "kumar@abc-it.edu",
+  "fullName": "Prof. Rajesh Kumar",
+  "phone": "+1-234-567-8920",
+  "password": "TempPassword123!",
+  "employeeId": "EMP001",
+  "qualification": "M.Tech, Ph.D",
+  "specialization": "Machine Learning",
+  "hireDate": "2024-01-15",
+  "deptId": 1
 }
 ```
 
-### 4.6 Assign Teacher to Class-Subject
-**Endpoint:** `POST /hod/teacher-assignments`  
-**Access:** HOD only  
+### 7.2 Get All Teachers
+**Endpoint:** `GET /teachers`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+**Description:** Retrieves all teachers within the current college context. Scoped by college ID from token.
+
+### 7.3 Get Teacher by ID
+**Endpoint:** `GET /teachers/{teacherId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+
+### 7.4 Update Teacher
+**Endpoint:** `PUT /teachers/{teacherId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+
+### 7.5 Delete Teacher (Soft Delete)
+**Endpoint:** `DELETE /teachers/{teacherId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
+
+---
+
+## 8. Teacher Assignment APIs
+
+### 8.1 Assign Teacher to Class-Subject
+**Endpoint:** `POST /teacher-assignments`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -675,28 +566,15 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Teacher assigned successfully",
-  "data": {
-    "assignmentId": 1,
-    "classSubjectId": 1,
-    "className": "B.Tech CSE 3rd Sem A 2024-25",
-    "subjectName": "Data Structures and Algorithms",
-    "teacherUserId": 20,
-    "teacherName": "Prof. Rajesh Kumar",
-    "isActive": true,
-    "createdAt": "2024-12-12T12:15:00"
-  },
-  "timestamp": "2024-12-12T12:15:00"
-}
-```
+> **Note:** This endpoint is mapped in the ClassController under `/classes/teacher-assignments`.
 
-### 4.7 Enroll Student in Class
-**Endpoint:** `POST /hod/student-enrollments`  
-**Access:** HOD only  
+---
+
+## 9. Enrollment APIs
+
+### 9.1 Enroll Student in Class
+**Endpoint:** `POST /enrollments`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -707,58 +585,17 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Student enrolled successfully",
-  "data": {
-    "enrollmentId": 1,
-    "studentUserId": 100,
-    "studentName": "John Doe",
-    "rollNumber": "CSE2024001",
-    "classId": 1,
-    "className": "B.Tech CSE 3rd Sem A 2024-25",
-    "enrollmentStatus": "Active",
-    "createdAt": "2024-12-12T12:20:00"
-  },
-  "timestamp": "2024-12-12T12:20:00"
-}
-```
+### 9.2 Get Enrollments by Class
+**Endpoint:** `GET /enrollments/class/{classId}`  
+**Access:** SUPERADMIN, COLLEGEADMIN, HOD  
 
 ---
 
-## 5. Teacher APIs
+## 10. Attendance APIs (Teacher)
 
-### 5.1 Get My Assignments
-**Endpoint:** `GET /teachers/assignments`  
-**Access:** Teacher only  
-**Headers:** `Authorization: Bearer {token}`
-
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Assignments retrieved successfully",
-  "data": [
-    {
-      "assignmentId": 1,
-      "classId": 1,
-      "className": "B.Tech CSE 3rd Sem A 2024-25",
-      "subjectId": 1,
-      "subjectCode": "CS301",
-      "subjectName": "Data Structures and Algorithms",
-      "totalStudents": 45,
-      "isActive": true
-    }
-  ],
-  "timestamp": "2024-12-12T12:25:00"
-}
-```
-
-### 5.2 Mark Attendance
-**Endpoint:** `POST /teachers/attendance`  
-**Access:** Teacher only  
+### 10.1 Mark Attendance
+**Endpoint:** `POST /attendance`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -799,50 +636,23 @@
 }
 ```
 
-### 5.3 Get Attendance History
-**Endpoint:** `GET /teachers/attendance/assignment/{assignmentId}`  
-**Access:** Teacher only  
+### 10.2 Get Attendance by Assignment
+**Endpoint:** `GET /attendance/assignment/{assignmentId}`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Query Parameters:**
 - `startDate` (optional, format: YYYY-MM-DD)
 - `endDate` (optional, format: YYYY-MM-DD)
-- `studentUserId` (optional)
 
-**Example:** `GET /teachers/attendance/assignment/1?startDate=2024-12-01&endDate=2024-12-12`
+### 10.3 Get Attendance Summary
+**Endpoint:** `GET /attendance/assignment/{assignmentId}/summary`  
+**Access:** SUPERADMIN, TEACHER  
+**Headers:** `Authorization: Bearer {token}`
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Attendance history retrieved successfully",
-  "data": [
-    {
-      "recordDate": "2024-12-12",
-      "studentUserId": 100,
-      "studentName": "John Doe",
-      "rollNumber": "CSE2024001",
-      "isPresent": true,
-      "remarks": null,
-      "createdAt": "2024-12-12T12:30:00"
-    },
-    {
-      "recordDate": "2024-12-11",
-      "studentUserId": 100,
-      "studentName": "John Doe",
-      "rollNumber": "CSE2024001",
-      "isPresent": true,
-      "remarks": null,
-      "createdAt": "2024-12-11T10:00:00"
-    }
-  ],
-  "timestamp": "2024-12-12T12:35:00"
-}
-```
-
-### 5.4 Update Attendance
-**Endpoint:** `PUT /teachers/attendance/{attendanceId}`  
-**Access:** Teacher only  
+### 10.4 Update Attendance
+**Endpoint:** `PUT /attendance/{attendanceId}`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -853,27 +663,86 @@
 }
 ```
 
+### 10.5 Get My Assignments
+**Endpoint:** `GET /attendance/my-assignments`  
+**Access:** SUPERADMIN, TEACHER  
+**Headers:** `Authorization: Bearer {token}`
+
 **Success Response (200 OK):**
 ```json
 {
   "success": true,
-  "message": "Attendance updated successfully",
-  "data": {
-    "attendanceId": 1,
-    "studentUserId": 100,
-    "studentName": "John Doe",
-    "recordDate": "2024-12-12",
-    "isPresent": true,
-    "remarks": "Corrected entry",
-    "updatedAt": "2024-12-12T12:40:00"
-  },
-  "timestamp": "2024-12-12T12:40:00"
+  "message": "Assignments retrieved successfully",
+  "data": [
+    {
+      "assignmentId": 1,
+      "classId": 1,
+      "className": "B.Tech CSE 3rd Sem A 2024-25",
+      "subjectId": 1,
+      "subjectCode": "CS301",
+      "subjectName": "Data Structures and Algorithms",
+      "totalStudents": 45,
+      "isActive": true
+    }
+  ],
+  "timestamp": "2024-12-12T12:25:00"
 }
 ```
 
-### 5.5 Enter Marks
-**Endpoint:** `POST /teachers/marks`  
-**Access:** Teacher only  
+---
+
+## 11. Attendance APIs (Student)
+
+### 11.1 Get My Attendance
+**Endpoint:** `GET /student-attendance/my-attendance`  
+**Access:** SUPERADMIN, STUDENT  
+**Headers:** `Authorization: Bearer {token}`
+
+**Query Parameters:**
+- `semester` (optional, default: current semester)
+
+**Success Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Attendance retrieved successfully",
+  "data": {
+    "semester": 3,
+    "academicYear": "2024-2025",
+    "overallAttendance": {
+      "totalClasses": 120,
+      "classesAttended": 112,
+      "attendancePercentage": 93.33
+    },
+    "subjectWiseAttendance": [
+      {
+        "subjectId": 1,
+        "subjectCode": "CS301",
+        "subjectName": "Data Structures and Algorithms",
+        "teacherName": "Prof. Rajesh Kumar",
+        "totalClasses": 24,
+        "classesAttended": 22,
+        "attendancePercentage": 91.67,
+        "status": "Good"
+      }
+    ]
+  },
+  "timestamp": "2024-12-12T13:15:00"
+}
+```
+
+### 11.2 Get Attendance by Subject
+**Endpoint:** `GET /student-attendance/subject/{subjectId}`  
+**Access:** SUPERADMIN, STUDENT  
+**Headers:** `Authorization: Bearer {token}`
+
+---
+
+## 12. Marks APIs (Teacher)
+
+### 12.1 Enter Marks
+**Endpoint:** `POST /marks`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -896,60 +765,22 @@
 }
 ```
 
-**Success Response (201 Created):**
-```json
-{
-  "success": true,
-  "message": "Marks entered successfully",
-  "data": {
-    "assignmentId": 1,
-    "examTypeId": 1,
-    "examTypeName": "Internal 1",
-    "maxMarks": 50,
-    "totalStudents": 45,
-    "marksEntered": 45,
-    "averageMarks": 40.25,
-    "createdAt": "2024-12-12T12:45:00"
-  },
-  "timestamp": "2024-12-12T12:45:00"
-}
-```
-
-### 5.6 Get Marks by Assignment
-**Endpoint:** `GET /teachers/marks/assignment/{assignmentId}`  
-**Access:** Teacher only  
+### 12.2 Get Marks by Assignment
+**Endpoint:** `GET /marks/assignment/{assignmentId}`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Query Parameters:**
 - `examTypeId` (optional)
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Marks retrieved successfully",
-  "data": [
-    {
-      "markId": 1,
-      "studentUserId": 100,
-      "studentName": "John Doe",
-      "rollNumber": "CSE2024001",
-      "examTypeId": 1,
-      "examTypeName": "Internal 1",
-      "marksObtained": 45.5,
-      "maxMarks": 50,
-      "percentage": 91.0,
-      "remarks": "Good performance",
-      "createdAt": "2024-12-12T12:45:00"
-    }
-  ],
-  "timestamp": "2024-12-12T12:50:00"
-}
-```
+### 12.3 Get Marks Summary
+**Endpoint:** `GET /marks/assignment/{assignmentId}/summary`  
+**Access:** SUPERADMIN, TEACHER  
+**Headers:** `Authorization: Bearer {token}`
 
-### 5.7 Update Marks
-**Endpoint:** `PUT /teachers/marks/{markId}`  
-**Access:** Teacher only  
+### 12.4 Update Marks
+**Endpoint:** `PUT /marks/{markId}`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -960,32 +791,71 @@
 }
 ```
 
+### 12.5 Get Exam Types
+**Endpoint:** `GET /marks/exam-types`  
+**Access:** SUPERADMIN, TEACHER  
+**Headers:** `Authorization: Bearer {token}`
+
+---
+
+## 13. Marks APIs (Student)
+
+### 13.1 Get My Marks
+**Endpoint:** `GET /student-marks/my-marks`  
+**Access:** SUPERADMIN, STUDENT  
+**Headers:** `Authorization: Bearer {token}`
+
+**Query Parameters:**
+- `semester` (optional, default: current semester)
+
 **Success Response (200 OK):**
 ```json
 {
   "success": true,
-  "message": "Marks updated successfully",
+  "message": "Mark retrieved successfully",
   "data": {
-    "markId": 1,
-    "studentUserId": 100,
-    "studentName": "John Doe",
-    "marksObtained": 47.0,
-    "maxMarks": 50,
-    "percentage": 94.0,
-    "remarks": "Updated after rechecking",
-    "updatedAt": "2024-12-12T12:55:00"
+    "semester": 3,
+    "academicYear": "2024-2025",
+    "subjects": [
+      {
+        "subjectId": 1,
+        "subjectCode": "CS301",
+        "subjectName": "Data Structures and Algorithms",
+        "credits": 3,
+        "teacherName": "Prof. Rajesh Kumar",
+        "examMarks": [
+          {
+            "examTypeId": 1,
+            "examTypeName": "Internal 1",
+            "marksObtained": 45.5,
+            "maxMarks": 50,
+            "percentage": 91.0,
+            "remarks": "Good performance"
+          }
+        ],
+        "totalMarksObtained": 93.5,
+        "totalMaxMarks": 100,
+        "overallPercentage": 93.5
+      }
+    ],
+    "overallPercentage": 91.2
   },
-  "timestamp": "2024-12-12T12:55:00"
+  "timestamp": "2024-12-12T13:10:00"
 }
 ```
 
+### 13.2 Get Marks by Subject
+**Endpoint:** `GET /student-marks/subject/{subjectId}`  
+**Access:** SUPERADMIN, STUDENT  
+**Headers:** `Authorization: Bearer {token}`
+
 ---
 
-## 6. Student APIs
+## 14. Profile APIs
 
-### 6.1 Get My Profile
-**Endpoint:** `GET /students/profile`  
-**Access:** Student only  
+### 14.1 Get My Profile
+**Endpoint:** `GET /profile`  
+**Access:** SUPERADMIN, STUDENT  
 **Headers:** `Authorization: Bearer {token}`
 
 **Success Response (200 OK):**
@@ -1021,9 +891,9 @@
 }
 ```
 
-### 6.2 Update My Profile
-**Endpoint:** `PUT /students/profile`  
-**Access:** Student only  
+### 14.2 Update My Profile
+**Endpoint:** `PUT /profile`  
+**Access:** SUPERADMIN, STUDENT  
 **Headers:** `Authorization: Bearer {token}`
 
 **Request Body:**
@@ -1037,166 +907,56 @@
 }
 ```
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Profile updated successfully",
-  "data": {
-    "userId": 100,
-    "email": "john.doe.new@student.abc-it.edu",
-    "phone": "+1-234-567-8935",
-    "studentProfile": {
-      "parentPhone": "+1-234-567-8945",
-      "parentEmail": "robert.doe.new@email.com",
-      "address": "123 New Address, City, State"
-    },
-    "updatedAt": "2024-12-12T13:05:00"
-  },
-  "timestamp": "2024-12-12T13:05:00"
-}
-```
+---
 
-### 6.3 Get My Marks
-**Endpoint:** `GET /students/marks/my-marks`  
-**Access:** Student only  
+## 15. Dashboard APIs
+
+### 15.1 Teacher Dashboard
+**Endpoint:** `GET /dashboard/teacher`  
+**Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
-**Query Parameters:**
-- `semester` (optional, default: current semester)
-- `subjectId` (optional)
+> **Note:** TeacherDashboardService is currently under development (TODO).
 
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Marks retrieved successfully",
-  "data": {
-    "semester": 3,
-    "academicYear": "2024-2025",
-    "subjects": [
-      {
-        "subjectId": 1,
-        "subjectCode": "CS301",
-        "subjectName": "Data Structures and Algorithms",
-        "credits": 3,
-        "teacherName": "Prof. Rajesh Kumar",
-        "examMarks": [
-          {
-            "examTypeId": 1,
-            "examTypeName": "Internal 1",
-            "marksObtained": 45.5,
-            "maxMarks": 50,
-            "percentage": 91.0,
-            "remarks": "Good performance"
-          },
-          {
-            "examTypeId": 2,
-            "examTypeName": "Internal 2",
-            "marksObtained": 48.0,
-            "maxMarks": 50,
-            "percentage": 96.0,
-            "remarks": null
-          }
-        ],
-        "totalMarksObtained": 93.5,
-        "totalMaxMarks": 100,
-        "overallPercentage": 93.5
-      }
-    ],
-    "overallPercentage": 91.2
-  },
-  "timestamp": "2024-12-12T13:10:00"
-}
-```
-
-### 6.4 Get My Attendance
-**Endpoint:** `GET /students/attendance/my-attendance`  
-**Access:** Student only  
+### 15.2 Student Dashboard
+**Endpoint:** `GET /dashboard/student`  
+**Access:** SUPERADMIN, STUDENT  
 **Headers:** `Authorization: Bearer {token}`
-
-**Query Parameters:**
-- `semester` (optional, default: current semester)
-- `subjectId` (optional)
-
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Attendance retrieved successfully",
-  "data": {
-    "semester": 3,
-    "academicYear": "2024-2025",
-    "overallAttendance": {
-      "totalClasses": 120,
-      "classesAttended": 112,
-      "attendancePercentage": 93.33
-    },
-    "subjectWiseAttendance": [
-      {
-        "subjectId": 1,
-        "subjectCode": "CS301",
-        "subjectName": "Data Structures and Algorithms",
-        "teacherName": "Prof. Rajesh Kumar",
-        "totalClasses": 24,
-        "classesAttended": 22,
-        "attendancePercentage": 91.67,
-        "status": "Good"
-      }
-    ]
-  },
-  "timestamp": "2024-12-12T13:15:00"
-}
-```
-
-### 6.5 Get Attendance Details by Subject
-**Endpoint:** `GET /students/attendance/subject/{subjectId}`  
-**Access:** Student only  
-**Headers:** `Authorization: Bearer {token}`
-
-**Query Parameters:**
-- `startDate` (optional)
-- `endDate` (optional)
-
-**Success Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Attendance details retrieved successfully",
-  "data": {
-    "subjectId": 1,
-    "subjectName": "Data Structures and Algorithms",
-    "teacherName": "Prof. Rajesh Kumar",
-    "attendanceRecords": [
-      {
-        "recordDate": "2024-12-12",
-        "isPresent": true,
-        "remarks": null
-      },
-      {
-        "recordDate": "2024-12-11",
-        "isPresent": true,
-        "remarks": null
-      },
-      {
-        "recordDate": "2024-12-09",
-        "isPresent": false,
-        "remarks": "Medical leave"
-      }
-    ],
-    "summary": {
-      "totalClasses": 24,
-      "classesAttended": 22,
-      "attendancePercentage": 91.67
-    }
-  },
-  "timestamp": "2024-12-12T13:20:00"
-}
-```
 
 ---
 
-## 7. Common Response Codes
+## 16. Role-Based Access Matrix
+
+| Resource | SUPERADMIN | COLLEGEADMIN | HOD | TEACHER | STUDENT |
+|----------|:----------:|:------------:|:---:|:-------:|:-------:|
+| **Colleges** (`/colleges`) | ✅ CRUD | ❌ | ❌ | ❌ | ❌ |
+| **Departments** (`/departments`) | ✅ CRUD | ✅ CRUD | ❌ | ❌ | ❌ |
+| **Courses** (`/courses`) | ✅ CRUD | ✅ CRUD | ❌ | ❌ | ❌ |
+| **Subjects** (`/subjects`) | ✅ CRUD | ✅ CRUD | ✅ CRUD | ❌ | ❌ |
+| **Classes** (`/classes`) | ✅ CRUD | ✅ CRUD | ✅ CRUD | ❌ | ❌ |
+| **Teachers** (`/teachers`) | ✅ CRUD | ✅ CRUD | ✅ CRUD | ❌ | ❌ |
+| **Teacher Assignments** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Enrollments** (`/enrollments`) | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Attendance (T)** (`/attendance`) | ✅ | ❌ | ❌ | ✅ own | ❌ |
+| **Attendance (S)** (`/student-attendance`) | ✅ | ❌ | ❌ | ❌ | ✅ own |
+| **Marks (T)** (`/marks`) | ✅ | ❌ | ❌ | ✅ own | ❌ |
+| **Marks (S)** (`/student-marks`) | ✅ | ❌ | ❌ | ❌ | ✅ own |
+| **Profile** (`/profile`) | ✅ | ❌ | ❌ | ❌ | ✅ own |
+| **Dashboard** | ✅ all | ❌ | ❌ | ✅ own | ✅ own |
+
+### Role Descriptions
+
+| Role | ID | Scope |
+|------|:--:|-------|
+| **SUPERADMIN** | 1 | System-wide access. Can manage all colleges and all data |
+| **COLLEGEADMIN** | 2 | College-scoped. Manages departments, courses, and assigns HODs within their college |
+| **HOD** | 3 | Department-scoped. Manages subjects, classes, teachers, enrollments within their department |
+| **TEACHER** | 4 | Assignment-scoped. Manages attendance and marks for their assigned class-subjects |
+| **STUDENT** | 5 | Self-scoped. Views own profile, marks, and attendance |
+
+---
+
+## 17. Common Response Codes
 
 | Status Code | Description | When to Use |
 |-------------|-------------|-------------|
@@ -1213,7 +973,7 @@
 
 ---
 
-## 8. Error Handling
+## 18. Error Handling
 
 ### Standard Error Response Format
 
@@ -1233,22 +993,6 @@
 
 ### Examples
 
-#### Validation Error (400)
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": {
-    "email": "Email is required",
-    "password": "Password must be at least 8 characters",
-    "phone": "Invalid phone number format"
-  },
-  "timestamp": "2024-12-12T13:30:00",
-  "path": "/api/v1/auth/login",
-  "statusCode": 400
-}
-```
-
 #### Authentication Error (401)
 ```json
 {
@@ -1256,7 +1000,7 @@
   "message": "Invalid or expired token",
   "errors": null,
   "timestamp": "2024-12-12T13:35:00",
-  "path": "/api/v1/students/marks/my-marks",
+  "path": "/api/v1/student-marks/my-marks",
   "statusCode": 401
 }
 ```
@@ -1268,57 +1012,14 @@
   "message": "Access denied. Insufficient permissions",
   "errors": null,
   "timestamp": "2024-12-12T13:40:00",
-  "path": "/api/v1/admin/colleges",
+  "path": "/api/v1/colleges",
   "statusCode": 403
-}
-```
-
-#### Not Found Error (404)
-```json
-{
-  "success": false,
-  "message": "Resource not found",
-  "errors": {
-    "collegeId": "College with ID 999 does not exist"
-  },
-  "timestamp": "2024-12-12T13:45:00",
-  "path": "/api/v1/admin/colleges/999",
-  "statusCode": 404
-}
-```
-
-#### Conflict Error (409)
-```json
-{
-  "success": false,
-  "message": "Resource already exists",
-  "errors": {
-    "collegeCode": "College code 'ABC-IT' already exists",
-    "email": "Email 'admin@abc-it.edu' already registered"
-  },
-  "timestamp": "2024-12-12T13:50:00",
-  "path": "/api/v1/admin/colleges",
-  "statusCode": 409
-}
-```
-
-#### Business Logic Error (422)
-```json
-{
-  "success": false,
-  "message": "Business rule violation",
-  "errors": {
-    "marks": "Marks obtained (55) cannot exceed maximum marks (50)"
-  },
-  "timestamp": "2024-12-12T13:55:00",
-  "path": "/api/v1/teachers/marks",
-  "statusCode": 422
 }
 ```
 
 ---
 
-## 9. Authentication Header Format
+## 19. Authentication Header Format
 
 All authenticated endpoints require:
 
@@ -1326,15 +1027,20 @@ All authenticated endpoints require:
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+The JWT token contains `userId`, `collegeId`, `roleId`, and `roleName` claims used for:
+1. **Authentication** — Validating the token signature and expiry
+2. **Authorization** — Checking role via `@PreAuthorize("hasRole('ROLENAME')")`
+3. **Data Scoping** — `TenantContext` ensures users only see data within their college/department
+
 ---
 
-## 10. Pagination Format
+## 20. Pagination Format
 
 For list endpoints supporting pagination:
 
 **Request:**
 ```
-GET /api/v1/admin/colleges?page=0&size=20&sort=collegeName,asc
+GET /api/v1/colleges?page=0&size=20&sort=collegeName,asc
 ```
 
 **Response:**
@@ -1371,7 +1077,26 @@ GET /api/v1/admin/colleges?page=0&size=20&sort=collegeName,asc
 
 ---
 
-## 11. OpenAPI/Swagger Access
+## 21. Frontend Route ↔ Backend API Mapping
+
+| Frontend Route | Backend API | Roles |
+|----------------|-------------|-------|
+| `/login` | `POST /auth/login` | Public |
+| `/colleges` | `GET/POST /colleges` | SUPERADMIN |
+| `/departments` | `GET/POST /departments` | SUPERADMIN, COLLEGEADMIN |
+| `/courses` | `GET/POST /courses` | SUPERADMIN, COLLEGEADMIN |
+| `/subjects` | `GET/POST /subjects` | SUPERADMIN, COLLEGEADMIN, HOD |
+| `/teachers` | `GET/POST /teachers` | SUPERADMIN, COLLEGEADMIN, HOD |
+| `/classes` | `GET/POST /classes` | SUPERADMIN, COLLEGEADMIN, HOD |
+| `/attendance` | `GET/POST /attendance` | SUPERADMIN, TEACHER |
+| `/marks` | `GET/POST /marks` | SUPERADMIN, TEACHER |
+| `/profile` | `GET/PUT /profile` | SUPERADMIN, STUDENT |
+| `/student-marks` | `GET /student-marks/my-marks` | SUPERADMIN, STUDENT |
+| `/student-attendance` | `GET /student-attendance/my-attendance` | SUPERADMIN, STUDENT |
+
+---
+
+## 22. OpenAPI/Swagger Access
 
 **Swagger UI:** `https://college.example.com/api/v1/swagger-ui.html`  
 **OpenAPI Spec:** `https://college.example.com/api/v1/api-docs`

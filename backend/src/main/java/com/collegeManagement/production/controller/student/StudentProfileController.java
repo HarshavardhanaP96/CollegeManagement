@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/students/profile")
+@RequestMapping("/profile")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('STUDENT')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'STUDENT')")
 @Tag(name = "Student - Profile", description = "Profile management for students")
 public class StudentProfileController {
 

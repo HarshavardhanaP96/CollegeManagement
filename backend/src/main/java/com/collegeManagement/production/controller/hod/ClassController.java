@@ -24,9 +24,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/hod/classes")
+@RequestMapping("/classes")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('HOD')")
+@PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN', 'HOD')")
 @Tag(name = "HOD - Classes", description = "Class management for HOD")
 public class ClassController {
 
