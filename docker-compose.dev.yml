@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: gradle:8.5-jdk17
+    image: maven:3.9.6-eclipse-temurin-17
     container_name: college-mgmt-backend-dev
     working_dir: /app
     ports:
@@ -10,9 +10,9 @@ services:
     volumes:
       # Bind mount the local backend source code directly into the container
       - ./backend:/app
-      # Provide a named volume for Gradle cache so dependencies aren't downloaded every time
-      - gradle_cache:/home/gradle/.gradle
-    command: ./gradlew bootRun --no-daemon
+      # Provide a named volume for Maven cache so dependencies aren't downloaded every time
+      - maven_cache:/root/.m2
+    command: mvn spring-boot:run
     environment:
       # Ensure it correctly points to the postgres container defined in main docker-compose.yml
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/college_management
@@ -41,4 +41,4 @@ services:
       - college-network
 
 volumes:
-  gradle_cache:
+  maven_cache:

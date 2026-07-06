@@ -64,10 +64,10 @@ src/test/java/com/collegeManagement/
 ### 1. Run All Tests
 
 ```bash
-# Using Gradle wrapper
+# Using Maven wrapper
 mvn test
 
-# Or with Gradle installed
+# Or with Maven installed
 maven test
 ```
 
