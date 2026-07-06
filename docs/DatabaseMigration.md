@@ -656,16 +656,16 @@ spring:
 ### Development Environment
 ```bash
 # Run all pending migrations
-./gradlew update
+mvn update
 
 # Rollback last changeset
-./gradlew rollback -Pliquibase.rollbackCount=1
+mvn rollback -Pliquibase.rollbackCount=1
 
 # Generate SQL for review (without executing)
-./gradlew updateSQL
+mvn updateSQL
 
 # Validate changelog
-./gradlew validate
+mvn validate
 ```
 
 ### Production Deployment
@@ -674,15 +674,15 @@ spring:
 pg_dump -U postgres college_mgmt_db > backup_$(date +%Y%m%d).sql
 
 # 2. Dry run - generate SQL
-./gradlew updateSQL -Pspring.profiles.active=prod
+mvn updateSQL -Pspring.profiles.active=prod
 
 # 3. Review generated SQL
 
 # 4. Execute migration
-./gradlew update -Pspring.profiles.active=prod
+mvn update -Pspring.profiles.active=prod
 
 # 5. Verify migration
-./gradlew status -Pspring.profiles.active=prod
+mvn status -Pspring.profiles.active=prod
 ```
 
 ---
@@ -691,17 +691,17 @@ pg_dump -U postgres college_mgmt_db > backup_$(date +%Y%m%d).sql
 
 ### Rollback Last Migration
 ```bash
-./gradlew rollback -Pliquibase.rollbackCount=1
+mvn rollback -Pliquibase.rollbackCount=1
 ```
 
 ### Rollback to Specific Tag
 ```bash
-./gradlew rollback -Pliquibase.rollbackTag=v1.0-baseline
+mvn rollback -Pliquibase.rollbackTag=v1.0-baseline
 ```
 
 ### Rollback to Date
 ```bash
-./gradlew rollback -Pliquibase.rollbackDate=2024-12-01
+mvn rollback -Pliquibase.rollbackDate=2024-12-01
 ```
 
 ---

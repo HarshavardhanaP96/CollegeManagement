@@ -1,0 +1,12 @@
+resources:
+  - secrets.yaml
+  - backend/backend.yaml
+  - frontend/frontend.yaml
+  - db/postgres.yaml
+
+configMapGenerator:
+  - name: postgres-init-sql
+    options:
+      disableNameSuffixHash: true
+    files:
+      - init-db.sql=db/init-db.sql

@@ -196,8 +196,8 @@ college-management-system/
 │   │                   ├── service/
 │   │                   ├── controller/
 │   │                   └── integration/
-│   ├── build.gradle
-│   ├── settings.gradle
+│   ├── pom.xml
+│   ├── settings.maven
 │   └── README.md
 │
 └── frontend/

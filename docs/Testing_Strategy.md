@@ -66,8 +66,8 @@ src/test/java/com/collegeManagement/
 ## Testing Tools & Libraries
 
 ### Core Testing
-```gradle
-// Already in build.gradle
+```maven
+// Already in pom.xml
 testImplementation 'org.springframework.boot:spring-boot-starter-test'
 testImplementation 'org.springframework.security:spring-security-test'
 testImplementation 'org.springframework.batch:spring-batch-test'
@@ -76,8 +76,8 @@ testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 ```
 
 ### Additional Testing Dependencies
-```gradle
-// Add to build.gradle
+```maven
+// Add to pom.xml
 testImplementation 'org.mockito:mockito-inline:5.2.0'
 testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
 testImplementation 'com.github.javafaker:javafaker:1.0.2'
@@ -173,7 +173,7 @@ void setUp() {
 ## Code Coverage Tools
 
 ### JaCoCo Configuration
-```gradle
+```maven
 plugins {
     id 'jacoco'
 }
@@ -222,22 +222,22 @@ jacocoTestCoverageVerification {
 
 ```bash
 # Run all tests
-./gradlew test
+mvn test
 
 # Run specific test class
-./gradlew test --tests "UserServiceTest"
+mvn test --tests "UserServiceTest"
 
 # Run tests with coverage
-./gradlew test jacocoTestReport
+mvn test jacocoTestReport
 
 # Verify coverage threshold
-./gradlew test jacocoTestCoverageVerification
+mvn test jacocoTestCoverageVerification
 
 # Run only unit tests
-./gradlew test --tests "com.collegeManagement.unit.*"
+mvn test --tests "com.collegeManagement.unit.*"
 
 # Run only integration tests
-./gradlew test --tests "com.collegeManagement.integration.*"
+mvn test --tests "com.collegeManagement.integration.*"
 ```
 
 ---
@@ -269,7 +269,7 @@ jobs:
         with:
           java-version: '17'
       - name: Run tests
-        run: ./gradlew test jacocoTestReport
+        run: mvn test jacocoTestReport
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```

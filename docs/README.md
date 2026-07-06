@@ -1,0 +1,13 @@
+# EdgePoint Documentation
+
+This folder is consolidated into the main documents below.
+
+| Document | Purpose |
+|---|---|
+| [API.md](API.md) | REST API contracts and response shapes. |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Developer setup, project structure, database notes, and frontend implementation notes. |
+| [OPERATIONS.md](OPERATIONS.md) | Docker Compose, Kubernetes, ArgoCD, local Kind, CI/CD, and production operations. |
+| [TESTING.md](TESTING.md) | Testing strategy and test execution guide. |
+| [USER_GUIDE.md](USER_GUIDE.md) | Role-oriented product usage guide. |
+
+Infrastructure manifests now live under `../infra/`.

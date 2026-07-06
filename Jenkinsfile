@@ -20,7 +20,7 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    sh './gradlew clean bootJar'
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }

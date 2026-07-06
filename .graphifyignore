@@ -1,0 +1,35 @@
+# ─── Reference / legacy code (not our source) ───
+reference/
+EdgePoint.jsx
+docx_output.txt
+prompt.txt
+
+# ─── Documentation (not code, wastes graph tokens) ───
+docs/
+
+# ─── Build artifacts ───
+backend/target/
+backend/out/
+backend/bin/
+frontend/dist/
+frontend/node_modules/
+
+# ─── IDE / config noise ───
+.idea/
+.cursor/
+.vscode/
+.git/
+.claude/
+.agents/
+
+# ─── Infra (K8s/Docker manifests - low graph value) ───
+infra/
+
+# ─── Graphify's own output ───
+graphify-out/
+
+# ─── Misc root files ───
+SystemDesignUpdate.md
+PROJECT_CONTEXT.md
+Jenkinsfile
+scripts/

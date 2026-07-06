@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update

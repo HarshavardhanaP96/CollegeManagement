@@ -65,17 +65,17 @@ src/test/java/com/collegeManagement/
 
 ```bash
 # Using Gradle wrapper
-./gradlew test
+mvn test
 
 # Or with Gradle installed
-gradle test
+maven test
 ```
 
 ### 2. Run Tests with Coverage
 
 ```bash
 # Generate coverage report
-./gradlew test jacocoTestReport
+mvn test jacocoTestReport
 
 # View report (macOS)
 open build/reports/jacoco/test/html/index.html
@@ -91,7 +91,7 @@ start build/reports/jacoco/test/html/index.html
 
 ```bash
 # Check if coverage meets 85% requirement
-./gradlew jacocoTestCoverageVerification
+mvn jacocoTestCoverageVerification
 
 # This will FAIL the build if coverage is below 85%
 ```
@@ -104,50 +104,50 @@ start build/reports/jacoco/test/html/index.html
 
 ```bash
 # Unit tests
-./gradlew test --tests "CollegeServiceTest"
-./gradlew test --tests "AttendanceServiceTest"
-./gradlew test --tests "MarksServiceTest"
+mvn test --tests "CollegeServiceTest"
+mvn test --tests "AttendanceServiceTest"
+mvn test --tests "MarksServiceTest"
 
 # Integration tests
-./gradlew test --tests "AuthControllerIntegrationTest"
-./gradlew test --tests "CollegeControllerIntegrationTest"
+mvn test --tests "AuthControllerIntegrationTest"
+mvn test --tests "CollegeControllerIntegrationTest"
 
 # Repository tests
-./gradlew test --tests "CollegeRepositoryTest"
+mvn test --tests "CollegeRepositoryTest"
 ```
 
 ### Run Specific Test Method
 
 ```bash
-./gradlew test --tests "CollegeServiceTest.createCollege_withValidData_shouldReturnCreatedCollege"
+mvn test --tests "CollegeServiceTest.createCollege_withValidData_shouldReturnCreatedCollege"
 
-./gradlew test --tests "AuthServiceTest.login_withValidCredentials_shouldReturnLoginResponse"
+mvn test --tests "AuthServiceTest.login_withValidCredentials_shouldReturnLoginResponse"
 ```
 
 ### Run Tests by Package
 
 ```bash
 # All unit tests
-./gradlew test --tests "com.collegeManagement.unit.*"
+mvn test --tests "com.collegeManagement.unit.*"
 
 # All integration tests
-./gradlew test --tests "com.collegeManagement.integration.*"
+mvn test --tests "com.collegeManagement.integration.*"
 
 # All service tests
-./gradlew test --tests "com.collegeManagement.unit.service.*"
+mvn test --tests "com.collegeManagement.unit.service.*"
 
 # All controller tests
-./gradlew test --tests "com.collegeManagement.integration.api.*"
+mvn test --tests "com.collegeManagement.integration.api.*"
 ```
 
 ### Run Tests by Tag (if using @Tag)
 
 ```bash
 # Fast tests only
-./gradlew test --tests "*" --include-tags "fast"
+mvn test --tests "*" --include-tags "fast"
 
 # Integration tests only
-./gradlew test --tests "*" --include-tags "integration"
+mvn test --tests "*" --include-tags "integration"
 ```
 
 ---
@@ -158,16 +158,16 @@ start build/reports/jacoco/test/html/index.html
 
 ```bash
 # 1. Clean build
-./gradlew clean
+mvn clean
 
 # 2. Run all tests
-./gradlew test
+mvn test
 
 # 3. Generate coverage report
-./gradlew jacocoTestReport
+mvn jacocoTestReport
 
 # 4. Verify coverage threshold
-./gradlew jacocoTestCoverageVerification
+mvn jacocoTestCoverageVerification
 
 # 5. Check test results
 cat build/test-results/test/*.xml
@@ -204,7 +204,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "CollegeServiceTest"
+mvn test --tests "CollegeServiceTest"
 ```
 
 #### 2. AttendanceService Tests (12 tests)
@@ -222,7 +222,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "AttendanceServiceTest"
+mvn test --tests "AttendanceServiceTest"
 ```
 
 #### 3. MarksService Tests (14 tests)
@@ -242,7 +242,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "MarksServiceTest"
+mvn test --tests "MarksServiceTest"
 ```
 
 #### 4. AuthService Tests (10 tests)
@@ -261,7 +261,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "AuthServiceTest"
+mvn test --tests "AuthServiceTest"
 ```
 
 #### 5. UserService Tests (12 tests)
@@ -279,7 +279,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "UserServiceTest"
+mvn test --tests "UserServiceTest"
 ```
 
 ---
@@ -296,7 +296,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "AuthControllerIntegrationTest"
+mvn test --tests "AuthControllerIntegrationTest"
 ```
 
 #### 2. CollegeController Tests (12 tests)
@@ -312,7 +312,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "CollegeControllerIntegrationTest"
+mvn test --tests "CollegeControllerIntegrationTest"
 ```
 
 ---
@@ -329,7 +329,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "CollegeRepositoryTest"
+mvn test --tests "CollegeRepositoryTest"
 ```
 
 #### 2. UserRepository Tests (5 tests)
@@ -342,7 +342,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "UserRepositoryTest"
+mvn test --tests "UserRepositoryTest"
 ```
 
 #### 3. AttendanceRepository Tests (4 tests)
@@ -354,7 +354,7 @@ cat build/test-results/test/*.xml
 
 **Example:**
 ```bash
-./gradlew test --tests "AttendanceRepositoryTest"
+mvn test --tests "AttendanceRepositoryTest"
 ```
 
 ---
@@ -365,7 +365,7 @@ cat build/test-results/test/*.xml
 
 ```bash
 # Generate report
-./gradlew jacocoTestReport
+mvn jacocoTestReport
 
 # Open in browser
 open build/reports/jacoco/test/html/index.html
@@ -398,13 +398,13 @@ build/reports/jacoco/test/html/
 
 ```bash
 # View console output
-./gradlew test --info
+mvn test --info
 
 # View detailed logs
-./gradlew test --debug
+mvn test --debug
 
 # View only failed tests
-./gradlew test --rerun-tasks
+mvn test --rerun-tasks
 ```
 
 ### Test Reports Location
@@ -465,14 +465,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Grant execute permission for mvn
+        run: chmod +x mvn
       
       - name: Run tests with coverage
-        run: ./gradlew test jacocoTestReport
+        run: mvn test jacocoTestReport
       
       - name: Verify coverage threshold
-        run: ./gradlew jacocoTestCoverageVerification
+        run: mvn jacocoTestCoverageVerification
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

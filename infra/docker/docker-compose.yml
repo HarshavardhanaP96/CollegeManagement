@@ -1,0 +1,79 @@
+name: collegemanagement
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: college-mgmt-db
+    environment:
+      POSTGRES_DB: college_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../k8s/base/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - college-network
+
+  # Optional: pgAdmin for easier DB management
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: college-mgmt-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - college-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: college-mgmt-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - college-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.10
+    container_name: college-mgmt-logstash
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    depends_on:
+      - elasticsearch
+    networks:
+      - college-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: college-mgmt-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    depends_on:
+      - elasticsearch
+    networks:
+      - college-network
+
+networks:
+  college-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  elasticsearch_data:

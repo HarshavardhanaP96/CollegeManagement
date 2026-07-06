@@ -1,0 +1,17 @@
+namespace: college-mgmt
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+images:
+  - name: your-registry-url/college-mgmt-backend
+    newName: college-mgmt-backend
+    newTag: latest
+  - name: your-registry-url/college-mgmt-frontend
+    newName: college-mgmt-frontend
+    newTag: latest
+
+patches:
+  - path: backend-local.yaml
+  - path: frontend-local.yaml

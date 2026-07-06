@@ -1,0 +1,23 @@
+resources:
+  - ../../base
+namePrefix: prod-
+commonLabels:
+  variant: prod
+patches:
+  - target:
+      kind: Deployment
+      name: backend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2/value
+        value: jdbc:postgresql://prod-postgres-service:5432/college_management
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
