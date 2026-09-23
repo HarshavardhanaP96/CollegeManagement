@@ -37,7 +37,7 @@
 ## Test Structure
 
 ```
-src/test/java/com/collegeManagement/
+src/test/java/com/edgepoint/
 ├── unit/
 │   ├── service/
 │   │   ├── auth/
@@ -234,10 +234,10 @@ mvn test jacocoTestReport
 mvn test jacocoTestCoverageVerification
 
 # Run only unit tests
-mvn test --tests "com.collegeManagement.unit.*"
+mvn test --tests "com.edgepoint.unit.*"
 
 # Run only integration tests
-mvn test --tests "com.collegeManagement.integration.*"
+mvn test --tests "com.edgepoint.integration.*"
 ```
 
 ---

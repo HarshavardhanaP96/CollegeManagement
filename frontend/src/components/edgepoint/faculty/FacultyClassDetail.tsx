@@ -1,4 +1,5 @@
 import React from 'react';
+import { ClipboardList, FileText } from 'lucide-react';
 
 interface Class {
   name: string;
@@ -79,11 +80,11 @@ export function FacultyClassDetail({ cls, onBack }: FacultyClassDetailProps) {
                 <td className="py-3 px-4 text-gray-700">{s.grade}</td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
-                    <button className="text-xs border border-gray-100 rounded px-2 py-1 text-gray-500 hover:text-gray-900 transition-colors">
-                      📋 Mark
+                    <button className="inline-flex items-center gap-1 text-xs border border-gray-100 rounded px-2 py-1 text-gray-500 hover:text-gray-900 transition-colors">
+                      <ClipboardList size={13} /> Mark
                     </button>
-                    <button className="text-xs border border-gray-100 rounded px-2 py-1 text-gray-500 hover:text-gray-900 transition-colors">
-                      📄 Grade
+                    <button className="inline-flex items-center gap-1 text-xs border border-gray-100 rounded px-2 py-1 text-gray-500 hover:text-gray-900 transition-colors">
+                      <FileText size={13} /> Grade
                     </button>
                   </div>
                 </td>

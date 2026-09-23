@@ -9,29 +9,28 @@ export interface StudentProfileUpdateRequest {
   address?: string;
 }
 
+// Shape matches backend com.edgepoint.student.dto.StudentProfileDTO exactly (see
+// student.controller.StudentProfileController#getMyProfile) — it's flat, with no nested
+// `studentProfile` object and no collegeId/collegeName. Do not add fields the backend
+// doesn't send without adding them there first.
 export interface StudentProfileMinimal {
   userId: number;
   username: string;
   email: string;
   fullName: string;
   phone: string;
-  collegeId: number;
-  collegeName: string;
-  studentProfile: {
-    rollNumber: string;
-    deptId: number;
-    deptName: string;
-    courseId: number;
-    courseName: string;
-    admissionYear: number;
-    currentSemester: number;
-    parentName: string;
-    parentPhone: string;
-    parentEmail: string;
-    dateOfBirth: string;
-    address: string;
-  };
-  createdAt: string;
+  rollNumber: string;
+  deptId: number;
+  deptName: string;
+  courseId: number;
+  courseName: string;
+  admissionYear: number;
+  currentSemester: number;
+  parentName: string;
+  parentPhone: string;
+  parentEmail: string;
+  dateOfBirth: string;
+  address: string;
 }
 
 // Administrative Student DTO
@@ -88,6 +87,11 @@ export async function updateMyProfile(payload: StudentProfileUpdateRequest): Pro
 // Administrative Management API
 export async function getStudents(): Promise<ApiResponse<StudentResponse[]>> {
   const { data } = await apiClient.get<ApiResponse<StudentResponse[]>>('/students');
+  return data;
+}
+
+export async function getStudentById(studentId: number): Promise<ApiResponse<StudentResponse>> {
+  const { data } = await apiClient.get<ApiResponse<StudentResponse>>(`/students/${studentId}`);
   return data;
 }
 

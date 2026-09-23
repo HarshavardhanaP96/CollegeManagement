@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
+import { ProtectedRoute } from '../components/common/ProtectedRoute';
 import { useAuthStore } from '../store/authStore';
-import { getRoleStrategy } from '../strategies/roleStrategy';
+import { isRouteAllowed } from '../strategies/roleStrategy';
 
 // Auth pages
 import { LoginPage } from '../pages/LoginPage';
@@ -14,22 +15,29 @@ import { AnalyticsPage } from '../pages/AnalyticsPage';
 // SuperAdmin pages
 import { CollegeListPage } from '../pages/superadmin/CollegeListPage';
 import { CollegeCreatePage } from '../pages/superadmin/CollegeCreatePage';
+import { CollegeDetailPage } from '../pages/superadmin/CollegeDetailPage';
 
 // CollegeAdmin pages
 import { DepartmentListPage } from '../pages/collegeadmin/DepartmentListPage';
 import { DepartmentCreatePage } from '../pages/collegeadmin/DepartmentCreatePage';
+import { DepartmentDetailPage } from '../pages/collegeadmin/DepartmentDetailPage';
 import { CourseListPage } from '../pages/collegeadmin/CourseListPage';
 import { CourseCreatePage } from '../pages/collegeadmin/CourseCreatePage';
+import { CourseDetailPage } from '../pages/collegeadmin/CourseDetailPage';
 
 // HOD pages
 import { SubjectListPage } from '../pages/hod/SubjectListPage';
 import { SubjectCreatePage } from '../pages/hod/SubjectCreatePage';
+import { SubjectDetailPage } from '../pages/hod/SubjectDetailPage';
 import { TeacherListPage } from '../pages/hod/TeacherListPage';
 import { TeacherCreatePage } from '../pages/hod/TeacherCreatePage';
+import { TeacherDetailPage } from '../pages/hod/TeacherDetailPage';
 import { StudentListPage } from '../pages/hod/StudentListPage';
 import { StudentCreatePage } from '../pages/hod/StudentCreatePage';
+import { StudentDetailPage } from '../pages/hod/StudentDetailPage';
 import { ClassListPage } from '../pages/hod/ClassListPage';
 import { ClassCreatePage } from '../pages/hod/ClassCreatePage';
+import { ClassDetailPage } from '../pages/hod/ClassDetailPage';
 
 // Teacher pages
 import { TeacherAttendancePage } from '../pages/teacher/TeacherAttendancePage';
@@ -40,38 +48,40 @@ import { StudentProfilePage } from '../pages/student/StudentProfilePage';
 import { StudentMarksPage } from '../pages/student/StudentMarksPage';
 import { StudentAttendancePage } from '../pages/student/StudentAttendancePage';
 
-/** 
+/**
  * Route → Component mapping.
- * Sub-routes like /new are allowed if their parent list route is in the role strategy.
+ * Sub-routes like /new and /:id are allowed if their parent list route is in the role
+ * strategy (isRouteAllowed only looks at the first path segment — see roleStrategy.ts).
  */
 const routeComponentMap: Record<string, React.ComponentType> = {
   '/analytics':             AnalyticsPage,
   '/colleges':              CollegeListPage,
   '/colleges/new':          CollegeCreatePage,
+  '/colleges/:id':          CollegeDetailPage,
   '/departments':           DepartmentListPage,
   '/departments/new':       DepartmentCreatePage,
+  '/departments/:id':       DepartmentDetailPage,
   '/courses':               CourseListPage,
   '/courses/new':           CourseCreatePage,
+  '/courses/:id':           CourseDetailPage,
   '/subjects':              SubjectListPage,
   '/subjects/new':          SubjectCreatePage,
+  '/subjects/:id':          SubjectDetailPage,
   '/teachers':              TeacherListPage,
   '/teachers/new':          TeacherCreatePage,
+  '/teachers/:id':          TeacherDetailPage,
   '/students':              StudentListPage,
   '/students/new':          StudentCreatePage,
+  '/students/:id':          StudentDetailPage,
   '/classes':               ClassListPage,
   '/classes/new':           ClassCreatePage,
+  '/classes/:id':           ClassDetailPage,
   '/attendance':            TeacherAttendancePage,
   '/marks':                 TeacherMarksPage,
   '/profile':               StudentProfilePage,
   '/student-marks':         StudentMarksPage,
   '/student-attendance':    StudentAttendancePage,
 };
-
-function RoleGate({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
-  if (!user) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-}
 
 function LayoutWrapper() {
   return (
@@ -93,29 +103,36 @@ function AppRoutes() {
     );
   }
 
-  const strategy = user ? getRoleStrategy(user.roleName) : null;
-  const allowedPaths = new Set(strategy?.navItems.map((item) => item.path) ?? []);
+  // Only register routes this role can reach at all, per the Route Access
+  // Strategy (isRouteAllowed — the same rule ProtectedRoute enforces per
+  // request, and the same rule Sidebar uses to decide which links to show).
+  // This keeps unreachable routes out of the router entirely rather than
+  // relying solely on the runtime guard.
+  const roleName = user?.roleName ?? '';
 
   return (
     <Routes>
       <Route element={<LayoutWrapper />}>
-        <Route path="/" element={<DashboardPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
 
         {Object.entries(routeComponentMap).map(([path, Component]) => {
-          // Rule: Allow if path is in sidebar OR if path ends in /new and parent path is in sidebar
-          const parentPath = path.endsWith('/new') ? path.replace('/new', '') : path;
-          const isAllowed = allowedPaths.has(path) || allowedPaths.has(parentPath);
-          
-          if (!isAllowed) return null;
+          if (!isRouteAllowed(roleName, path)) return null;
 
           return (
             <Route
               key={path}
               path={path}
               element={
-                <RoleGate>
+                <ProtectedRoute>
                   <Component />
-                </RoleGate>
+                </ProtectedRoute>
               }
             />
           );

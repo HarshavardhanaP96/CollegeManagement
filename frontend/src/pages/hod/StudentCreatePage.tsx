@@ -8,6 +8,7 @@ import { createStudent } from '../../api/student';
 import { getDepartments } from '../../api/department';
 import { getCourses } from '../../api/course';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Select, Breadcrumbs } from '../../components/common';
 
 const createStudentSchema = z.object({
@@ -34,8 +35,8 @@ export function StudentCreatePage() {
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { data: deptsData } = useQuery({ queryKey: ['departments'], queryFn: () => getDepartments() });
-  const { data: coursesData } = useQuery({ queryKey: ['courses'], queryFn: () => getCourses() });
+  const { data: deptsData } = useQuery({ queryKey: queryKeys.departments.all, queryFn: () => getDepartments() });
+  const { data: coursesData } = useQuery({ queryKey: queryKeys.courses.all, queryFn: () => getCourses() });
 
   const {
     register,
@@ -51,7 +52,7 @@ export function StudentCreatePage() {
   const createMutation = useMutation({
     mutationFn: createStudent,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.all });
       navigate('/students');
     },
     onError: (error) => {

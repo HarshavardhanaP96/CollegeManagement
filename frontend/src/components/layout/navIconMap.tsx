@@ -1,36 +1,34 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard,
-  BarChart3,
+  BrainCircuit,
+  Landmark,
   Building2,
-  Layers,
-  GraduationCap,
+  Library,
   BookOpen,
   Users,
   UserRound,
   School,
   ClipboardCheck,
-  FileText,
+  NotebookPen,
   UserCircle,
   CirclePlus,
-  ClipboardList,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
-  'layout-dashboard': LayoutDashboard,
-  analytics: BarChart3,
-  colleges: Building2,
-  departments: Layers,
-  courses: GraduationCap,
+  dashboard: LayoutDashboard,
+  analytics: BrainCircuit,
+  colleges: Landmark,
+  departments: Building2,
+  courses: Library,
   subjects: BookOpen,
   students: Users,
   teachers: UserRound,
   classes: School,
   attendance: ClipboardCheck,
-  marks: FileText,
+  marks: NotebookPen,
   profile: UserCircle,
   plus: CirclePlus,
-  'clipboard-list': ClipboardList,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

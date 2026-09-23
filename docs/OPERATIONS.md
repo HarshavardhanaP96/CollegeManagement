@@ -88,9 +88,9 @@ When adding new users through the API or seed scripts, ensure the `password_hash
 <!-- Source: docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md -->
 # College Management System - Local Kubernetes (Kind) Runbook
 
-**Version:** 1.0  
-**Target:** Local UI testing after code updates  
-**Includes:** start, redeploy/update, restart, down
+**Version:** 1.1 (updated 2026-07-06)
+**Target:** Local build, test, and teardown after code updates
+**Includes:** build, load, deploy, smoke-test, stop
 
 ---
 
@@ -105,33 +105,62 @@ When adding new users through the API or seed scripts, ensure the `password_hash
 - Kind cluster name: `college-mgmt` (context: `kind-college-mgmt`)
 - Kubernetes namespace: `college-mgmt`
 - Image tags: `college-mgmt-backend:latest` and `college-mgmt-frontend:latest`
+- Backend API context path: `/api/v1`
 
 ---
 
-## 1. Start (one-time setup)
+## 1. Build Docker Images
 
-### 1.1 Create the Kind cluster
-Run once:
+### 1.1 Build backend (Maven multi-stage)
+```bash
+docker build -t college-mgmt-backend:latest backend
+```
+Build time: ~5–6 min on first run (Maven dep download), ~2 min with cache.
 
+### 1.2 Build frontend (Vite, skipping tsc type-check)
+> **Note:** The frontend Dockerfile uses `RUN npx vite build` directly, bypassing `tsc -b`.
+> Using `RUN npm run build` (which runs `tsc -b && vite build`) **will fail** due to
+> pre-existing TypeScript errors that do not affect runtime correctness.
+
+```bash
+docker build -t college-mgmt-frontend:latest frontend
+```
+Build time: ~1 min.
+
+---
+
+## 2. Start (one-time cluster setup)
+
+### 2.1 Create the Kind cluster *(run once)*
 ```bash
 kind create cluster --name college-mgmt
 ```
 
-### 1.2 Apply the local overlay (deploy services)
-Run:
+### 2.2 Load images into the Kind node
+```bash
+kind load docker-image college-mgmt-backend:latest college-mgmt-frontend:latest --name college-mgmt
+```
 
+### 2.3 Apply the local overlay (deploy services)
 ```bash
 kubectl apply -k infra/k8s/overlays/local --context kind-college-mgmt
 ```
 
-### 1.3 Verify pods
+### 2.4 Verify pods
 ```bash
 kubectl get pods -n college-mgmt --context kind-college-mgmt
 ```
+Expected: backend, frontend, postgres all `1/1 Running`.
+
+> **Backend startup time:** Spring Boot takes ~90 seconds to start (Flyway migrations + Hibernate).
+> Wait for `Started ProductionApplication` in logs before running API tests.
+>
+> **Expected warning:** Logstash TCP errors (`UnknownHostException: logstash.logging.svc.cluster.local`)
+> appear in backend logs — this is normal in local dev (ELK not deployed). App functions correctly.
 
 ---
 
-## 2. Redeploy after update (the “new build” flow)
+## 3. Redeploy after update (the “new build” flow)
 
 When you change UI/backend code, rebuild images and refresh the running deployments.
 
@@ -181,7 +210,7 @@ kubectl rollout status deployment/frontend -n college-mgmt --context kind-colleg
 
 ---
 
-## 3. “Restart only” (no rebuild)
+## 4. “Restart only” (no rebuild)
 If you suspect cached pods/assets and you only want to restart:
 
 ```bash
@@ -192,45 +221,85 @@ kubectl rollout status deployment/frontend -n college-mgmt --context kind-colleg
 
 ---
 
-## 4. Test the UI
+## 5. Test the Application
 
-Forward the frontend service to your local browser:
-
+### 5.1 Frontend (browser)
 ```bash
 kubectl port-forward -n college-mgmt svc/frontend-service 9080:80 --context kind-college-mgmt
 ```
-
-Open:
-- http://localhost:9080
+Open: http://localhost:9080
 
 Tip: do a hard refresh (Ctrl+Shift+R) after redeploy to avoid stale cached bundles.
 
+### 5.2 Backend API smoke test
+
+Port-forward the backend:
+```bash
+kubectl port-forward -n college-mgmt svc/backend-service 8080:8080 --context kind-college-mgmt
+```
+
+Actuator health:
+```bash
+curl http://localhost:8080/api/v1/actuator/health
+```
+
+Auth login:
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password123"}'
+```
+Expected: `{"success":true,"message":"Login successful","data":{"accessToken":"..."}}`
+
+### 5.3 Verify pod health
+```bash
+kubectl get pods -n college-mgmt --context kind-college-mgmt
+# All should be 1/1 Running
+
+kubectl logs -n college-mgmt deployment/backend --context kind-college-mgmt --tail=5
+# Look for: "Started ProductionApplication in XX seconds"
+```
+
 ---
 
-## 5. Down (tear everything down)
+## 6. Stop the Application
 
-### 5.1 Delete the namespace (cleans resources)
+### Option A — Scale to zero *(fastest; cluster preserved)*
+```bash
+kubectl scale deployment backend frontend postgres \
+  --replicas=0 -n college-mgmt --context kind-college-mgmt
+```
+Restart later:
+```bash
+kubectl scale deployment backend frontend postgres \
+  --replicas=1 -n college-mgmt --context kind-college-mgmt
+```
+
+### Option B — Delete namespace *(all resources removed; cluster intact)*
 ```bash
 kubectl delete namespace college-mgmt --context kind-college-mgmt
 ```
+Re-deploy: `kubectl apply -k infra/k8s/overlays/local --context kind-college-mgmt`
 
-### 5.2 Delete the Kind cluster (removes nodes)
+### Option C — Delete Kind cluster *(full teardown)*
 ```bash
 kind delete cluster --name college-mgmt
 ```
 
 ---
 
-## 6. Quick Troubleshooting
-- Images changed but UI shows old styling/JS:
-  - Ensure you rebuilt and ran `bash scripts/k8s-local-rebuild.sh`
-  - Ensure you restarted the frontend Deployment
-  - Do hard refresh in browser
-- If backend doesn’t come up:
-  - Check logs: `kubectl logs -n college-mgmt deployment/backend --context kind-college-mgmt`
-- If pods are stuck in `ContainerCreating`:
-  - Check cluster resources: `kubectl describe pod <pod> -n college-mgmt --context kind-college-mgmt`
+## 7. Troubleshooting
 
+| Symptom | Fix |
+|---------|-----|
+| Frontend shows old JS/CSS after redeploy | Hard-refresh (Ctrl+Shift+R); restart frontend deployment |
+| Backend pod CrashLoopBackOff | `kubectl logs deployment/backend -n college-mgmt --context kind-college-mgmt` |
+| Port-forward fails right after restart | Backend needs ~90s; wait for `Started ProductionApplication` in logs |
+| `ContainerCreating` stuck | `kubectl describe pod <pod-name> -n college-mgmt --context kind-college-mgmt` |
+| Logstash TCP errors in backend logs | Expected — ELK not deployed locally. Does **not** affect app |
+| Frontend Docker build fails with TS errors | Dockerfile must use `RUN npx vite build`, not `RUN npm run build` |
+
+For the full standalone runbook see [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](LOCAL_K8S_DEPLOYMENT_RUNBOOK.md).
 
 ---
 

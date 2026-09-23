@@ -46,25 +46,10 @@ export interface CollegeResponse {
   timestamp: string;
 }
 
+// Matches backend com.edgepoint.core.dto.CollegeResponseDTO exactly — flat, no nested
+// departments/courses/statistics (those were previously assumed here but never sent).
 export interface CollegeDetail extends CollegeListItem {
   address: string;
-  departments?: Array<{
-    deptId: number;
-    deptName: string;
-    deptCode: string;
-    hodName?: string;
-  }>;
-  courses?: Array<{
-    courseId: number;
-    courseName: string;
-    courseCode: string;
-  }>;
-  statistics?: {
-    totalDepartments: number;
-    totalTeachers: number;
-    totalStudents: number;
-    totalClasses: number;
-  };
 }
 
 export interface CollegeDetailResponse {

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Select, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '../../components/common';
 import { getTeacherAssignments, enterMarks, getMarksByAssignment } from '../../api';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 
 export function TeacherMarksPage() {
   const queryClient = useQueryClient();
@@ -12,12 +13,12 @@ export function TeacherMarksPage() {
   const [marksEntries, setMarksEntries] = useState<Record<number, { marksObtained: number; remarks: string }>>({});
 
   const { data: assignmentsData } = useQuery({
-    queryKey: ['teacher-assignments'],
+    queryKey: queryKeys.teacherAssignments.all,
     queryFn: () => getTeacherAssignments(),
   });
 
   const { data: marksData } = useQuery({
-    queryKey: ['marks', selectedAssignment, examTypeId],
+    queryKey: queryKeys.marks.byAssignment(selectedAssignment ?? undefined, examTypeId ?? undefined),
     queryFn: () => getMarksByAssignment(selectedAssignment!, { examTypeId: examTypeId ?? undefined }),
     enabled: !!selectedAssignment,
   });
@@ -25,7 +26,7 @@ export function TeacherMarksPage() {
   const enterMarksMutation = useMutation({
     mutationFn: enterMarks,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['marks'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.marks.all });
       setMarksEntries({});
     },
     onError: (error) => {

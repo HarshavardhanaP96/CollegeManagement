@@ -1,5 +1,7 @@
 server:
   port: 8080
+  servlet:
+    context-path: /api/v1
 
 spring:
   application:
@@ -53,12 +55,14 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
-app:
-  jwt:
-    secret: ${JWT_SECRET:edgepoint-secret-key-must-be-at-least-256-bits-long-for-hs256}
-    access-token-validity-minutes: 15
-    refresh-token-validity-days: 7
+  security:
+    # Read by JwtService / AuthServiceImpl (@Value("${spring.security.jwt.*}")).
+    # secret-key must be base64 — JwtService base64-decodes it before building the HMAC key.
+    jwt:
+      secret-key: ${JWT_SECRET:iBD+TO3fXjqpq5xt3tvYaTwWC7arMYhdnJaJAXb+TVU=}
+      expiration: ${JWT_EXPIRATION:86400000}
 
+app:
   cors:
     allowed-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
 
@@ -69,6 +73,12 @@ app:
   stripe:
     api-key: ${STRIPE_API_KEY:sk_test_placeholder}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+  security:
+    # Base64-encoded AES-256 key used to encrypt secret columns at rest
+    # (e.g. notification_configs.smtp_password / whatsapp_api_key).
+    # Dev-only default below — MUST be overridden via ENCRYPTION_KEY in every other environment.
+    encryption-key: ${ENCRYPTION_KEY:6JsyJxpJbSMdwIdlS8/5YLhoE/uf5V4++iLNuqCksFg=}
 
 management:
   endpoints:

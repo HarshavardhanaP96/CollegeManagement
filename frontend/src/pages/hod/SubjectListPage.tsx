@@ -2,13 +2,15 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Button, DataTable, Loading } from '../../components/common';
 import { getSubjects } from '../../api/subject';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function SubjectListPage() {
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['subjects'],
+    queryKey: queryKeys.subjects.all,
     queryFn: () => getSubjects(),
   });
 
@@ -96,9 +98,11 @@ export function SubjectListPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Syllabus</h1>
         </div>
-        <Button onClick={() => navigate('/subjects/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-          Induct
-        </Button>
+        <Can action="create" resource="subjects">
+          <Button onClick={() => navigate('/subjects/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+            Induct
+          </Button>
+        </Can>
       </header>
 
       <div className="flex-1 min-h-0">

@@ -12,13 +12,14 @@
  *  3. Done — sidebar, dashboard, and routing will pick it up automatically
  */
 
-import { 
-  getColleges, 
-  getDepartments, 
-  getTeacherDashboard, 
+import {
+  getColleges,
+  getDepartments,
+  getTeacherDashboard,
   getStudentDashboard,
   getStudents
 } from '../api';
+import { queryKeys } from '../api/queryKeys';
 
 // ===== Types =====
 
@@ -26,7 +27,7 @@ export interface NavItem {
   key: string;
   label: string;
   path: string;
-  icon?: string; // emoji/icon identifier
+  icon?: string; // key into components/layout/navIconMap.tsx
   group?: string;
 }
 
@@ -47,7 +48,7 @@ export interface DashboardCard {
   key: string;
   title: string;
   type: 'stat' | 'quick-action' | 'chart';
-  queryKey?: string[];
+  queryKey?: readonly string[];
   // for stat cards
   fetchFn?: () => Promise<{ label: string; value: string | number }>;
   // For quick-action
@@ -71,17 +72,17 @@ const superAdminStrategy: RoleStrategy = {
   roleName: 'SUPERADMIN',
   displayName: 'Super Admin',
   navItems: [
-    { key: 'dashboard',     label: 'Dashboard',     path: '/',                   icon: '📊', group: 'Main' },
-    { key: 'analytics',     label: 'Intelligence',  path: '/analytics',          icon: '🧠', group: 'Main' },
-    { key: 'colleges',      label: 'Colleges',      path: '/colleges',           icon: '🏛️', group: 'Management' },
-    { key: 'departments',   label: 'Departments',   path: '/departments',        icon: '🏢', group: 'Management' },
-    { key: 'courses',       label: 'Courses',       path: '/courses',            icon: '📚', group: 'Management' },
-    { key: 'subjects',      label: 'Subjects',      path: '/subjects',           icon: '📖', group: 'Academic' },
-    { key: 'students',      label: 'Students',      path: '/students',           icon: '🧑‍🎓', group: 'Academic' },
-    { key: 'teachers',      label: 'Teachers',      path: '/teachers',           icon: '👨‍🏫', group: 'Academic' },
-    { key: 'classes',       label: 'Classes',       path: '/classes',            icon: '🎓', group: 'Academic' },
-    { key: 'attendance',    label: 'Attendance',     path: '/attendance',         icon: '📋', group: 'Operations' },
-    { key: 'marks',         label: 'Marks',          path: '/marks',             icon: '📝', group: 'Operations' },
+    { key: 'dashboard',     label: 'Dashboard',     path: '/',                   icon: 'dashboard', group: 'Main' },
+    { key: 'analytics',     label: 'Intelligence',  path: '/analytics',          icon: 'analytics', group: 'Main' },
+    { key: 'colleges',      label: 'Colleges',      path: '/colleges',           icon: 'colleges', group: 'Management' },
+    { key: 'departments',   label: 'Departments',   path: '/departments',        icon: 'departments', group: 'Management' },
+    { key: 'courses',       label: 'Courses',       path: '/courses',            icon: 'courses', group: 'Management' },
+    { key: 'subjects',      label: 'Subjects',      path: '/subjects',           icon: 'subjects', group: 'Academic' },
+    { key: 'students',      label: 'Students',      path: '/students',           icon: 'students', group: 'Academic' },
+    { key: 'teachers',      label: 'Teachers',      path: '/teachers',           icon: 'teachers', group: 'Academic' },
+    { key: 'classes',       label: 'Classes',       path: '/classes',            icon: 'classes', group: 'Academic' },
+    { key: 'attendance',    label: 'Attendance',     path: '/attendance',         icon: 'attendance', group: 'Operations' },
+    { key: 'marks',         label: 'Marks',          path: '/marks',             icon: 'marks', group: 'Operations' },
   ],
   permissions: {
     colleges: ALL_ACTIONS,
@@ -100,7 +101,7 @@ const superAdminStrategy: RoleStrategy = {
       key: 'stat-colleges',
       title: 'Total Colleges',
       type: 'stat',
-      queryKey: ['colleges-count'],
+      queryKey: queryKeys.dashboardStats.collegesCount,
       fetchFn: async () => {
         const res = await getColleges({ size: 1 });
         return { label: 'Colleges', value: res.data.pageable.totalElements || 0 };
@@ -110,7 +111,7 @@ const superAdminStrategy: RoleStrategy = {
       key: 'stat-departments',
       title: 'Total Departments',
       type: 'stat',
-      queryKey: ['departments-count'],
+      queryKey: queryKeys.dashboardStats.departmentsCount,
       fetchFn: async () => {
         const res = await getDepartments();
         return { label: 'Departments', value: res.data.length || 0 };
@@ -121,9 +122,9 @@ const superAdminStrategy: RoleStrategy = {
       title: 'Quick Actions',
       type: 'quick-action',
       actions: [
-        { label: 'Register College', path: '/colleges/new', icon: '➕' },
-        { label: 'Manage Colleges', path: '/colleges', icon: '🏛️' },
-        { label: 'System Overview', path: '/', icon: '📊' },
+        { label: 'Register College', path: '/colleges/new', icon: 'plus' },
+        { label: 'Manage Colleges', path: '/colleges', icon: 'colleges' },
+        { label: 'System Overview', path: '/', icon: 'dashboard' },
       ],
     },
   ],
@@ -134,14 +135,14 @@ const collegeAdminStrategy: RoleStrategy = {
   roleName: 'COLLEGEADMIN',
   displayName: 'College Admin',
   navItems: [
-    { key: 'dashboard',     label: 'Dashboard',     path: '/',              icon: '📊', group: 'Main' },
-    { key: 'analytics',     label: 'Intelligence',  path: '/analytics',     icon: '🧠', group: 'Main' },
-    { key: 'departments',   label: 'Departments',   path: '/departments',   icon: '🏢', group: 'Management' },
-    { key: 'courses',       label: 'Courses',       path: '/courses',       icon: '📚', group: 'Management' },
-    { key: 'subjects',      label: 'Subjects',      path: '/subjects',      icon: '📖', group: 'Academic' },
-    { key: 'students',      label: 'Students',      path: '/students',      icon: '🧑‍🎓', group: 'Academic' },
-    { key: 'teachers',      label: 'Teachers',      path: '/teachers',      icon: '👨‍🏫', group: 'Academic' },
-    { key: 'classes',       label: 'Classes',       path: '/classes',       icon: '🎓', group: 'Academic' },
+    { key: 'dashboard',     label: 'Dashboard',     path: '/',              icon: 'dashboard', group: 'Main' },
+    { key: 'analytics',     label: 'Intelligence',  path: '/analytics',     icon: 'analytics', group: 'Main' },
+    { key: 'departments',   label: 'Departments',   path: '/departments',   icon: 'departments', group: 'Management' },
+    { key: 'courses',       label: 'Courses',       path: '/courses',       icon: 'courses', group: 'Management' },
+    { key: 'subjects',      label: 'Subjects',      path: '/subjects',      icon: 'subjects', group: 'Academic' },
+    { key: 'students',      label: 'Students',      path: '/students',      icon: 'students', group: 'Academic' },
+    { key: 'teachers',      label: 'Teachers',      path: '/teachers',      icon: 'teachers', group: 'Academic' },
+    { key: 'classes',       label: 'Classes',       path: '/classes',       icon: 'classes', group: 'Academic' },
   ],
   permissions: {
     departments: ALL_ACTIONS,
@@ -159,7 +160,7 @@ const collegeAdminStrategy: RoleStrategy = {
       key: 'stat-students',
       title: 'Total Students',
       type: 'stat',
-      queryKey: ['students-count'],
+      queryKey: queryKeys.dashboardStats.studentsCount,
       fetchFn: async () => {
         const res = await getStudents();
         return { label: 'Students', value: res.data.length || 0 };
@@ -170,9 +171,9 @@ const collegeAdminStrategy: RoleStrategy = {
       title: 'Quick Actions',
       type: 'quick-action',
       actions: [
-        { label: 'Establish Dept', path: '/departments/new', icon: '🏢' },
-        { label: 'Formulate Course', path: '/courses/new', icon: '📚' },
-        { label: 'Enroll Student', path: '/students/new', icon: '🧑‍🎓' },
+        { label: 'Establish Dept', path: '/departments/new', icon: 'departments' },
+        { label: 'Formulate Course', path: '/courses/new', icon: 'courses' },
+        { label: 'Enroll Student', path: '/students/new', icon: 'students' },
       ],
     },
   ],
@@ -183,12 +184,12 @@ const hodStrategy: RoleStrategy = {
   roleName: 'HOD',
   displayName: 'Head of Department',
   navItems: [
-    { key: 'dashboard',   label: 'Dashboard',  path: '/',            icon: '📊', group: 'Main' },
-    { key: 'analytics',   label: 'Analytics',  path: '/analytics',   icon: '🧠', group: 'Main' },
-    { key: 'subjects',    label: 'Subjects',    path: '/subjects',    icon: '📖', group: 'Department' },
-    { key: 'students',    label: 'Students',    path: '/students',    icon: '🧑‍🎓', group: 'Department' },
-    { key: 'teachers',    label: 'Teachers',    path: '/teachers',    icon: '👨‍🏫', group: 'Department' },
-    { key: 'classes',     label: 'Classes',     path: '/classes',     icon: '🎓', group: 'Department' },
+    { key: 'dashboard',   label: 'Dashboard',  path: '/',            icon: 'dashboard', group: 'Main' },
+    { key: 'analytics',   label: 'Analytics',  path: '/analytics',   icon: 'analytics', group: 'Main' },
+    { key: 'subjects',    label: 'Subjects',    path: '/subjects',    icon: 'subjects', group: 'Department' },
+    { key: 'students',    label: 'Students',    path: '/students',    icon: 'students', group: 'Department' },
+    { key: 'teachers',    label: 'Teachers',    path: '/teachers',    icon: 'teachers', group: 'Department' },
+    { key: 'classes',     label: 'Classes',     path: '/classes',     icon: 'classes', group: 'Department' },
   ],
   permissions: {
     subjects: ALL_ACTIONS,
@@ -198,6 +199,9 @@ const hodStrategy: RoleStrategy = {
     attendance: ALL_ACTIONS,
     marks: ALL_ACTIONS,
     departments: ['read'],
+    // Read-only: HOD reads the course catalog to link a new class to a program
+    // (see ClassCreatePage) — matches CourseController's @PreAuthorize on GET.
+    courses: ['read'],
     profile: ALL_ACTIONS,
   },
   dashboardCards: [
@@ -206,9 +210,9 @@ const hodStrategy: RoleStrategy = {
       title: 'Quick Actions',
       type: 'quick-action',
       actions: [
-        { label: 'Enroll Student', path: '/students/new', icon: '🧑‍🎓' },
-        { label: 'Onboard Faculty', path: '/teachers/new', icon: '👨‍🏫' },
-        { label: 'Instantiate Class', path: '/classes/new', icon: '🎓' },
+        { label: 'Enroll Student', path: '/students/new', icon: 'students' },
+        { label: 'Onboard Faculty', path: '/teachers/new', icon: 'teachers' },
+        { label: 'Instantiate Class', path: '/classes/new', icon: 'classes' },
       ],
     },
   ],
@@ -219,9 +223,9 @@ const teacherStrategy: RoleStrategy = {
   roleName: 'TEACHER',
   displayName: 'Teacher',
   navItems: [
-    { key: 'dashboard',   label: 'Dashboard',   path: '/',             icon: '📊', group: 'Main' },
-    { key: 'attendance',  label: 'Attendance',   path: '/attendance',   icon: '📋', group: 'My Work' },
-    { key: 'marks',       label: 'Marks',        path: '/marks',        icon: '📝', group: 'My Work' },
+    { key: 'dashboard',   label: 'Dashboard',   path: '/',             icon: 'dashboard', group: 'Main' },
+    { key: 'attendance',  label: 'Attendance',   path: '/attendance',   icon: 'attendance', group: 'My Work' },
+    { key: 'marks',       label: 'Marks',        path: '/marks',        icon: 'marks', group: 'My Work' },
   ],
   permissions: {
     attendance: ALL_ACTIONS,
@@ -236,7 +240,7 @@ const teacherStrategy: RoleStrategy = {
       key: 'stat-assignments',
       title: 'Total Assignments',
       type: 'stat',
-      queryKey: ['teacher-dashboard'],
+      queryKey: queryKeys.dashboardStats.teacherAssignmentsCount,
       fetchFn: async () => {
         const res = await getTeacherDashboard();
         return { label: 'Assignments', value: res.data.totalAssignments };
@@ -246,7 +250,7 @@ const teacherStrategy: RoleStrategy = {
       key: 'stat-students',
       title: 'My Students',
       type: 'stat',
-      queryKey: ['teacher-dashboard'],
+      queryKey: queryKeys.dashboardStats.teacherStudentsCount,
       fetchFn: async () => {
         const res = await getTeacherDashboard();
         return { label: 'Students', value: res.data.totalStudents };
@@ -257,8 +261,8 @@ const teacherStrategy: RoleStrategy = {
       title: 'Quick Actions',
       type: 'quick-action',
       actions: [
-        { label: 'Mark Attendance', path: '/attendance', icon: '📋' },
-        { label: 'Enter Marks', path: '/marks', icon: '📝' },
+        { label: 'Mark Attendance', path: '/attendance', icon: 'attendance' },
+        { label: 'Enter Marks', path: '/marks', icon: 'marks' },
       ],
     },
   ],
@@ -269,10 +273,10 @@ const studentStrategy: RoleStrategy = {
   roleName: 'STUDENT',
   displayName: 'Student',
   navItems: [
-    { key: 'dashboard',         label: 'Dashboard',       path: '/',                     icon: '📊', group: 'Main' },
-    { key: 'profile',           label: 'My Profile',      path: '/profile',              icon: '👤', group: 'My Data' },
-    { key: 'student-marks',     label: 'My Marks',        path: '/student-marks',        icon: '📝', group: 'My Data' },
-    { key: 'student-attendance',label: 'My Attendance',   path: '/student-attendance',   icon: '📋', group: 'My Data' },
+    { key: 'dashboard',         label: 'Dashboard',       path: '/',                     icon: 'dashboard', group: 'Main' },
+    { key: 'profile',           label: 'My Profile',      path: '/profile',              icon: 'profile', group: 'My Data' },
+    { key: 'student-marks',     label: 'My Marks',        path: '/student-marks',        icon: 'marks', group: 'My Data' },
+    { key: 'student-attendance',label: 'My Attendance',   path: '/student-attendance',   icon: 'attendance', group: 'My Data' },
   ],
   permissions: {
     profile: ['read', 'update'],
@@ -285,10 +289,10 @@ const studentStrategy: RoleStrategy = {
       key: 'stat-attendance',
       title: 'Overall Attendance',
       type: 'stat',
-      queryKey: ['student-dashboard'],
+      queryKey: queryKeys.dashboardStats.studentSummary,
       fetchFn: async () => {
         const res = await getStudentDashboard();
-        return { label: 'Attendance', value: `${res.data.overallAttendance.attendancePercentage.toFixed(1)}%` };
+        return { label: 'Attendance', value: `${res.data.overallAttendance.toFixed(1)}%` };
       }
     },
     {
@@ -296,9 +300,9 @@ const studentStrategy: RoleStrategy = {
       title: 'Quick Actions',
       type: 'quick-action',
       actions: [
-        { label: 'View Profile', path: '/profile', icon: '👤' },
-        { label: 'View Marks', path: '/student-marks', icon: '📝' },
-        { label: 'View Attendance', path: '/student-attendance', icon: '📋' },
+        { label: 'View Profile', path: '/profile', icon: 'profile' },
+        { label: 'View Marks', path: '/student-marks', icon: 'marks' },
+        { label: 'View Attendance', path: '/student-attendance', icon: 'attendance' },
       ],
     },
   ],

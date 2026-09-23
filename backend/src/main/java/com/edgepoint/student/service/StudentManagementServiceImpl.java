@@ -59,8 +59,11 @@ public class StudentManagementServiceImpl implements StudentManagementService {
         user = userRepository.save(user);
 
         StudentProfile profile = new StudentProfile();
+        // @MapsId on `user` derives studentUserId from the association at flush time — do not
+        // also set it directly. Doing both previously caused Hibernate to see a mismatched/null
+        // identifier at flush ("AssertionFailure: null identifier") and fail every student
+        // enrollment with a 500.
         profile.setUser(user);
-        profile.setStudentUserId(user.getUserId());
         profile.setRollNumber(request.getRollNumber());
         profile.setDeptId(request.getDeptId());
         profile.setCourseId(request.getCourseId());

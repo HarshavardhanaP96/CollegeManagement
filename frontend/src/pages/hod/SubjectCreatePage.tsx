@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createSubject } from '../../api/subject';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Select, Breadcrumbs } from '../../components/common';
 
 const createSubjectSchema = z.object({
@@ -37,7 +38,7 @@ export function SubjectCreatePage() {
   const createMutation = useMutation({
     mutationFn: createSubject,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subjects.all });
       navigate('/subjects');
     },
     onError: (error) => {

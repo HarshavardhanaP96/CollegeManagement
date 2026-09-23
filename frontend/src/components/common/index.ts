@@ -25,6 +25,8 @@ export { DataTable } from './DataTable';
 export { Breadcrumbs } from './Breadcrumbs';
 export type { BreadcrumbsProps } from './Breadcrumbs';
 
+export { DetailField, DetailGrid } from './DetailField';
+
 export { ErrorBoundary } from './ErrorBoundary';
 
 export { ProtectedRoute } from './ProtectedRoute';

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Select, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '../../components/common';
 import { getTeacherAssignments, markAttendance, getAttendanceByAssignment } from '../../api';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 
 export function TeacherAttendancePage() {
   const queryClient = useQueryClient();
@@ -11,12 +12,12 @@ export function TeacherAttendancePage() {
   const [attendanceRecords, setAttendanceRecords] = useState<Record<number, { isPresent: boolean; remarks: string }>>({});
 
   const { data: assignmentsData } = useQuery({
-    queryKey: ['teacher-assignments'],
+    queryKey: queryKeys.teacherAssignments.all,
     queryFn: () => getTeacherAssignments(),
   });
 
   const { data: attendanceData } = useQuery({
-    queryKey: ['attendance', selectedAssignment, selectedDate],
+    queryKey: queryKeys.attendance.byAssignment(selectedAssignment ?? undefined, selectedDate),
     queryFn: () => 
       getAttendanceByAssignment(selectedAssignment!, { 
         startDate: selectedDate, 
@@ -28,7 +29,7 @@ export function TeacherAttendancePage() {
   const markMutation = useMutation({
     mutationFn: markAttendance,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance.all });
       setAttendanceRecords({});
     },
     onError: (error) => {

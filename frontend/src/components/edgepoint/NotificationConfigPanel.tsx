@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getNotificationConfig, updateNotificationConfig, NotificationConfigDto, NotificationConfigRequest } from '../../api/notificationConfig';
+import { X } from 'lucide-react';
+import { getNotificationConfig, updateNotificationConfig, type NotificationConfigDto, type NotificationConfigRequest } from '../../api/notificationConfig';
 
 interface Props {
   institutionId: string;
@@ -82,7 +83,7 @@ export function NotificationConfigPanel({ institutionId, institutionName, readOn
         setSuccessMsg('Configuration saved successfully.');
         setConfig(res.data);
       } else {
-        setError(res.error?.message || 'Failed to save configuration.');
+        setError(res.message || 'Failed to save configuration.');
       }
     } catch (err: any) {
       setError('An error occurred while saving.');
@@ -101,7 +102,9 @@ export function NotificationConfigPanel({ institutionId, institutionName, readOn
           <p className="text-sm text-gray-400">Configure SMTP and WhatsApp settings for {institutionName}</p>
         </div>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-900">
+            <X size={18} />
+          </button>
         )}
       </div>
 

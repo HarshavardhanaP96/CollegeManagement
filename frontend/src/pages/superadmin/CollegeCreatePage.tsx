@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createCollege } from '../../api/college';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Breadcrumbs } from '../../components/common';
 
 const createCollegeSchema = z.object({
@@ -34,7 +35,7 @@ export function CollegeCreatePage() {
   const createMutation = useMutation({
     mutationFn: createCollege,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colleges'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.colleges.all });
       navigate('/colleges');
     },
     onError: (error) => {

@@ -30,4 +30,8 @@ public interface ClassRepository extends JpaRepository<AcademicClass, Integer> {
     @Query("SELECT COUNT(c) FROM AcademicClass c JOIN Department d ON c.deptId = d.deptId " +
             "WHERE d.collegeId = :collegeId AND c.isDeleted = false")
     Integer countByCollegeId(@Param("collegeId") Integer collegeId);
+
+    @Query("SELECT c FROM AcademicClass c JOIN Department d ON c.deptId = d.deptId " +
+            "WHERE d.collegeId = :collegeId AND c.isDeleted = false")
+    List<AcademicClass> findByCollegeIdAndIsDeletedFalse(@Param("collegeId") Integer collegeId);
 }

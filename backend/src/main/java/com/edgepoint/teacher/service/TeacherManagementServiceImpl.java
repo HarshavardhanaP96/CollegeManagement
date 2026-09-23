@@ -75,8 +75,10 @@ public class TeacherManagementServiceImpl implements TeacherManagementService {
         user = userRepository.save(user);
 
         TeacherProfile profile = new TeacherProfile();
+        // @MapsId on `user` derives teacherUserId from the association at flush time — setting
+        // it directly too previously caused Hibernate's "AssertionFailure: null identifier" and
+        // failed every faculty onboarding with a 500 (same bug as StudentManagementServiceImpl).
         profile.setUser(user);
-        profile.setTeacherUserId(user.getUserId());
         profile.setEmployeeId(request.getEmployeeId());
         profile.setDeptId(deptId);
         profile.setHireDate(request.getHireDate());

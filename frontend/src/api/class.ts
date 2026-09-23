@@ -8,17 +8,17 @@ export interface ClassCreateRequest {
   className?: string;
 }
 
+// Shape matches backend com.edgepoint.academic.dto.ClassResponseDTO exactly — no courseName,
+// totalStudents or totalSubjects field exists there (courseName in particular was previously
+// assumed here but never sent, always undefined at runtime).
 export interface ClassResponse {
   classId: number;
   deptId: number;
   courseId: number;
-  courseName: string;
   academicYear: string;
   semester: number;
   section: string;
   className: string;
-  totalStudents?: number;
-  totalSubjects?: number;
   createdAt: string;
 }
 

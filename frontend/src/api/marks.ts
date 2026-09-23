@@ -74,30 +74,38 @@ export async function updateMark(
   return data;
 }
 
-// Student marks endpoints (now at /student-marks/*)
-export async function getMyMarks(params?: { semester?: number; subjectId?: number }): Promise<ApiResponse<{
+// Student marks endpoints (/student-marks/*)
+// Shape matches backend com.edgepoint.student.dto.StudentMarkDTO / SubjectMarkDTO / ExamMarkDTO
+// exactly (see academic.controller.StudentMarkController#getMyMarks) — do not add fields the
+// backend doesn't send (e.g. credits, teacherName, examTypeId) without adding them there first.
+export interface ExamMarkView {
+  examTypeName: string;
+  marksObtained: number;
+  maxMarks: number;
+  percentage: number;
+}
+
+export interface SubjectMarkView {
+  subjectId: number;
+  subjectName: string;
+  subjectCode: string;
+  examMarks: ExamMarkView[];
+  totalMarks: number;
+  totalMaxMarks: number;
+  percentage: number;
+}
+
+export interface StudentMarkView {
+  studentUserId: number;
+  studentName: string;
+  rollNumber: string;
   semester: number;
-  academicYear: string;
-  subjects: Array<{
-    subjectId: number;
-    subjectCode: string;
-    subjectName: string;
-    credits: number;
-    teacherName: string;
-    examMarks: Array<{
-      examTypeId: number;
-      examTypeName: string;
-      marksObtained: number;
-      maxMarks: number;
-      percentage: number;
-      remarks?: string;
-    }>;
-    totalMarksObtained: number;
-    totalMaxMarks: number;
-    overallPercentage: number;
-  }>;
+  subjectMarks: SubjectMarkView[];
   overallPercentage: number;
-}>> {
-  const { data } = await apiClient.get<ApiResponse<any>>('/student-marks/my-marks', { params });
+  grade: string;
+}
+
+export async function getMyMarks(params?: { semester?: number }): Promise<ApiResponse<StudentMarkView>> {
+  const { data } = await apiClient.get<ApiResponse<StudentMarkView>>('/student-marks/my-marks', { params });
   return data;
 }

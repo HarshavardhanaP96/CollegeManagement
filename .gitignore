@@ -1,4 +1,6 @@
 prompt.txt
+.agents/
+.claude/
 .idea/
 .cursor/
 .vscode/
@@ -7,3 +9,4 @@ build/
 .classpath
 .project
 .settings
+graphify-out/

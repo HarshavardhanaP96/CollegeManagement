@@ -16,29 +16,33 @@ A full-stack application for managing college data, including departments, cours
 ### Backend
 - **Framework**: Spring Boot 3.5.8
 - **Language**: Java 17
+- **Build**: Maven (migrated off Gradle)
 - **Security**: Spring Security + JWT
-- **Database**: PostgreSQL (Migrations via Liquibase)
-- **Mapping**: MapStruct
+- **Database**: PostgreSQL (Migrations via Flyway, `backend/src/main/resources/db/migration`)
 - **Boilerplate**: Lombok
 - **Documentation**: OpenAPI/Swagger
+- **Also present**: Redis, Kafka, S3, Stripe integration
 
 ## Project Structure
-- `backend/src/main/java/com/collegeManagement/production`: Root package for the backend.
+- `backend/src/main/java/com/edgepoint/`: Root package for the backend, organized **feature-first**
+  (`core`, `academic`, `attendance`, `student`, `teacher`, `notification`), each with its own
+  `controller/domain/dto/repository/service`.
 - `frontend/src`:
   - `api/`: API definitions and axios client.
-  - `pages/`: UI pages for different roles.
-  - `store/`: State management.
+  - `pages/`: UI pages for different roles (`superadmin`, `collegeadmin`, `hod`, `teacher`, `student`).
+  - `components/edgepoint`: Role-specific portals and shared UI kit.
+  - `store/`: State management (Zustand).
+  - `strategies/`: Role-based navigation/permission strategy.
 
 ## Current Maintenance Tasks
-1. **Backend Package Fix**: Align package declarations and imports with the `com.collegeManagement.production` structure.
-2. **Frontend Syntax Update**: Align TanStack Query usage with v5 standards.
-3. **Build Validation**: Ensure both layers compile successfully.
-4. **Database Configuration**: Added default PostgreSQL configuration in `application.properties` and initialized Liquibase master changelog.
+1. **Notification module**: Per-college SMTP + WhatsApp Cloud API configuration is in progress
+   (`com.edgepoint.notification`). Secrets (`smtp_password`, `whatsapp_api_key`) are encrypted at
+   rest via `EncryptedStringConverter` (AES-256-GCM); set `ENCRYPTION_KEY` in every non-dev environment.
+2. **Build Validation**: Ensure both layers compile successfully.
 
 ## Local Development Setup
-- **PostgreSQL**: Requires a database named `college_management`.
+- **PostgreSQL**: Requires a database named `edgepoint` (see `backend/src/main/resources/application.yml`).
 - **Environment Variables**:
-  - `SPRING_DATASOURCE_URL`: JDBC URL (default: `jdbc:postgresql://localhost:5432/college_management`)
-  - `SPRING_DATASOURCE_USERNAME`: DB Username (default: `postgres`)
-  - `SPRING_DATASOURCE_PASSWORD`: DB Password (default: `postgres`)
   - `JWT_SECRET`: Secret for JWT signing.
+  - `ENCRYPTION_KEY`: Base64 AES-256 key used to encrypt secret columns at rest (e.g. notification config credentials). Has a dev-only default; must be overridden outside local dev.
+  - `STRIPE_API_KEY` / `STRIPE_WEBHOOK_SECRET`: Stripe integration credentials.

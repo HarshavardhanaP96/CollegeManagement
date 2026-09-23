@@ -123,11 +123,21 @@ public class ClassManagementServiceImpl implements ClassManagementService {
     @Override
     @Transactional(readOnly = true)
     public List<ClassResponseDTO> getAllClasses() {
-        Integer hodUserId = tenantContext.getCurrentUserId();
-        Department department = departmentRepository.findByDeptHeadUserIdAndIsDeletedFalse(hodUserId)
-                .orElseThrow(() -> new BadRequestException("You are not assigned as HOD"));
+        // This endpoint is open to SUPERADMIN, COLLEGEADMIN and HOD (see ClassController's
+        // @PreAuthorize), so it can't assume every caller is an HOD. HOD is scoped to their own
+        // department; SUPERADMIN/COLLEGEADMIN are scoped to their college, same as
+        // DepartmentServiceImpl#getAllDepartments.
+        List<AcademicClass> classes;
+        if (tenantContext.getRoleId() != null && tenantContext.getRoleId() == 3) { // HOD role
+            Integer hodUserId = tenantContext.getCurrentUserId();
+            Department department = departmentRepository.findByDeptHeadUserIdAndIsDeletedFalse(hodUserId)
+                    .orElseThrow(() -> new BadRequestException("You are not assigned as HOD"));
+            classes = classRepository.findByDeptIdAndIsDeletedFalse(department.getDeptId());
+        } else {
+            classes = classRepository.findByCollegeIdAndIsDeletedFalse(tenantContext.getCollegeId());
+        }
 
-        return classRepository.findByDeptIdAndIsDeletedFalse(department.getDeptId()).stream()
+        return classes.stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }

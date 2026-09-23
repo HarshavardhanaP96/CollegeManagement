@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createClass, getCourses } from '../../api';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Select, Breadcrumbs } from '../../components/common';
 
 const createClassSchema = z.object({
@@ -24,7 +25,7 @@ export function ClassCreatePage() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const { data: coursesData } = useQuery({
-    queryKey: ['courses'],
+    queryKey: queryKeys.courses.all,
     queryFn: () => getCourses(),
   });
 
@@ -43,7 +44,7 @@ export function ClassCreatePage() {
   const createMutation = useMutation({
     mutationFn: createClass,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.classes.all });
       navigate('/classes');
     },
     onError: (error) => {

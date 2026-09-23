@@ -1,7 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
+import { GraduationCap } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { getRoleStrategy } from '../../strategies/roleStrategy';
 import type { NavItem } from '../../strategies/roleStrategy';
+import { NavIcon } from './navIconMap';
 import { clsx } from 'clsx';
 
 interface SidebarProps {
@@ -54,8 +56,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
         onClick={isCollapsed ? onToggle : undefined}
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-2xl shadow-lg shadow-sky-500/20">
-            🎓
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-500/20">
+            <GraduationCap size={22} strokeWidth={2.25} />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
@@ -113,8 +115,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
                         : "hover:bg-slate-800/50 hover:text-white"
                     )}
                   >
-                    <span className={clsx("text-lg transition-transform duration-200", isActive ? "scale-110" : "")}>
-                      {item.icon}
+                    <span className={clsx("shrink-0 transition-transform duration-200", isActive ? "scale-110" : "")}>
+                      <NavIcon name={item.icon} size={18} />
                     </span>
                     {!isCollapsed && item.label}
                     {!isCollapsed && isActive && (

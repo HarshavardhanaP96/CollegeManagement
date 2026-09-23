@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users, Clock, MapPin } from 'lucide-react';
 import { Badge } from '../Badge';
 
 interface Class {
@@ -65,9 +66,9 @@ export function FacultyCommandCenter({ onSelect }: FacultyCommandCenterProps) {
             </div>
             <p className="text-lg font-bold text-gray-900 mb-3">{cls.name}</p>
             <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span>👥 {cls.students}</span>
-              <span>🕐 {cls.time}</span>
-              <span>📍 {cls.room}</span>
+              <span className="inline-flex items-center gap-1"><Users size={13} /> {cls.students}</span>
+              <span className="inline-flex items-center gap-1"><Clock size={13} /> {cls.time}</span>
+              <span className="inline-flex items-center gap-1"><MapPin size={13} /> {cls.room}</span>
             </div>
           </button>
         ))}

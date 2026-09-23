@@ -2,13 +2,15 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Button, DataTable, Loading } from '../../components/common';
 import { getStudents } from '../../api/student';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function StudentListPage() {
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['students'],
+    queryKey: queryKeys.students.all,
     queryFn: () => getStudents(),
   });
 
@@ -93,9 +95,11 @@ export function StudentListPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Registry</h1>
         </div>
-        <Button onClick={() => navigate('/students/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-          Enroll
-        </Button>
+        <Can action="create" resource="students">
+          <Button onClick={() => navigate('/students/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+            Enroll
+          </Button>
+        </Can>
       </header>
 
       <div className="flex-1 min-h-0">

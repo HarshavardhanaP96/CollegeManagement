@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Select, Loading, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/common';
 import { getMyAttendance } from '../../api/attendance';
+import { queryKeys } from '../../api/queryKeys';
 
 export function StudentAttendancePage() {
   const [semester, setSemester] = useState<number | undefined>(undefined);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['student-attendance', semester],
+    queryKey: queryKeys.studentAttendance.bySemester(semester),
     queryFn: () => getMyAttendance({ semester }),
   });
 
@@ -45,10 +46,7 @@ export function StudentAttendancePage() {
           <Card title="Overall Attendance">
             <div className="text-center">
               <p className="text-3xl font-bold text-sky-600">
-                {attendanceData.overallAttendance.attendancePercentage.toFixed(2)}%
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                {attendanceData.overallAttendance.classesAttended} / {attendanceData.overallAttendance.totalClasses} classes
+                {attendanceData.overallAttendance.toFixed(2)}%
               </p>
             </div>
           </Card>
@@ -61,21 +59,19 @@ export function StudentAttendancePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Subject</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Classes Attended</TableHead>
+                  <TableHead>Present</TableHead>
+                  <TableHead>Absent</TableHead>
                   <TableHead>Total Classes</TableHead>
                   <TableHead>Percentage</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceData.subjectWiseAttendance.map((subject) => (
+                {attendanceData.subjectAttendances.map((subject) => (
                   <TableRow key={subject.subjectId}>
                     <TableCell className="font-medium">{subject.subjectName}</TableCell>
-                    <TableCell>{subject.subjectCode}</TableCell>
-                    <TableCell>{subject.teacherName}</TableCell>
-                    <TableCell>{subject.classesAttended}</TableCell>
+                    <TableCell>{subject.presentCount}</TableCell>
+                    <TableCell>{subject.absentCount}</TableCell>
                     <TableCell>{subject.totalClasses}</TableCell>
                     <TableCell>{subject.attendancePercentage.toFixed(2)}%</TableCell>
                     <TableCell>
@@ -88,7 +84,7 @@ export function StudentAttendancePage() {
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {subject.status}
+                        {subject.attendancePercentage >= 75 ? 'Good' : subject.attendancePercentage >= 65 ? 'Warning' : 'Low'}
                       </span>
                     </TableCell>
                   </TableRow>

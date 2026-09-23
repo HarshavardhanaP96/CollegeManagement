@@ -6,17 +6,18 @@ import { getTeachers } from '../api/teacher';
 import { getStudents } from '../api/student';
 import { getSubjects } from '../api/subject';
 import { getClasses } from '../api/class';
+import { queryKeys } from '../api/queryKeys';
 import { Card, Loading } from '../components/common';
 
 export function AnalyticsPage() {
   // Fetch all data for high-level stats
-  const { data: collegesData, isLoading: collegesLoading } = useQuery({ queryKey: ['colleges-all'], queryFn: () => getColleges({ size: 100 }) });
-  const { data: deptsData, isLoading: deptsLoading } = useQuery({ queryKey: ['depts-all'], queryFn: () => getDepartments() });
-  const { data: coursesData, isLoading: coursesLoading } = useQuery({ queryKey: ['courses-all'], queryFn: () => getCourses() });
-  const { data: teachersData, isLoading: teachersLoading } = useQuery({ queryKey: ['teachers-all'], queryFn: () => getTeachers() });
-  const { data: studentsData, isLoading: studentsLoading } = useQuery({ queryKey: ['students-all'], queryFn: () => getStudents() });
-  const { data: subjectsData, isLoading: subjectsLoading } = useQuery({ queryKey: ['subjects-all'], queryFn: () => getSubjects() });
-  const { data: classesData, isLoading: classesLoading } = useQuery({ queryKey: ['classes-all'], queryFn: () => getClasses() });
+  const { data: collegesData, isLoading: collegesLoading } = useQuery({ queryKey: queryKeys.analytics.colleges, queryFn: () => getColleges({ size: 100 }) });
+  const { data: deptsData, isLoading: deptsLoading } = useQuery({ queryKey: queryKeys.analytics.departments, queryFn: () => getDepartments() });
+  const { data: coursesData, isLoading: coursesLoading } = useQuery({ queryKey: queryKeys.analytics.courses, queryFn: () => getCourses() });
+  const { data: teachersData, isLoading: teachersLoading } = useQuery({ queryKey: queryKeys.analytics.teachers, queryFn: () => getTeachers() });
+  const { data: studentsData, isLoading: studentsLoading } = useQuery({ queryKey: queryKeys.analytics.students, queryFn: () => getStudents() });
+  const { data: subjectsData, isLoading: subjectsLoading } = useQuery({ queryKey: queryKeys.analytics.subjects, queryFn: () => getSubjects() });
+  const { data: classesData, isLoading: classesLoading } = useQuery({ queryKey: queryKeys.analytics.classes, queryFn: () => getClasses() });
 
   const isLoading = collegesLoading || deptsLoading || coursesLoading || teachersLoading || studentsLoading || subjectsLoading || classesLoading;
 

@@ -2,13 +2,15 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Button, DataTable, Loading } from '../../components/common';
 import { getTeachers } from '../../api/teacher';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function TeacherListPage() {
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['teachers'],
+    queryKey: queryKeys.teachers.all,
     queryFn: () => getTeachers(),
   });
 
@@ -87,9 +89,11 @@ export function TeacherListPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Faculty</h1>
         </div>
-        <Button onClick={() => navigate('/teachers/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-          Onboard
-        </Button>
+        <Can action="create" resource="teachers">
+          <Button onClick={() => navigate('/teachers/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+            Onboard
+          </Button>
+        </Can>
       </header>
 
       <div className="flex-1 min-h-0">

@@ -20,8 +20,14 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    sh 'mvn clean package -DskipTests'
+                    sh 'mvn clean verify'
                 }
+            }
+        }
+        stage('Test Results') {
+            steps {
+                junit '**/target/surefire-reports/*.xml'
+                archiveArtifacts artifacts: '**/target/site/jacoco/jacoco.xml', fingerprint: true
             }
         }
 

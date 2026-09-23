@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Input, Loading } from '../../components/common';
 import { getMyProfile, updateMyProfile } from '../../api/student';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,7 +25,7 @@ export function StudentProfilePage() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['student-profile'],
+    queryKey: queryKeys.studentProfile.all,
     queryFn: () => getMyProfile(),
   });
 
@@ -38,9 +40,9 @@ export function StudentProfilePage() {
       ? {
           phone: data.data.phone,
           email: data.data.email,
-          parentPhone: data.data.studentProfile.parentPhone,
-          parentEmail: data.data.studentProfile.parentEmail,
-          address: data.data.studentProfile.address,
+          parentPhone: data.data.parentPhone,
+          parentEmail: data.data.parentEmail,
+          address: data.data.address,
         }
       : undefined,
   });
@@ -50,7 +52,7 @@ export function StudentProfilePage() {
     onSuccess: () => {
       setIsEditing(false);
       setServerError(null);
-      queryClient.invalidateQueries({ queryKey: ['student-profile'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.studentProfile.all });
     },
     onError: (error) => {
       const { message } = getErrorMessage(error);
@@ -81,7 +83,9 @@ export function StudentProfilePage() {
           <p className="text-sm text-slate-600">View and update your profile information</p>
         </div>
         {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          <Can action="update" resource="profile">
+            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          </Can>
         )}
       </div>
 
@@ -158,7 +162,7 @@ export function StudentProfilePage() {
                     <span className="font-medium">Phone:</span> {profile.phone}
                   </div>
                   <div>
-                    <span className="font-medium">Roll Number:</span> {profile.studentProfile.rollNumber}
+                    <span className="font-medium">Roll Number:</span> {profile.rollNumber}
                   </div>
                 </div>
               </div>
@@ -166,16 +170,13 @@ export function StudentProfilePage() {
                 <h3 className="mb-2 font-semibold">Academic Information</h3>
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="font-medium">College:</span> {profile.collegeName}
+                    <span className="font-medium">Department:</span> {profile.deptName}
                   </div>
                   <div>
-                    <span className="font-medium">Department:</span> {profile.studentProfile.deptName}
+                    <span className="font-medium">Course:</span> {profile.courseName}
                   </div>
                   <div>
-                    <span className="font-medium">Course:</span> {profile.studentProfile.courseName}
-                  </div>
-                  <div>
-                    <span className="font-medium">Current Semester:</span> {profile.studentProfile.currentSemester}
+                    <span className="font-medium">Current Semester:</span> {profile.currentSemester}
                   </div>
                 </div>
               </div>
@@ -184,16 +185,16 @@ export function StudentProfilePage() {
               <h3 className="mb-2 font-semibold">Parent/Guardian Information</h3>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-medium">Name:</span> {profile.studentProfile.parentName}
+                  <span className="font-medium">Name:</span> {profile.parentName}
                 </div>
                 <div>
-                  <span className="font-medium">Phone:</span> {profile.studentProfile.parentPhone}
+                  <span className="font-medium">Phone:</span> {profile.parentPhone}
                 </div>
                 <div>
-                  <span className="font-medium">Email:</span> {profile.studentProfile.parentEmail}
+                  <span className="font-medium">Email:</span> {profile.parentEmail}
                 </div>
                 <div>
-                  <span className="font-medium">Address:</span> {profile.studentProfile.address}
+                  <span className="font-medium">Address:</span> {profile.address}
                 </div>
               </div>
             </div>

@@ -46,8 +46,12 @@ public class CourseController {
         );
     }
 
+    // HOD needs to read the course catalog to link a new class to a program (see
+    // ClassManagementServiceImpl#createClass) — read-only, so it doesn't need the class-level
+    // SUPERADMIN/COLLEGEADMIN restriction that create/update/delete below still have.
     @GetMapping
     @Operation(summary = "Get all courses")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN', 'HOD')")
     public ResponseEntity<ApiResponse<List<CourseResponseDTO>>> getAllCourses() {
         List<CourseResponseDTO> courses = courseService.getAllCourses();
         return ResponseEntity.ok(ApiResponse.success(courses, "Courses retrieved successfully"));
@@ -55,6 +59,7 @@ public class CourseController {
 
     @GetMapping("/{courseId}")
     @Operation(summary = "Get course by ID")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN', 'HOD')")
     public ResponseEntity<ApiResponse<CourseResponseDTO>> getCourseById(@PathVariable Integer courseId) {
         CourseResponseDTO response = courseService.getCourseById(courseId);
         return ResponseEntity.ok(ApiResponse.success(response, "Course retrieved successfully"));

@@ -2,13 +2,15 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Button, DataTable, Loading } from '../../components/common';
 import { getDepartments } from '../../api/department';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function DepartmentListPage() {
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['departments'],
+    queryKey: queryKeys.departments.all,
     queryFn: () => getDepartments(),
   });
 
@@ -86,9 +88,11 @@ export function DepartmentListPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Units</h1>
         </div>
-        <Button onClick={() => navigate('/departments/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-          Establish
-        </Button>
+        <Can action="create" resource="departments">
+          <Button onClick={() => navigate('/departments/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+            Establish
+          </Button>
+        </Can>
       </header>
 
       <div className="flex-1 min-h-0">

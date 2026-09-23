@@ -25,4 +25,8 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer> {
     @Query("SELECT COUNT(s) FROM Subject s JOIN Department d ON s.deptId = d.deptId " +
             "WHERE d.collegeId = :collegeId AND s.isDeleted = false")
     Integer countByCollegeId(@Param("collegeId") Integer collegeId);
+
+    @Query("SELECT s FROM Subject s JOIN Department d ON s.deptId = d.deptId " +
+            "WHERE d.collegeId = :collegeId AND s.isDeleted = false")
+    List<Subject> findByCollegeIdAndIsDeletedFalse(@Param("collegeId") Integer collegeId);
 }

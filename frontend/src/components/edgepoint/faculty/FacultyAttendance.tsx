@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Check, X } from 'lucide-react';
 
 export function FacultyAttendance() {
   const students = [
@@ -120,7 +121,7 @@ export function FacultyAttendance() {
                           n[i] = opt;
                           setToday(n);
                         }}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded transition-all ${
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded transition-all ${
                           today[i] === opt
                             ? opt === "P"
                               ? "bg-emerald-500 text-white"
@@ -130,7 +131,7 @@ export function FacultyAttendance() {
                             : "text-gray-400 hover:bg-gray-100"
                         }`}
                       >
-                        {opt === "P" ? "✓ P" : opt === "L" ? "L" : "× A"}
+                        {opt === "P" ? <><Check size={12} /> P</> : opt === "L" ? "L" : <><X size={12} /> A</>}
                       </button>
                     ))}
                   </div>

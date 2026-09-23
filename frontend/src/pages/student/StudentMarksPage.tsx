@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Select, Loading, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/common';
 import { getMyMarks } from '../../api/marks';
+import { queryKeys } from '../../api/queryKeys';
 
 export function StudentMarksPage() {
   const [semester, setSemester] = useState<number | undefined>(undefined);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['student-marks', semester],
+    queryKey: queryKeys.studentMarks.bySemester(semester),
     queryFn: () => getMyMarks({ semester }),
   });
 
@@ -42,15 +43,12 @@ export function StudentMarksPage() {
         <Loading text="Loading marks..." />
       ) : marksData ? (
         <div className="space-y-6">
-          {marksData.subjects.map((subject) => (
+          {marksData.subjectMarks.map((subject) => (
             <Card key={subject.subjectId} noPadding className="shadow-2xl shadow-slate-200/50">
               <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
                  <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">
                     {subject.subjectName} ({subject.subjectCode})
                  </h2>
-                 <p className="mt-1 text-xs text-slate-500 font-bold uppercase tracking-tight">
-                    Faculty: {subject.teacherName} • {subject.credits} Credits
-                 </p>
               </div>
               <Table>
                 <TableHeader>
@@ -59,7 +57,6 @@ export function StudentMarksPage() {
                     <TableHead>Marks Obtained</TableHead>
                     <TableHead>Maximum Marks</TableHead>
                     <TableHead>Percentage</TableHead>
-                    <TableHead>Remarks</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -69,25 +66,23 @@ export function StudentMarksPage() {
                       <TableCell>{exam.marksObtained}</TableCell>
                       <TableCell>{exam.maxMarks}</TableCell>
                       <TableCell>{exam.percentage.toFixed(2)}%</TableCell>
-                      <TableCell>{exam.remarks || '-'}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-slate-50 font-semibold">
                     <TableCell>Overall</TableCell>
-                    <TableCell>{subject.totalMarksObtained}</TableCell>
+                    <TableCell>{subject.totalMarks}</TableCell>
                     <TableCell>{subject.totalMaxMarks}</TableCell>
-                    <TableCell>{subject.overallPercentage.toFixed(2)}%</TableCell>
-                    <TableCell>-</TableCell>
+                    <TableCell>{subject.percentage.toFixed(2)}%</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </Card>
           ))}
-          {marksData.subjects.length > 0 && (
+          {marksData.subjectMarks.length > 0 && (
             <Card>
               <div className="text-center">
                 <p className="text-lg font-semibold">
-                  Overall Percentage: {marksData.overallPercentage.toFixed(2)}%
+                  Overall Percentage: {marksData.overallPercentage.toFixed(2)}% (Grade {marksData.grade})
                 </p>
               </div>
             </Card>

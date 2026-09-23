@@ -1,16 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, Button, DataTable, Loading } from '../../components/common';
-import { getClasses } from '../../api';
+import { getClasses, getCourses } from '../../api';
+import { queryKeys } from '../../api/queryKeys';
+import { Can } from '../../hooks/Can';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function ClassListPage() {
   const navigate = useNavigate();
 
   const { data: classesData, isLoading: classesLoading } = useQuery({
-    queryKey: ['classes'],
+    queryKey: queryKeys.classes.all,
     queryFn: () => getClasses(),
   });
+
+  // ClassResponseDTO only carries courseId, not a course name — join against the
+  // courses list (already fetched/cached elsewhere) to show something readable.
+  const { data: coursesData } = useQuery({
+    queryKey: queryKeys.courses.all,
+    queryFn: () => getCourses(),
+  });
+  const courseNameById = new Map((coursesData?.data || []).map((c) => [c.courseId, c.courseName]));
 
   const classes = classesData?.data || [];
 
@@ -41,28 +51,13 @@ export function ClassListPage() {
       ),
     },
     {
-      accessorKey: 'courseName',
+      accessorKey: 'courseId',
       header: 'Degree Path',
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-[13px] font-black text-slate-700">{row.original.courseName}</span>
-      ),
-    },
-    {
-      header: 'Metrics',
-      enableSorting: true,
-      accessorFn: (row) => row.totalStudents,
-      cell: ({ row }) => (
-        <div className="flex gap-4">
-           <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {row.original.totalStudents || 0} Students
-           </span>
-           <span className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              {row.original.totalSubjects || 0} Subjects
-           </span>
-        </div>
+        <span className="text-[13px] font-black text-slate-700">
+          {courseNameById.get(row.original.courseId) || `Course #${row.original.courseId}`}
+        </span>
       ),
     },
     {
@@ -83,9 +78,11 @@ export function ClassListPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Cohorts</h1>
         </div>
-        <Button onClick={() => navigate('/classes/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-          Instantiate
-        </Button>
+        <Can action="create" resource="classes">
+          <Button onClick={() => navigate('/classes/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
+            Instantiate
+          </Button>
+        </Can>
       </header>
 
       <div className="flex-1 min-h-0">

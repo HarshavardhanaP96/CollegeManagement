@@ -42,7 +42,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {...props}
           >
             {placeholder && (
-              <option value="" disabled>
+              // Not `disabled`: a disabled option can't be the browser's native default
+              // selection, so on first render the browser silently falls through to the first
+              // real <option> instead — which looks selected but was never chosen by the user,
+              // so no change event fires and react-hook-form's registered value stays
+              // `undefined`. Submitting then fails validation ("expected number, received NaN")
+              // even though a value is visibly shown. Leaving this enabled keeps the DOM's
+              // default selection and RHF's default value in agreement (both "nothing chosen").
+              <option value="">
                 {placeholder}
               </option>
             )}

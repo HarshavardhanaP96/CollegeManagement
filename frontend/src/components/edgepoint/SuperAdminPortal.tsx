@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Settings } from 'lucide-react';
 import { Badge } from './Badge';
 import { TopBar } from './TopBar';
 import { SidebarLayout } from './SidebarLayout';
@@ -184,7 +185,9 @@ function PlatformConsole({ institutions, onSelectInstitution }: { institutions: 
               <tr key={inst.id} onClick={() => onSelectInstitution(inst)} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer group">
                 <td className="py-3 px-4 font-medium text-gray-900 group-hover:text-blue-600 flex items-center justify-between">
                   {inst.name}
-                  <span className="text-xs text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">Configure ⚙️</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Configure <Settings size={12} />
+                  </span>
                 </td>
                 <td className="py-3 px-4 text-xs font-mono text-gray-400">{inst.domain}</td>
                 <td className="py-3 px-4">

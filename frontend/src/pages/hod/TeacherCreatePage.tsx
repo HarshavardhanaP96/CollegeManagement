@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createTeacher } from '../../api/teacher';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Breadcrumbs } from '../../components/common';
 
 const createTeacherSchema = z.object({
@@ -38,7 +39,7 @@ export function TeacherCreatePage() {
   const createMutation = useMutation({
     mutationFn: createTeacher,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
       navigate('/teachers');
     },
     onError: (error) => {

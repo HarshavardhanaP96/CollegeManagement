@@ -48,8 +48,13 @@ public class DepartmentController {
         );
     }
 
+    // HOD needs to read the department list too — e.g. StudentCreateRequest.deptId is a
+    // required field the HOD picks when enrolling a student (see StudentCreatePage) — read-only,
+    // so it doesn't need the class-level SUPERADMIN/COLLEGEADMIN restriction that
+    // create/update/delete below still have. Same reasoning as CourseController's GET endpoints.
     @GetMapping
     @Operation(summary = "Get all departments", description = "Get all departments in the college")
+    @PreAuthorize("hasAnyRole('SUPERADMIN', 'COLLEGEADMIN', 'HOD')")
     public ResponseEntity<ApiResponse<List<DepartmentResponseDTO>>> getAllDepartments() {
         log.info("Fetching all departments for college");
 

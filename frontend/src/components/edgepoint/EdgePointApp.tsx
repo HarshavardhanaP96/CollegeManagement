@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Landmark, GraduationCap, BookOpen, User } from 'lucide-react';
 import { useAuthStore, getRoleName } from '../../store/authStore';
 import { login } from '../../api/auth';
 import { StudentPortal } from './student/StudentPortal';
@@ -10,10 +11,10 @@ import { SuperAdminPortal } from './SuperAdminPortal';
 
 function Landing({ navigate }: { navigate: (to: string, role?: string) => void }) {
   const roles = [
-    { id: "superadmin", role: "PLATFORM OPERATOR", title: "Super Admin", desc: "Manage every institution on the platform", icon: "🏛" },
-    { id: "registry", role: "INSTITUTION LEAD", title: "College Admin", desc: "Run a single college: staff, fees, curriculum, results", icon: "🎓" },
-    { id: "faculty", role: "FACULTY MEMBER", title: "Teacher", desc: "Mark attendance, enter grades, manage classes", icon: "📖" },
-    { id: "student", role: "LEARNER", title: "Student / Parent", desc: "View timeline, analytics, fees and receipts", icon: "👤" },
+    { id: "superadmin", role: "PLATFORM OPERATOR", title: "Super Admin", desc: "Manage every institution on the platform", icon: Landmark },
+    { id: "registry", role: "INSTITUTION LEAD", title: "College Admin", desc: "Run a single college: staff, fees, curriculum, results", icon: GraduationCap },
+    { id: "faculty", role: "FACULTY MEMBER", title: "Teacher", desc: "Mark attendance, enter grades, manage classes", icon: BookOpen },
+    { id: "student", role: "LEARNER", title: "Student / Parent", desc: "View timeline, analytics, fees and receipts", icon: User },
   ];
 
   return (
@@ -41,7 +42,9 @@ function Landing({ navigate }: { navigate: (to: string, role?: string) => void }
           {roles.map((r) => (
             <button key={r.id} onClick={() => navigate("login", r.id)} className="bg-white border border-gray-100 rounded-xl p-6 text-left hover:border-gray-300 hover:shadow-md transition-all group">
               <div className="flex items-start justify-between mb-6">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-xl group-hover:bg-gray-200 transition-colors">{r.icon}</div>
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-700 group-hover:bg-gray-200 transition-colors">
+                  <r.icon size={20} strokeWidth={2} />
+                </div>
                 <span className="text-gray-300 group-hover:text-gray-600 transition-colors text-lg">→</span>
               </div>
               <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-1">{r.role}</p>

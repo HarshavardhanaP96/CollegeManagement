@@ -70,48 +70,36 @@ export async function updateAttendance(
   return data;
 }
 
-// Student attendance endpoints (now at /student-attendance/*)
-export async function getMyAttendance(params?: { semester?: number; subjectId?: number }): Promise<ApiResponse<{
+// Student attendance endpoints (/student-attendance/*)
+// Shape matches backend com.edgepoint.student.dto.StudentAttendanceDTO / SubjectAttendanceDTO
+// exactly (see attendance.controller.StudentAttendanceController#getMyAttendance) — do not add
+// fields the backend doesn't send (e.g. teacherName, subjectCode, status) without adding them
+// there first.
+export interface SubjectAttendanceView {
+  subjectId: number;
+  subjectName: string;
+  totalClasses: number;
+  presentCount: number;
+  absentCount: number;
+  attendancePercentage: number;
+}
+
+export interface StudentAttendanceView {
+  studentUserId: number;
+  studentName: string;
+  rollNumber: string;
   semester: number;
-  academicYear: string;
-  overallAttendance: {
-    totalClasses: number;
-    classesAttended: number;
-    attendancePercentage: number;
-  };
-  subjectWiseAttendance: Array<{
-    subjectId: number;
-    subjectCode: string;
-    subjectName: string;
-    teacherName: string;
-    totalClasses: number;
-    classesAttended: number;
-    attendancePercentage: number;
-    status: string;
-  }>;
-}>> {
-  const { data } = await apiClient.get<ApiResponse<any>>('/student-attendance/my-attendance', { params });
+  subjectAttendances: SubjectAttendanceView[];
+  /** Overall attendance percentage across all subjects (not an object — a single number). */
+  overallAttendance: number;
+}
+
+export async function getMyAttendance(params?: { semester?: number }): Promise<ApiResponse<StudentAttendanceView>> {
+  const { data } = await apiClient.get<ApiResponse<StudentAttendanceView>>('/student-attendance/my-attendance', { params });
   return data;
 }
 
-export async function getAttendanceBySubject(
-  subjectId: number,
-  params?: { startDate?: string; endDate?: string }
-): Promise<ApiResponse<{
-  subjectId: number;
-  subjectName: string;
-  teacherName: string;
-  attendanceRecords: Array<{
-    recordDate: string;
-    isPresent: boolean;
-    remarks?: string;
-  }>;
-  summary: {
-    totalClasses: number;
-    classesAttended: number;
-    attendancePercentage: number;
-  };
-}>> {
-  const { data } = await apiClient.get<ApiResponse<any>>(`/student-attendance/subject/${subjectId}`, { params });
+export async function getAttendanceBySubject(subjectId: number): Promise<ApiResponse<SubjectAttendanceView>> {
+  const { data } = await apiClient.get<ApiResponse<SubjectAttendanceView>>(`/student-attendance/subject/${subjectId}`);
   return data;
 }

@@ -7,36 +7,60 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
+// Shapes below match backend com.edgepoint.teacher.dto.TeacherDashboardDTO and
+// com.edgepoint.student.dto.StudentDashBoardDTO exactly (see teacher.controller.
+// TeacherDashboardController / student.controller.StudentDashboardController) — do not add
+// fields the backend doesn't send without adding them there first.
 export interface TeacherDashboardData {
+  teacherName: string;
+  department: string;
   totalAssignments: number;
+  totalClasses: number;
   totalStudents: number;
-  assignments: Array<{
+  activeAssignments: Array<{
     assignmentId: number;
     classId: number;
     className: string;
     subjectId: number;
-    subjectCode: string;
     subjectName: string;
-    totalStudents: number;
-    isActive: boolean;
+  }>;
+  recentActivities: Array<{
+    activityType: string;
+    description: string;
+    timestamp: string;
   }>;
 }
 
 export interface StudentDashboardData {
+  studentName: string;
+  rollNumber: string;
+  department: string;
+  course: string;
   currentSemester: number;
-  academicYear: string;
-  overallAttendance: {
-    totalClasses: number;
-    classesAttended: number;
-    attendancePercentage: number;
+  /** Overall attendance percentage (not an object — a single number). */
+  overallAttendance: number;
+  overallPercentage: number;
+  totalSubjects: number;
+  recentAttendance: {
+    subjectAttendances: Array<{
+      subjectId: number;
+      subjectName: string;
+      totalClasses: number;
+      presentCount: number;
+      absentCount: number;
+      attendancePercentage: number;
+    }>;
   };
-  recentMarks: Array<{
-    subjectName: string;
-    examTypeName: string;
-    marksObtained: number;
-    maxMarks: number;
-    percentage: number;
-  }>;
+  recentMarks: {
+    subjectMarks: Array<{
+      subjectId: number;
+      subjectName: string;
+      subjectCode: string;
+      totalMarks: number;
+      totalMaxMarks: number;
+      percentage: number;
+    }>;
+  };
 }
 
 export async function getTeacherDashboard(): Promise<ApiResponse<TeacherDashboardData>> {

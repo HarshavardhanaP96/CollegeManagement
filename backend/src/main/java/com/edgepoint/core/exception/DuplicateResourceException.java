@@ -2,6 +2,7 @@
 package com.edgepoint.core.exception;
 
 import lombok.Getter;
+import java.util.Collections;
 import java.util.Map;
 
 @Getter
@@ -10,11 +11,10 @@ public class DuplicateResourceException extends RuntimeException {
 
     public DuplicateResourceException(String message) {
         super(message);
-        this.errors = null;
+        this.errors = Collections.emptyMap();
     }
 
     public DuplicateResourceException(String message, Map<String, String> errors) {
         super(message);
-        this.errors = errors;
-    }
+        this.errors = errors != null ? Collections.unmodifiableMap(errors) : Collections.emptyMap();    }
 }

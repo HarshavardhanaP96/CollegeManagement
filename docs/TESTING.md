@@ -38,7 +38,7 @@
 ## Test Structure
 
 ```
-src/test/java/com/collegeManagement/
+src/test/java/com/edgepoint/
 ├── unit/
 │   ├── service/
 │   │   ├── auth/
@@ -235,10 +235,10 @@ mvn test jacocoTestReport
 mvn test jacocoTestCoverageVerification
 
 # Run only unit tests
-mvn test --tests "com.collegeManagement.unit.*"
+mvn test --tests "com.edgepoint.unit.*"
 
 # Run only integration tests
-mvn test --tests "com.collegeManagement.integration.*"
+mvn test --tests "com.edgepoint.integration.*"
 ```
 
 ---
@@ -316,7 +316,7 @@ Let's start implementing!
 ## 🗂️ Test Structure
 
 ```
-src/test/java/com/collegeManagement/
+src/test/java/com/edgepoint/
 ├── unit/                           # Unit Tests (63 tests)
 │   ├── service/
 │   │   ├── auth/
@@ -421,16 +421,16 @@ mvn test --tests "AuthServiceTest.login_withValidCredentials_shouldReturnLoginRe
 
 ```bash
 # All unit tests
-mvn test --tests "com.collegeManagement.unit.*"
+mvn test --tests "com.edgepoint.unit.*"
 
 # All integration tests
-mvn test --tests "com.collegeManagement.integration.*"
+mvn test --tests "com.edgepoint.integration.*"
 
 # All service tests
-mvn test --tests "com.collegeManagement.unit.service.*"
+mvn test --tests "com.edgepoint.unit.service.*"
 
 # All controller tests
-mvn test --tests "com.collegeManagement.integration.api.*"
+mvn test --tests "com.edgepoint.integration.api.*"
 ```
 
 ### Run Tests by Tag (if using @Tag)
@@ -669,7 +669,7 @@ open build/reports/jacoco/test/html/index.html
 ```
 build/reports/jacoco/test/html/
 ├── index.html              # Main report
-├── com.collegeManagement/
+├── com.edgepoint/
 │   ├── service/            # Service layer coverage
 │   ├── controller/         # Controller layer coverage
 │   ├── repository/         # Repository layer coverage

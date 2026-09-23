@@ -29,7 +29,7 @@ C4Context
 ### 1.1 Core Architectural Principles
 1. **Decoupled Client-Server Interaction**: The React client acts as an autonomous consumer of the Spring Boot REST API. State management is strictly divided between client-side UI state (Zustand) and remote server state (TanStack Query v5).
 2. **Role-Based Access Control (RBAC)**: All endpoints and UI routes are protected by role-specific validation strategies (SuperAdmin, CollegeAdmin, HOD, Teacher, Student).
-3. **Database Migration & Schema Evolution**: Managed declaratively via Liquibase changelogs to ensure reliable, version-controlled schema transitions across environments.
+3. **Database Migration & Schema Evolution**: Managed declaratively via Flyway SQL migrations (`backend/src/main/resources/db/migration`) to ensure reliable, version-controlled schema transitions across environments.
 
 ---
 
@@ -70,14 +70,19 @@ graph TD
 
 ### 2.2 Backend Architecture & Domain Model
 
-#### 2.2.1 Layered Package Structure
-The backend follows a rigorous package-by-layer/feature architecture under `com.collegeManagement.production`:
+#### 2.2.1 Feature-First Package Structure
+The backend is organized **feature-first** under `com.edgepoint`, with one package per business domain
+(`core`, `academic`, `attendance`, `student`, `teacher`, `notification`). Each feature package contains
+its own layered slice:
 - `controller/`: REST controllers defining OpenAPI contracts and role-based pre-authorization annotations (`@PreAuthorize`).
 - `service/`: Transactional business logic layer orchestrating entity persistence and validation.
 - `repository/`: Spring Data JPA repositories with optimized JPQL queries.
-- `entity/`: JPA entities with robust auditing (`@CreatedDate`, `@LastModifiedDate`).
-- `dto/`: Immutable data transfer objects mapped automatically via MapStruct.
-- `exception/`: Global `@ControllerAdvice` handling exceptions and returning standardized RFC 7807 error responses.
+- `domain/`: JPA entities with auditing via `AuditableEntity` (`@CreatedDate`, `@LastModifiedDate`).
+- `dto/`: Data transfer objects (request/response records/POJOs), mapped manually in service layer.
+- `core/exception/`: Shared, global `@ControllerAdvice` (`GlobalExceptionHandler`) handling exceptions
+  across all feature packages and returning standardized error responses.
+- `core/security/crypto/EncryptedStringConverter`: AES-256-GCM JPA `AttributeConverter` for encrypting
+  secret columns at rest (e.g. notification SMTP password / WhatsApp API key).
 
 #### 2.2.2 Security & Authentication Flow
 1. **Login Request**: Client sends credentials to `/api/v1/auth/login`.

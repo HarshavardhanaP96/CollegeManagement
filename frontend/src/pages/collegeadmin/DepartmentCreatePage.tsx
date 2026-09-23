@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createDepartment } from '../../api/department';
 import { getErrorMessage } from '../../api/client';
+import { queryKeys } from '../../api/queryKeys';
 import { Card, Button, Input, Breadcrumbs } from '../../components/common';
 
 const createDeptSchema = z.object({
@@ -31,7 +32,7 @@ export function DepartmentCreatePage() {
   const createMutation = useMutation({
     mutationFn: createDepartment,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
       navigate('/departments');
     },
     onError: (error) => {

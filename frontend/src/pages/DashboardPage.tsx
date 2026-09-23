@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { getRoleStrategy } from '../strategies/roleStrategy';
 import type { DashboardCard } from '../strategies/roleStrategy';
+import { NavIcon } from '../components/layout/navIconMap';
 
 function StatCard({ card }: { card: DashboardCard }) {
   const { data, isLoading, error } = useQuery({
@@ -53,8 +54,8 @@ function QuickActionCard({ card }: { card: DashboardCard }) {
             to={action.path}
             className="group flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 px-5 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-sky-300 hover:bg-white hover:text-sky-700 hover:shadow-lg hover:shadow-sky-500/10"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-xl shadow-sm transition-colors group-hover:bg-sky-50">
-              {action.icon}
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition-colors group-hover:bg-sky-50 group-hover:text-sky-600">
+              <NavIcon name={action.icon} size={18} />
             </div>
             {action.label}
             <svg className="ml-auto h-5 w-5 -translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
