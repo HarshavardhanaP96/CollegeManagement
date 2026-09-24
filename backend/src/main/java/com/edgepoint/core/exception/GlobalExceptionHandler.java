@@ -2,9 +2,11 @@ package com.edgepoint.core.exception;
 
 
 
+import com.edgepoint.core.alerting.FailureRateMonitor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -27,7 +29,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final FailureRateMonitor failureRateMonitor;
 
     // =============================================
     // Custom Business Exceptions
@@ -329,6 +334,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, HttpServletRequest request) {
         log.error("Unexpected error occurred: ", ex);
+        failureRateMonitor.recordFailure();
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .success(false)

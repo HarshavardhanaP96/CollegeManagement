@@ -155,8 +155,8 @@ Expected: backend, frontend, postgres all `1/1 Running`.
 > **Backend startup time:** Spring Boot takes ~90 seconds to start (Flyway migrations + Hibernate).
 > Wait for `Started ProductionApplication` in logs before running API tests.
 >
-> **Expected warning:** Logstash TCP errors (`UnknownHostException: logstash.logging.svc.cluster.local`)
-> appear in backend logs — this is normal in local dev (ELK not deployed). App functions correctly.
+> **Logs are structured JSON on stdout** (see [OBSERVABILITY.md](OBSERVABILITY.md)) — no Logstash
+> host to reach, so there's no connection-retry warning to expect here anymore.
 
 ---
 
@@ -296,8 +296,8 @@ kind delete cluster --name college-mgmt
 | Backend pod CrashLoopBackOff | `kubectl logs deployment/backend -n college-mgmt --context kind-college-mgmt` |
 | Port-forward fails right after restart | Backend needs ~90s; wait for `Started ProductionApplication` in logs |
 | `ContainerCreating` stuck | `kubectl describe pod <pod-name> -n college-mgmt --context kind-college-mgmt` |
-| Logstash TCP errors in backend logs | Expected — ELK not deployed locally. Does **not** affect app |
 | Frontend Docker build fails with TS errors | Dockerfile must use `RUN npx vite build`, not `RUN npm run build` |
+| `/actuator/*` returns 401 | Shouldn't happen — `WebSecurityConfig` permits `/actuator/**` unauthenticated. If it does, a security change regressed it. |
 
 For the full standalone runbook see [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](LOCAL_K8S_DEPLOYMENT_RUNBOOK.md).
 
@@ -343,7 +343,9 @@ For the full standalone runbook see [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](LOCAL_K8S_
 - **Database:** MySQL 8.0.28+
 - **Web Server:** Nginx 1.18+ (as reverse proxy)
 - **SSL Certificate:** Let's Encrypt or commercial CA
-- **Monitoring:** Prometheus + Grafana (optional but recommended)
+- **Monitoring:** the backend exposes a Prometheus-format metrics endpoint at
+  `/api/v1/actuator/prometheus` out of the box (see [OBSERVABILITY.md](OBSERVABILITY.md)) —
+  point a Prometheus server at it; Grafana on top is optional.
 
 ---
 

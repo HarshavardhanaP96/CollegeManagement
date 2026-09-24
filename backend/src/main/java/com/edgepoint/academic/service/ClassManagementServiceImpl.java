@@ -6,20 +6,25 @@ import com.edgepoint.academic.domain.Subject;
 import com.edgepoint.academic.repository.ClassRepository;
 import com.edgepoint.academic.repository.ClassSubjectRepository;
 import com.edgepoint.academic.repository.DepartmentRepository;
+import com.edgepoint.academic.repository.SubjectRepository;
 import com.edgepoint.academic.repository.TeacherAssignmentRepository;
 
 import com.edgepoint.academic.dto.AddSubjectToClassRequest;
 import com.edgepoint.academic.dto.ClassCreateRequest;
+import com.edgepoint.academic.dto.ClassSubjectResponseDTO;
 import com.edgepoint.academic.dto.TeacherAssignRequest;
+import com.edgepoint.academic.dto.TeacherAssignmentResponseDTO;
 import com.edgepoint.academic.dto.ClassResponseDTO;
 import com.edgepoint.academic.domain.AcademicClass;
 import com.edgepoint.academic.domain.ClassSubject;
 import com.edgepoint.academic.domain.TeacherAssignment;
 
 import com.edgepoint.academic.domain.Department;
+import com.edgepoint.core.domain.User;
 import com.edgepoint.core.exception.BadRequestException;
 import com.edgepoint.core.exception.DuplicateResourceException;
 import com.edgepoint.core.exception.ResourceNotFoundException;
+import com.edgepoint.core.repository.UserRepository;
 import com.edgepoint.core.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +44,8 @@ public class ClassManagementServiceImpl implements ClassManagementService {
     private final ClassSubjectRepository classSubjectRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
     private final DepartmentRepository departmentRepository;
+    private final SubjectRepository subjectRepository;
+    private final UserRepository userRepository;
     private final TenantContext tenantContext;
 
     @Override
@@ -109,6 +116,55 @@ public class ClassManagementServiceImpl implements ClassManagementService {
         teacherAssignmentRepository.save(assignment);
         log.info("Teacher {} assigned to class-subject {}",
                 request.getTeacherUserId(), request.getClassSubjectId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClassSubjectResponseDTO> getClassSubjects(Integer classId) {
+        classRepository.findByClassIdAndIsDeletedFalse(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("AcademicClass not found: " + classId));
+
+        return classSubjectRepository.findByClassIdAndIsDeletedFalse(classId).stream()
+                .map(cs -> {
+                    Subject subject = subjectRepository.findBySubjectIdAndIsDeletedFalse(cs.getSubjectId())
+                            .orElse(null);
+                    ClassSubjectResponseDTO dto = new ClassSubjectResponseDTO();
+                    dto.setClassSubjectId(cs.getClassSubjectId());
+                    dto.setClassId(cs.getClassId());
+                    dto.setSubjectId(cs.getSubjectId());
+                    dto.setSubjectName(subject != null ? subject.getSubjectName() : null);
+                    dto.setSubjectCode(subject != null ? subject.getSubjectCode() : null);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TeacherAssignmentResponseDTO> getTeacherAssignmentsByClass(Integer classId) {
+        AcademicClass classEntity = classRepository.findByClassIdAndIsDeletedFalse(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("AcademicClass not found: " + classId));
+
+        List<ClassSubject> classSubjects = classSubjectRepository.findByClassIdAndIsDeletedFalse(classId);
+
+        return classSubjects.stream()
+                .flatMap(cs -> teacherAssignmentRepository.findActiveByClassSubjectId(cs.getClassSubjectId()).stream()
+                        .map(ta -> {
+                            Subject subject = subjectRepository.findBySubjectIdAndIsDeletedFalse(cs.getSubjectId())
+                                    .orElse(null);
+                            User teacher = userRepository.findById(ta.getTeacherUserId()).orElse(null);
+                            TeacherAssignmentResponseDTO dto = new TeacherAssignmentResponseDTO();
+                            dto.setAssignmentId(ta.getAssignmentId());
+                            dto.setClassSubjectId(cs.getClassSubjectId());
+                            dto.setClassName(classEntity.getClassName());
+                            dto.setSubjectName(subject != null ? subject.getSubjectName() : null);
+                            dto.setTeacherUserId(ta.getTeacherUserId());
+                            dto.setTeacherName(teacher != null ? teacher.getFullName() : null);
+                            dto.setIsActive(ta.getIsActive());
+                            dto.setCreatedAt(ta.getCreatedAt());
+                            return dto;
+                        }))
+                .collect(Collectors.toList());
     }
 
     @Override

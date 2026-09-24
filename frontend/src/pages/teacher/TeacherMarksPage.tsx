@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Select, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '../../components/common';
-import { getTeacherAssignments, enterMarks, getMarksByAssignment } from '../../api';
+import { enterMarks, getMarksByAssignment, getRoster } from '../../api/marks';
+import { getTeacherAssignments } from '../../api/assignment';
+import { getExamTypes } from '../../api/examType';
 import { getErrorMessage } from '../../api/client';
 import { queryKeys } from '../../api/queryKeys';
 
@@ -9,12 +11,22 @@ export function TeacherMarksPage() {
   const queryClient = useQueryClient();
   const [selectedAssignment, setSelectedAssignment] = useState<number | null>(null);
   const [examTypeId, setExamTypeId] = useState<number | null>(null);
-  const [maxMarks, setMaxMarks] = useState<number>(100);
-  const [marksEntries, setMarksEntries] = useState<Record<number, { marksObtained: number; remarks: string }>>({});
+  const [marksEntries, setMarksEntries] = useState<Record<number, { marksObtained: string; remarks: string }>>({});
 
   const { data: assignmentsData } = useQuery({
     queryKey: queryKeys.teacherAssignments.all,
     queryFn: () => getTeacherAssignments(),
+  });
+
+  const { data: examTypesData } = useQuery({
+    queryKey: queryKeys.examTypes.all,
+    queryFn: () => getExamTypes(),
+  });
+
+  const { data: rosterData } = useQuery({
+    queryKey: queryKeys.roster.marks(selectedAssignment ?? undefined),
+    queryFn: () => getRoster(selectedAssignment!),
+    enabled: !!selectedAssignment,
   });
 
   const { data: marksData } = useQuery({
@@ -36,21 +48,35 @@ export function TeacherMarksPage() {
   });
 
   const assignments = assignmentsData?.data || [];
+  const examTypes = examTypesData?.data || [];
+  const roster = rosterData?.data || [];
   const marks = marksData?.data || [];
+  const selectedExamType = examTypes.find((et) => et.examTypeId === examTypeId);
+
+  const setEntry = (studentUserId: number, field: 'marksObtained' | 'remarks', value: string) => {
+    setMarksEntries((prev) => {
+      const existing = prev[studentUserId] ?? { marksObtained: '', remarks: '' };
+      return { ...prev, [studentUserId]: { ...existing, [field]: value } };
+    });
+  };
 
   const handleEnterMarks = () => {
     if (!selectedAssignment || !examTypeId) return;
 
-    const entries = Object.entries(marksEntries).map(([studentId, entry]) => ({
-      studentUserId: parseInt(studentId),
-      marksObtained: entry.marksObtained,
-      remarks: entry.remarks || undefined,
-    }));
+    const studentMarks = Object.entries(marksEntries)
+      .filter(([, entry]) => entry.marksObtained !== '')
+      .map(([studentId, entry]) => ({
+        studentUserId: parseInt(studentId),
+        marksObtained: parseFloat(entry.marksObtained),
+        remarks: entry.remarks || undefined,
+      }));
+
+    if (studentMarks.length === 0) return;
 
     enterMarksMutation.mutate({
       assignmentId: selectedAssignment,
       examTypeId,
-      marksEntries: entries,
+      studentMarks,
     });
   };
 
@@ -79,36 +105,75 @@ export function TeacherMarksPage() {
               }}
               placeholder="Select a class-subject"
             />
-            <Input
-              label="Exam Type ID"
-              type="number"
-              value={examTypeId || ''}
-              onChange={(e) => setExamTypeId(e.target.value ? parseInt(e.target.value) : null)}
-              placeholder="Enter exam type ID"
+            <Select
+              label="Exam Type"
+              options={examTypes.map((et) => ({
+                value: et.examTypeId,
+                label: `${et.examTypeName} (max ${et.maxMarks})`,
+              }))}
+              value={examTypeId?.toString() || ''}
+              onChange={(e) => {
+                setExamTypeId(e.target.value ? parseInt(e.target.value) : null);
+                setMarksEntries({});
+              }}
+              placeholder="Select an exam type"
             />
           </div>
-          <Input
-            label="Maximum Marks"
-            type="number"
-            value={maxMarks}
-            onChange={(e) => setMaxMarks(parseInt(e.target.value) || 100)}
-          />
 
           {selectedAssignment && examTypeId && (
             <div className="mt-4">
-              <p className="mb-2 text-sm text-slate-600">
-                Enter marks for students. Marks cannot exceed {maxMarks}.
-              </p>
-              <div className="rounded border p-4">
-                <p className="text-sm text-slate-500">
-                  Note: Student list will be loaded from the backend when entering marks.
-                </p>
-              </div>
+              {roster.length === 0 ? (
+                <div className="rounded border p-4">
+                  <p className="text-sm text-slate-500">No students are enrolled in this class yet.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-2 text-sm text-slate-600">
+                    Enter marks for students. Marks cannot exceed {selectedExamType?.maxMarks ?? '-'}.
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Roll No.</TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Marks Obtained</TableHead>
+                        <TableHead>Remarks</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roster.map((student) => (
+                        <TableRow key={student.studentUserId}>
+                          <TableCell>{student.rollNumber}</TableCell>
+                          <TableCell className="font-medium">{student.fullName}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={selectedExamType?.maxMarks}
+                              value={marksEntries[student.studentUserId]?.marksObtained ?? ''}
+                              onChange={(e) => setEntry(student.studentUserId, 'marksObtained', e.target.value)}
+                              placeholder="0"
+                              className="w-24"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={marksEntries[student.studentUserId]?.remarks ?? ''}
+                              onChange={(e) => setEntry(student.studentUserId, 'remarks', e.target.value)}
+                              placeholder="Optional"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
               <div className="mt-4 flex justify-end">
                 <Button
                   onClick={handleEnterMarks}
                   isLoading={enterMarksMutation.isPending}
-                  disabled={Object.keys(marksEntries).length === 0}
+                  disabled={Object.values(marksEntries).every((e) => !e.marksObtained)}
                 >
                   Submit Marks
                 </Button>
@@ -141,7 +206,7 @@ export function TeacherMarksPage() {
                   <TableCell>{mark.examTypeName}</TableCell>
                   <TableCell>{mark.marksObtained}</TableCell>
                   <TableCell>{mark.maxMarks}</TableCell>
-                  <TableCell>{mark.percentage.toFixed(2)}%</TableCell>
+                  <TableCell>{((mark.marksObtained / mark.maxMarks) * 100).toFixed(2)}%</TableCell>
                   <TableCell>{mark.remarks || '-'}</TableCell>
                 </TableRow>
               ))}

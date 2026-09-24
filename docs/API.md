@@ -25,6 +25,8 @@
 16. [Student Management APIs](#19-student-management-apis)
 17. [Common Response Codes](#17-common-response-codes)
 18. [Error Handling](#18-error-handling)
+23. [Support API](#23-support-api)
+24. [Observability Endpoints](#24-observability-endpoints)
 
 ---
 
@@ -1100,6 +1102,54 @@ GET /api/v1/colleges?page=0&size=20&sort=collegeName,asc
 
 **Swagger UI:** `https://college.example.com/api/v1/swagger-ui.html`  
 **OpenAPI Spec:** `https://college.example.com/api/v1/api-docs`
+
+---
+
+## 23. Support API
+
+### 23.1 Submit a Support Query
+**Endpoint:** `POST /support`  
+**Access:** Any authenticated user (all roles)  
+**Headers:** `Authorization: Bearer {token}`
+
+Forwards the query to the ops Discord channel (see
+[OBSERVABILITY.md](OBSERVABILITY.md)). Nothing is persisted — there is no ticket list to
+fetch back.
+
+**Request Body:**
+```json
+{
+  "subject": "Can't submit attendance for my class",
+  "message": "Describe the issue in detail here..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Your support query has been submitted",
+  "data": null,
+  "timestamp": "2026-09-24T08:04:54.131"
+}
+```
+
+---
+
+## 24. Observability Endpoints
+
+These are Spring Boot Actuator endpoints, not app controllers — responses are Actuator's own
+JSON shape, **not** wrapped in the `{ success, message, data, timestamp }` envelope used
+everywhere else in this document. All of them are permitted without authentication (required
+for Kubernetes probes and Prometheus scraping — see `WebSecurityConfig`). Full details in
+[OBSERVABILITY.md](OBSERVABILITY.md).
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /actuator/health` | Liveness/readiness (`status: UP`/`DOWN` per component — db, redis, disk, ...) |
+| `GET /actuator/info` | App name, build version/time (from `build-info.properties`), and `apiVersion` |
+| `GET /actuator/metrics` | Spring Boot's own metrics browser |
+| `GET /actuator/prometheus` | Prometheus-format metrics for scraping |
 
 ---
 

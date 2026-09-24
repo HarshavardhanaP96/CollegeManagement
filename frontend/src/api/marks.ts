@@ -6,10 +6,12 @@ export interface MarkEntry {
   remarks?: string;
 }
 
+// Shape matches backend com.edgepoint.academic.dto.MarkCreateRequest exactly — the field is
+// `studentMarks`, not `marksEntries`.
 export interface MarkCreateRequest {
   assignmentId: number;
   examTypeId: number;
-  marksEntries: MarkEntry[];
+  studentMarks: MarkEntry[];
 }
 
 export interface MarkUpdateRequest {
@@ -17,30 +19,31 @@ export interface MarkUpdateRequest {
   remarks?: string;
 }
 
+// Shape matches backend com.edgepoint.academic.dto.MarkResponseDTO exactly — no rollNumber
+// or percentage field exists there; percentage is derived client-side from marksObtained/maxMarks.
 export interface MarkResponse {
   markId: number;
   assignmentId: number;
   studentUserId: number;
   studentName: string;
-  rollNumber: string;
   examTypeId: number;
   examTypeName: string;
   marksObtained: number;
   maxMarks: number;
-  percentage: number;
   remarks?: string;
   createdAt: string;
 }
 
+// Shape matches backend com.edgepoint.academic.dto.MarkSummaryDTO exactly.
 export interface MarksSummary {
   assignmentId: number;
   examTypeId: number;
   examTypeName: string;
   maxMarks: number;
   totalStudents: number;
-  marksEntered: number;
+  enteredCount: number;
   averageMarks: number;
-  createdAt: string;
+  averagePercentage: number;
 }
 
 export interface ApiResponse<T> {
@@ -48,6 +51,18 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
   timestamp: string;
+}
+
+// Shape matches backend com.edgepoint.academic.dto.RosterStudentDTO exactly.
+export interface RosterStudent {
+  studentUserId: number;
+  rollNumber: string;
+  fullName: string;
+}
+
+export async function getRoster(assignmentId: number): Promise<ApiResponse<RosterStudent[]>> {
+  const { data } = await apiClient.get<ApiResponse<RosterStudent[]>>(`/marks/assignment/${assignmentId}/roster`);
+  return data;
 }
 
 // Teacher marks endpoints (now at /marks/*)

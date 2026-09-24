@@ -5,7 +5,7 @@ import com.edgepoint.academic.dto.MarkCreateRequest;
 import com.edgepoint.academic.dto.MarkUpdateRequest;
 import com.edgepoint.academic.dto.MarkResponseDTO;
 import com.edgepoint.academic.dto.MarkSummaryDTO;
-import com.edgepoint.academic.dto.ExamTypeDTO;
+import com.edgepoint.academic.dto.RosterStudentDTO;
 
 import java.util.List;
 
@@ -14,5 +14,6 @@ public interface MarkService {
     MarkResponseDTO updateMarks(Integer markId, MarkUpdateRequest request);
     List<MarkResponseDTO> getMarksByAssignment(Integer assignmentId, Integer examTypeId);
     MarkSummaryDTO getMarksSummary(Integer assignmentId, Integer examTypeId);
-    List<ExamTypeDTO> getExamTypes();
+    /** Students enrolled in this assignment's class — the roster to grade. */
+    List<RosterStudentDTO> getRoster(Integer assignmentId);
 }

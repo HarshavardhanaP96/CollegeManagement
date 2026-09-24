@@ -44,6 +44,11 @@ public class WebSecurityConfig {
                 // Public endpoints
                 .requestMatchers("/auth/login", "/auth/refresh-token").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                // Kubernetes liveness/readiness probes and Prometheus scraping hit these
+                // unauthenticated — without this they'd 401 and probes/scraping would never work.
+                // Internal-only in practice (not routed externally); tighten with a network
+                // policy or a separate management port if that stops being true.
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // All other endpoints require authentication

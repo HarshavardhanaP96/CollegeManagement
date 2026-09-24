@@ -4,13 +4,4 @@ namePrefix: test-
 commonLabels:
   variant: test
 patches:
-  - target:
-      kind: Deployment
-      name: backend
-    patch: |-
-      - op: replace
-        path: /spec/replicas
-        value: 1
-      - op: replace
-        path: /spec/template/spec/containers/0/env/2/value
-        value: jdbc:postgresql://test-postgres-service:5432/college_management
+  - path: backend-test.yaml

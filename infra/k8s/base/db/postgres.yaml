@@ -17,7 +17,7 @@ spec:
         image: postgres:15-alpine
         env:
         - name: POSTGRES_DB
-          value: college_management
+          value: edgepoint
         - name: POSTGRES_USER
           value: postgres
         - name: POSTGRES_PASSWORD

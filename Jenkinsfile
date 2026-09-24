@@ -62,8 +62,8 @@ pipeline {
             steps {
                 script {
                     // Use sed to update image tags in deployment files
-                    sh "sed -i 's|image: .*/${BACKEND_IMAGE}:.*|image: ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}|g' k8s/base/backend/backend.yaml"
-                    sh "sed -i 's|image: .*/${FRONTEND_IMAGE}:.*|image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}|g' k8s/base/frontend/frontend.yaml"
+                    sh "sed -i 's|image: .*/${BACKEND_IMAGE}:.*|image: ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG}|g' infra/k8s/base/backend/backend.yaml"
+                    sh "sed -i 's|image: .*/${FRONTEND_IMAGE}:.*|image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG}|g' infra/k8s/base/frontend/frontend.yaml"
                 }
             }
         }
@@ -72,7 +72,7 @@ pipeline {
             steps {
                 // In a GitOps flow, we would commit and push the updated manifests
                 // ArgoCD would then detect the change and sync
-                sh 'git add k8s/base/backend/backend.yaml k8s/base/frontend/frontend.yaml'
+                sh 'git add infra/k8s/base/backend/backend.yaml infra/k8s/base/frontend/frontend.yaml'
                 sh "git commit -m 'ci: update image tags to ${IMAGE_TAG}'"
                 sh 'git push origin main'
                 

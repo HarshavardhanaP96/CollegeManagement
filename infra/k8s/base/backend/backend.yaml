@@ -23,7 +23,11 @@ spec:
         - name: LOGSTASH_PORT
           value: "5000"
         - name: SPRING_DATASOURCE_URL
-          value: jdbc:postgresql://postgres-service:5432/college_management
+          # Must match the app's real default DB name (see backend/src/main/resources/
+          # application.yml) — this previously said "college_management", a name the app
+          # itself never uses, which only "worked" by coincidence because this env var always
+          # overrides the yml default anyway. Fixed for consistency with local dev and docs.
+          value: jdbc:postgresql://postgres-service:5432/edgepoint
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -39,6 +43,49 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: secret
+        - name: ENCRYPTION_KEY
+          # AES-256 key for encrypting secret columns at rest (e.g. notification config
+          # credentials — see core/security/crypto/EncryptedStringConverter). Without this,
+          # the app silently falls back to the dev-only default baked into application.yml.
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: encryption-key
+        - name: DISCORD_WEBHOOK_URL
+          # Discord incoming-webhook URL for ops alerts (frequent failures, slow requests,
+          # support submissions — see DiscordAlertService / docs/OBSERVABILITY.md). Blank
+          # placeholder by default; the service just logs a warning and skips sending when unset.
+          valueFrom:
+            secretKeyRef:
+              name: discord-secret
+              key: webhook-url
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        # application.yml already enables management.health.livenessstate/readinessstate —
+        # this was never wired to an actual probe, so Kubernetes had no way to know the app
+        # was still starting (~90s: Flyway + Hibernate validate) vs. actually unhealthy.
+        # startupProbe covers the slow boot; liveness/readiness only start after it succeeds.
+        startupProbe:
+          httpGet:
+            path: /api/v1/actuator/health
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/v1/actuator/health/readiness
+            port: 8080
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/v1/actuator/health/liveness
+            port: 8080
+          periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service

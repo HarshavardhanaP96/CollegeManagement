@@ -6,10 +6,12 @@ export interface AttendanceRecord {
   remarks?: string;
 }
 
+// Shape matches backend com.edgepoint.attendance.dto.AttendanceCreateRequest exactly — the
+// field is `studentAttendances`, not `attendanceRecords`.
 export interface AttendanceCreateRequest {
   assignmentId: number;
   recordDate: string;
-  attendanceRecords: AttendanceRecord[];
+  studentAttendances: AttendanceRecord[];
 }
 
 export interface AttendanceUpdateRequest {
@@ -17,26 +19,29 @@ export interface AttendanceUpdateRequest {
   remarks?: string;
 }
 
+// Shape matches backend com.edgepoint.attendance.dto.AttendanceResponseDTO exactly — no
+// rollNumber field exists there.
 export interface AttendanceResponse {
   attendanceId: number;
   assignmentId: number;
   studentUserId: number;
   studentName: string;
-  rollNumber: string;
   recordDate: string;
   isPresent: boolean;
   remarks?: string;
   createdAt: string;
 }
 
+// Shape matches backend com.edgepoint.attendance.dto.AttendanceSummaryDTO exactly.
 export interface AttendanceSummary {
   assignmentId: number;
   recordDate: string;
   totalStudents: number;
   presentCount: number;
   absentCount: number;
+  markedCount: number;
+  unmarkedCount: number;
   attendancePercentage: number;
-  createdAt: string;
 }
 
 export interface ApiResponse<T> {
@@ -44,6 +49,20 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
   timestamp: string;
+}
+
+// Shape matches backend com.edgepoint.academic.dto.RosterStudentDTO exactly. Named distinctly
+// from marks.ts's identical DTO/endpoint pair so the two don't collide in the `api/index.ts`
+// barrel re-export.
+export interface AttendanceRosterStudent {
+  studentUserId: number;
+  rollNumber: string;
+  fullName: string;
+}
+
+export async function getAttendanceRoster(assignmentId: number): Promise<ApiResponse<AttendanceRosterStudent[]>> {
+  const { data } = await apiClient.get<ApiResponse<AttendanceRosterStudent[]>>(`/attendance/assignment/${assignmentId}/roster`);
+  return data;
 }
 
 // Teacher attendance endpoints (now at /attendance/*)

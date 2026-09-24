@@ -24,6 +24,8 @@ import { DepartmentDetailPage } from '../pages/collegeadmin/DepartmentDetailPage
 import { CourseListPage } from '../pages/collegeadmin/CourseListPage';
 import { CourseCreatePage } from '../pages/collegeadmin/CourseCreatePage';
 import { CourseDetailPage } from '../pages/collegeadmin/CourseDetailPage';
+import { ExamTypeListPage } from '../pages/collegeadmin/ExamTypeListPage';
+import { ExamTypeCreatePage } from '../pages/collegeadmin/ExamTypeCreatePage';
 
 // HOD pages
 import { SubjectListPage } from '../pages/hod/SubjectListPage';
@@ -48,6 +50,9 @@ import { StudentProfilePage } from '../pages/student/StudentProfilePage';
 import { StudentMarksPage } from '../pages/student/StudentMarksPage';
 import { StudentAttendancePage } from '../pages/student/StudentAttendancePage';
 
+// Shared pages
+import { SupportPage } from '../pages/SupportPage';
+
 /**
  * Route → Component mapping.
  * Sub-routes like /new and /:id are allowed if their parent list route is in the role
@@ -64,6 +69,8 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/courses':               CourseListPage,
   '/courses/new':           CourseCreatePage,
   '/courses/:id':           CourseDetailPage,
+  '/exam-types':            ExamTypeListPage,
+  '/exam-types/new':        ExamTypeCreatePage,
   '/subjects':              SubjectListPage,
   '/subjects/new':          SubjectCreatePage,
   '/subjects/:id':          SubjectDetailPage,
@@ -81,6 +88,7 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/profile':               StudentProfilePage,
   '/student-marks':         StudentMarksPage,
   '/student-attendance':    StudentAttendancePage,
+  '/support':               SupportPage,
 };
 
 function LayoutWrapper() {

@@ -10,9 +10,11 @@ import {
   UserRound,
   School,
   ClipboardCheck,
+  ListChecks,
   NotebookPen,
   UserCircle,
   CirclePlus,
+  LifeBuoy,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -27,8 +29,10 @@ const ICONS: Record<string, LucideIcon> = {
   classes: School,
   attendance: ClipboardCheck,
   marks: NotebookPen,
+  examTypes: ListChecks,
   profile: UserCircle,
   plus: CirclePlus,
+  support: LifeBuoy,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

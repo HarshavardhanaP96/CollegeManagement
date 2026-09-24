@@ -5,6 +5,7 @@
 package com.edgepoint.attendance.controller;
 
 import com.edgepoint.academic.domain.Mark;
+import com.edgepoint.academic.dto.RosterStudentDTO;
 import com.edgepoint.core.dto.ApiResponse;
 
 import com.edgepoint.attendance.dto.AttendanceCreateRequest;
@@ -102,5 +103,12 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<List<TeacherAssignmentDTO>>> getMyAssignments() {
         List<TeacherAssignmentDTO> assignments = attendanceService.getTeacherAssignments();
         return ResponseEntity.ok(ApiResponse.success(assignments, "Assignments retrieved successfully"));
+    }
+
+    @GetMapping("/assignment/{assignmentId}/roster")
+    @Operation(summary = "Get roster", description = "Students enrolled in this assignment's class — who to mark")
+    public ResponseEntity<ApiResponse<List<RosterStudentDTO>>> getRoster(@PathVariable Integer assignmentId) {
+        List<RosterStudentDTO> roster = attendanceService.getRoster(assignmentId);
+        return ResponseEntity.ok(ApiResponse.success(roster, "Roster retrieved successfully"));
     }
 }

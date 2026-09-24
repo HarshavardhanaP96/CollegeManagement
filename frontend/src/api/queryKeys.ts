@@ -56,6 +56,25 @@ export const queryKeys = {
 
   teacherAssignments: { all: ['teacher-assignments'] as const },
 
+  classSubjects: {
+    byClass: (classId: number) => ['class-subjects', classId] as const,
+  },
+  classAssignments: {
+    byClass: (classId: number) => ['class-assignments', classId] as const,
+  },
+  enrollments: {
+    byClass: (classId: number) => ['enrollments', classId] as const,
+  },
+  examTypes: {
+    all: ['exam-types'] as const,
+  },
+  roster: {
+    marks: (assignmentId?: number) => ['roster', 'marks', assignmentId] as const,
+    attendance: (assignmentId?: number) => ['roster', 'attendance', assignmentId] as const,
+  },
+
+  appInfo: { all: ['app-info'] as const },
+
   studentProfile: { all: ['student-profile'] as const },
 
   studentMarks: {

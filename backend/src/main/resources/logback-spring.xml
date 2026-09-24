@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
-    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="college-management"/>
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="edgepoint-api"/>
 
-    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>${LOGSTASH_HOST:-logstash}:${LOGSTASH_PORT:-5000}</destination>
+    <!-- Structured JSON to stdout — works with any log collector (kubectl logs, Fluent Bit,
+         CloudWatch, etc.) without running a separate log-shipping server. Replaces the previous
+         LogstashTcpSocketAppender, which required a reachable Logstash host and otherwise
+         retried a failing connection every ~30s. -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"app_name":"${appName}"}</customFields>
         </encoder>
     </appender>
-    
+
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOGSTASH"/>
+        <appender-ref ref="JSON_CONSOLE"/>
     </root>
 </configuration>

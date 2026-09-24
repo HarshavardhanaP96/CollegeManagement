@@ -1,6 +1,7 @@
 // src/main/java/com/collegeManagement/service/attendance/AttendanceServiceImpl.java
 package com.edgepoint.attendance.service;
 
+import com.edgepoint.academic.dto.RosterStudentDTO;
 import com.edgepoint.attendance.dto.AttendanceCreateRequest;
 import com.edgepoint.attendance.dto.AttendanceUpdateRequest;
 import com.edgepoint.attendance.dto.StudentAttendanceDTO;
@@ -16,6 +17,8 @@ import com.edgepoint.core.exception.ResourceNotFoundException;
 import com.edgepoint.attendance.repository.AttendanceRecordRepository;
 import com.edgepoint.academic.repository.StudentEnrollmentRepository;
 import com.edgepoint.academic.repository.TeacherAssignmentRepository;
+import com.edgepoint.student.domain.StudentProfile;
+import com.edgepoint.student.repository.StudentProfileRepository;
 import com.edgepoint.core.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final AttendanceRecordRepository attendanceRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
+    private final StudentProfileRepository studentProfileRepository;
     private final TenantContext tenantContext;
 
     @Override
@@ -179,6 +183,32 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         return assignments.stream()
                 .map(this::mapToAssignmentDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RosterStudentDTO> getRoster(Integer assignmentId) {
+        validateTeacherAccess(assignmentId);
+
+        TeacherAssignment assignment = teacherAssignmentRepository
+                .findByAssignmentIdAndIsDeletedFalse(assignmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
+
+        List<StudentEnrollment> enrollments = enrollmentRepository
+                .findActiveByClassId(assignment.getClassSubject().getClassId());
+
+        return enrollments.stream()
+                .map(e -> {
+                    StudentProfile profile = studentProfileRepository
+                            .findByStudentUserIdAndIsDeletedFalse(e.getStudentUserId())
+                            .orElse(null);
+                    return RosterStudentDTO.builder()
+                            .studentUserId(e.getStudentUserId())
+                            .rollNumber(profile != null ? profile.getRollNumber() : null)
+                            .fullName(e.getStudent().getFullName())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 

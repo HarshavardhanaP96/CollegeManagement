@@ -5,7 +5,7 @@ import com.edgepoint.core.dto.ApiResponse;
 
 import com.edgepoint.academic.dto.MarkCreateRequest;
 import com.edgepoint.academic.dto.MarkUpdateRequest;
-import com.edgepoint.academic.dto.ExamTypeDTO;
+import com.edgepoint.academic.dto.RosterStudentDTO;
 import com.edgepoint.academic.dto.MarkResponseDTO;
 import com.edgepoint.academic.dto.MarkSummaryDTO;
 import com.edgepoint.academic.service.MarkService;
@@ -85,10 +85,10 @@ public class MarkController {
         return ResponseEntity.ok(ApiResponse.success(response, "Mark updated successfully"));
     }
 
-    @GetMapping("/exam-types")
-    @Operation(summary = "Get exam types", description = "Get all exam types for the college")
-    public ResponseEntity<ApiResponse<List<ExamTypeDTO>>> getExamTypes() {
-        List<ExamTypeDTO> examTypes = markService.getExamTypes();
-        return ResponseEntity.ok(ApiResponse.success(examTypes, "Exam types retrieved successfully"));
+    @GetMapping("/assignment/{assignmentId}/roster")
+    @Operation(summary = "Get roster", description = "Students enrolled in this assignment's class — who to grade")
+    public ResponseEntity<ApiResponse<List<RosterStudentDTO>>> getRoster(@PathVariable Integer assignmentId) {
+        List<RosterStudentDTO> roster = markService.getRoster(assignmentId);
+        return ResponseEntity.ok(ApiResponse.success(roster, "Roster retrieved successfully"));
     }
 }

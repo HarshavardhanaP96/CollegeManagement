@@ -32,17 +32,19 @@ export interface NavItem {
 }
 
 export type Action = 'create' | 'read' | 'update' | 'delete';
-export type Resource = 
-  | 'colleges' 
-  | 'departments' 
-  | 'courses' 
-  | 'subjects' 
-  | 'students' 
-  | 'teachers' 
-  | 'classes' 
-  | 'attendance' 
-  | 'marks' 
-  | 'profile';
+export type Resource =
+  | 'colleges'
+  | 'departments'
+  | 'courses'
+  | 'subjects'
+  | 'students'
+  | 'teachers'
+  | 'classes'
+  | 'attendance'
+  | 'marks'
+  | 'examTypes'
+  | 'profile'
+  | 'support';
 
 export interface DashboardCard {
   key: string;
@@ -83,6 +85,8 @@ const superAdminStrategy: RoleStrategy = {
     { key: 'classes',       label: 'Classes',       path: '/classes',            icon: 'classes', group: 'Academic' },
     { key: 'attendance',    label: 'Attendance',     path: '/attendance',         icon: 'attendance', group: 'Operations' },
     { key: 'marks',         label: 'Marks',          path: '/marks',             icon: 'marks', group: 'Operations' },
+    { key: 'examTypes',     label: 'Exam Types',     path: '/exam-types',        icon: 'examTypes', group: 'Operations' },
+    { key: 'support',       label: 'Support',        path: '/support',           icon: 'support', group: 'Support' },
   ],
   permissions: {
     colleges: ALL_ACTIONS,
@@ -94,7 +98,9 @@ const superAdminStrategy: RoleStrategy = {
     classes: ALL_ACTIONS,
     attendance: ALL_ACTIONS,
     marks: ALL_ACTIONS,
+    examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
+    support: ['create', 'read'],
   },
   dashboardCards: [
     {
@@ -143,6 +149,8 @@ const collegeAdminStrategy: RoleStrategy = {
     { key: 'students',      label: 'Students',      path: '/students',      icon: 'students', group: 'Academic' },
     { key: 'teachers',      label: 'Teachers',      path: '/teachers',      icon: 'teachers', group: 'Academic' },
     { key: 'classes',       label: 'Classes',       path: '/classes',       icon: 'classes', group: 'Academic' },
+    { key: 'examTypes',     label: 'Exam Types',    path: '/exam-types',    icon: 'examTypes', group: 'Operations' },
+    { key: 'support',       label: 'Support',       path: '/support',       icon: 'support', group: 'Support' },
   ],
   permissions: {
     departments: ALL_ACTIONS,
@@ -153,7 +161,9 @@ const collegeAdminStrategy: RoleStrategy = {
     classes: ALL_ACTIONS,
     attendance: ALL_ACTIONS,
     marks: ALL_ACTIONS,
+    examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
+    support: ['create', 'read'],
   },
   dashboardCards: [
     {
@@ -190,6 +200,7 @@ const hodStrategy: RoleStrategy = {
     { key: 'students',    label: 'Students',    path: '/students',    icon: 'students', group: 'Department' },
     { key: 'teachers',    label: 'Teachers',    path: '/teachers',    icon: 'teachers', group: 'Department' },
     { key: 'classes',     label: 'Classes',     path: '/classes',     icon: 'classes', group: 'Department' },
+    { key: 'support',     label: 'Support',     path: '/support',     icon: 'support', group: 'Support' },
   ],
   permissions: {
     subjects: ALL_ACTIONS,
@@ -202,7 +213,9 @@ const hodStrategy: RoleStrategy = {
     // Read-only: HOD reads the course catalog to link a new class to a program
     // (see ClassCreatePage) — matches CourseController's @PreAuthorize on GET.
     courses: ['read'],
+    examTypes: ['read'],
     profile: ALL_ACTIONS,
+    support: ['create', 'read'],
   },
   dashboardCards: [
     {
@@ -226,6 +239,7 @@ const teacherStrategy: RoleStrategy = {
     { key: 'dashboard',   label: 'Dashboard',   path: '/',             icon: 'dashboard', group: 'Main' },
     { key: 'attendance',  label: 'Attendance',   path: '/attendance',   icon: 'attendance', group: 'My Work' },
     { key: 'marks',       label: 'Marks',        path: '/marks',        icon: 'marks', group: 'My Work' },
+    { key: 'support',     label: 'Support',      path: '/support',      icon: 'support', group: 'Support' },
   ],
   permissions: {
     attendance: ALL_ACTIONS,
@@ -233,7 +247,9 @@ const teacherStrategy: RoleStrategy = {
     students: ['read'],
     subjects: ['read'],
     classes: ['read'],
+    examTypes: ['read'],
     profile: ALL_ACTIONS,
+    support: ['create', 'read'],
   },
   dashboardCards: [
     {
@@ -277,12 +293,14 @@ const studentStrategy: RoleStrategy = {
     { key: 'profile',           label: 'My Profile',      path: '/profile',              icon: 'profile', group: 'My Data' },
     { key: 'student-marks',     label: 'My Marks',        path: '/student-marks',        icon: 'marks', group: 'My Data' },
     { key: 'student-attendance',label: 'My Attendance',   path: '/student-attendance',   icon: 'attendance', group: 'My Data' },
+    { key: 'support',           label: 'Support',         path: '/support',              icon: 'support', group: 'Support' },
   ],
   permissions: {
     profile: ['read', 'update'],
     attendance: ['read'],
     marks: ['read'],
     subjects: ['read'],
+    support: ['create', 'read'],
   },
   dashboardCards: [
     {

@@ -1,6 +1,7 @@
 // src/main/java/com/collegeManagement/service/attendance/AttendanceService.java
 package com.edgepoint.attendance.service;
 
+import com.edgepoint.academic.dto.RosterStudentDTO;
 import com.edgepoint.attendance.dto.AttendanceCreateRequest;
 import com.edgepoint.attendance.dto.AttendanceUpdateRequest;
 import com.edgepoint.attendance.dto.AttendanceResponseDTO;
@@ -20,4 +21,6 @@ public interface AttendanceService {
                                               LocalDate startDate,
                                               LocalDate endDate);
     List<TeacherAssignmentDTO> getTeacherAssignments();
+    /** Students enrolled in this assignment's class — the roster to mark. */
+    List<RosterStudentDTO> getRoster(Integer assignmentId);
 }

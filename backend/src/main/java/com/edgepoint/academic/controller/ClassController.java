@@ -10,7 +10,9 @@ import com.edgepoint.core.dto.ApiResponse;
 
 import com.edgepoint.academic.dto.ClassCreateRequest;
 import com.edgepoint.academic.dto.AddSubjectToClassRequest;
+import com.edgepoint.academic.dto.ClassSubjectResponseDTO;
 import com.edgepoint.academic.dto.TeacherAssignRequest;
+import com.edgepoint.academic.dto.TeacherAssignmentResponseDTO;
 import com.edgepoint.academic.dto.ClassResponseDTO;
 import com.edgepoint.academic.service.ClassManagementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,12 +73,28 @@ public class ClassController {
         return ResponseEntity.ok(ApiResponse.success(response, "Subject added to class successfully"));
     }
 
+    @GetMapping("/{classId}/subjects")
+    @Operation(summary = "Get subjects linked to a class")
+    public ResponseEntity<ApiResponse<List<ClassSubjectResponseDTO>>> getClassSubjects(
+            @PathVariable Integer classId) {
+        List<ClassSubjectResponseDTO> response = classManagementService.getClassSubjects(classId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Class subjects retrieved successfully"));
+    }
+
     @PostMapping("/teacher-assignments")
     @Operation(summary = "Assign teacher to class-subject")
     public ResponseEntity<ApiResponse<Void>> assignTeacher(
             @Valid @RequestBody TeacherAssignRequest request) {
         classManagementService.assignTeacher(request);
         return ResponseEntity.ok(ApiResponse.success(null, "Teacher assigned successfully"));
+    }
+
+    @GetMapping("/{classId}/teacher-assignments")
+    @Operation(summary = "Get teacher assignments for a class")
+    public ResponseEntity<ApiResponse<List<TeacherAssignmentResponseDTO>>> getTeacherAssignmentsByClass(
+            @PathVariable Integer classId) {
+        List<TeacherAssignmentResponseDTO> response = classManagementService.getTeacherAssignmentsByClass(classId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Teacher assignments retrieved successfully"));
     }
 
     @DeleteMapping("/{classId}")

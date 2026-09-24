@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: backend
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://prod-postgres-service:5432/edgepoint
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              # WARNING: Hibernate auto-DDL in production is not something to actually ship —
+              # this is here only because infra/k8s/base/db/init-db.sql doesn't create every
+              # table the app needs (subjects/classes/marks/attendance_records/
+              # notification_configs/...), so `validate` (the base default, and the only safe
+              # setting for real prod) fails at startup. Fix the real gap — a proper Flyway
+              # baseline migration covering the full schema — then delete this override and
+              # let prod fall back to `validate`.
+              value: update
+          resources:
+            requests:
+              cpu: 500m
+              memory: 768Mi
+            limits:
+              cpu: 2000m
+              memory: 1536Mi

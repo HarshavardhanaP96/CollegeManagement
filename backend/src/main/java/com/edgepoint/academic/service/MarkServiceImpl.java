@@ -5,7 +5,7 @@ import com.edgepoint.academic.dto.MarkUpdateRequest;
 import com.edgepoint.academic.dto.StudentMarkDTO;
 import com.edgepoint.academic.dto.MarkResponseDTO;
 import com.edgepoint.academic.dto.MarkSummaryDTO;
-import com.edgepoint.academic.dto.ExamTypeDTO;
+import com.edgepoint.academic.dto.RosterStudentDTO;
 import com.edgepoint.academic.domain.ExamType;
 import com.edgepoint.academic.domain.Mark;
 import com.edgepoint.academic.domain.TeacherAssignment;
@@ -14,7 +14,11 @@ import com.edgepoint.core.exception.DuplicateResourceException;
 import com.edgepoint.core.exception.ResourceNotFoundException;
 import com.edgepoint.academic.repository.ExamTypeRepository;
 import com.edgepoint.academic.repository.MarkRepository;
+import com.edgepoint.academic.repository.StudentEnrollmentRepository;
 import com.edgepoint.academic.repository.TeacherAssignmentRepository;
+import com.edgepoint.academic.domain.StudentEnrollment;
+import com.edgepoint.student.domain.StudentProfile;
+import com.edgepoint.student.repository.StudentProfileRepository;
 import com.edgepoint.core.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +39,8 @@ public class MarkServiceImpl implements MarkService {
     private final MarkRepository markRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
     private final ExamTypeRepository examTypeRepository;
+    private final StudentEnrollmentRepository studentEnrollmentRepository;
+    private final StudentProfileRepository studentProfileRepository;
     private final TenantContext tenantContext;
 
     @Override
@@ -192,11 +198,27 @@ public class MarkServiceImpl implements MarkService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ExamTypeDTO> getExamTypes() {
-        Integer collegeId = tenantContext.getCollegeId();
+    public List<RosterStudentDTO> getRoster(Integer assignmentId) {
+        validateTeacherAccess(assignmentId);
 
-        return examTypeRepository.findByCollegeId(collegeId).stream()
-                .map(this::mapToExamTypeDTO)
+        TeacherAssignment assignment = teacherAssignmentRepository
+                .findByAssignmentIdAndIsDeletedFalse(assignmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
+
+        List<StudentEnrollment> enrollments = studentEnrollmentRepository
+                .findActiveByClassId(assignment.getClassSubject().getClassId());
+
+        return enrollments.stream()
+                .map(e -> {
+                    StudentProfile profile = studentProfileRepository
+                            .findByStudentUserIdAndIsDeletedFalse(e.getStudentUserId())
+                            .orElse(null);
+                    return RosterStudentDTO.builder()
+                            .studentUserId(e.getStudentUserId())
+                            .rollNumber(profile != null ? profile.getRollNumber() : null)
+                            .fullName(e.getStudent().getFullName())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -223,14 +245,6 @@ public class MarkServiceImpl implements MarkService {
         dto.setMaxMarks(mark.getExamType().getMaxMarks());
         dto.setRemarks(mark.getRemarks());
         dto.setCreatedAt(mark.getCreatedAt());
-        return dto;
-    }
-
-    private ExamTypeDTO mapToExamTypeDTO(ExamType examType) {
-        ExamTypeDTO dto = new ExamTypeDTO();
-        dto.setExamTypeId(examType.getExamTypeId());
-        dto.setExamTypeName(examType.getExamTypeName());
-        dto.setMaxMarks(examType.getMaxMarks());
         return dto;
     }
 }

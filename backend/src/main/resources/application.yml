@@ -63,6 +63,8 @@ spring:
       expiration: ${JWT_EXPIRATION:86400000}
 
 app:
+  api-version: v1
+
   cors:
     allowed-origins: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
 
@@ -80,11 +82,26 @@ app:
     # Dev-only default below — MUST be overridden via ENCRYPTION_KEY in every other environment.
     encryption-key: ${ENCRYPTION_KEY:6JsyJxpJbSMdwIdlS8/5YLhoE/uf5V4++iLNuqCksFg=}
 
+  # Discord webhook for ops alerts (frequent failures, slow requests, support submissions).
+  # Left blank by default — DiscordAlertService no-ops (logs a warning) when unset, so local
+  # dev and CI never need a real webhook. Set DISCORD_WEBHOOK_URL to enable.
+  discord:
+    webhook-url: ${DISCORD_WEBHOOK_URL:}
+
+  alerting:
+    # "Frequent failures": alert if this many unhandled 5xx errors occur within the window below.
+    error-threshold-count: ${ALERT_ERROR_THRESHOLD_COUNT:5}
+    error-threshold-window-seconds: ${ALERT_ERROR_WINDOW_SECONDS:60}
+    # "Very slow requests": alert any single request slower than this.
+    slow-request-threshold-ms: ${ALERT_SLOW_REQUEST_MS:3000}
+    # Minimum gap between two alerts of the same kind, so a sustained outage doesn't flood Discord.
+    cooldown-seconds: ${ALERT_COOLDOWN_SECONDS:300}
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
@@ -92,6 +109,11 @@ management:
     livenessstate:
       enabled: true
     readinessstate:
+      enabled: true
+  info:
+    build:
+      enabled: true
+    env:
       enabled: true
 
 logging:

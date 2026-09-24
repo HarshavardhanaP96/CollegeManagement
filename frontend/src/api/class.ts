@@ -26,6 +26,15 @@ export interface AddSubjectToClassRequest {
   subjectId: number;
 }
 
+// Shape matches backend com.edgepoint.academic.dto.ClassSubjectResponseDTO exactly.
+export interface ClassSubjectResponse {
+  classSubjectId: number;
+  classId: number;
+  subjectId: number;
+  subjectName: string;
+  subjectCode: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -53,5 +62,10 @@ export async function addSubjectToClass(
   payload: AddSubjectToClassRequest,
 ): Promise<ApiResponse<ClassResponse>> {
   const { data } = await apiClient.post<ApiResponse<ClassResponse>>(`/classes/${classId}/subjects`, payload);
+  return data;
+}
+
+export async function getClassSubjects(classId: number): Promise<ApiResponse<ClassSubjectResponse[]>> {
+  const { data } = await apiClient.get<ApiResponse<ClassSubjectResponse[]>>(`/classes/${classId}/subjects`);
   return data;
 }

@@ -48,6 +48,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
 
         <!-- Kafka -->
         <dependency>
@@ -161,6 +165,16 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <executions>
+                    <execution>
+                        <!-- Generates META-INF/build-info.properties, picked up automatically by
+                             management.info.build.enabled so /actuator/info reports the real
+                             app version and build time instead of nothing. -->
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!-- JaCoCo Plugin for Code Coverage -->
             <plugin>

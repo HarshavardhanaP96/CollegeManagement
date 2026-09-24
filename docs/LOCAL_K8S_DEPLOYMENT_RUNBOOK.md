@@ -85,9 +85,8 @@ frontend-xxxxxxxxx-xxxxx   1/1     Running   0          2m
 postgres-xxxxxxxxx-xxxxx   1/1     Running   0          2m
 ```
 
-> **Expected warning:** Logstash TCP connection errors appear in backend logs
-> (`UnknownHostException: logstash.logging.svc.cluster.local`). This is normal —
-> the ELK stack is not deployed in the local env. The app functions correctly.
+> **Logs are structured JSON on stdout** (see [OBSERVABILITY.md](OBSERVABILITY.md)) — read them
+> with `kubectl logs`; there's no separate log-shipping host to reach or fail to connect to.
 >
 > **Backend startup time:** Spring Boot takes ~90 seconds to start (Flyway migrations + Hibernate).
 > Wait for `Started ProductionApplication` in logs before testing.
@@ -242,5 +241,5 @@ kind delete cluster --name college-mgmt
 | Backend pod CrashLoopBackOff | Check `kubectl logs deployment/backend ...`; verify DB secret and postgres pod are up |
 | Backend `1/1 Running` but port-forward fails | Pod is still starting. Wait for `Started ProductionApplication` in logs (~90s) |
 | `ContainerCreating` stuck | Run `kubectl describe pod <pod> -n college-mgmt`; check for image pull or resource issues |
-| Logstash TCP errors in backend logs | Expected — no ELK in local env. Does not affect app functionality |
 | Frontend Docker build fails with tsc errors | The Dockerfile must use `RUN npx vite build`, not `RUN npm run build` |
+| `/actuator/*` returns 401 | Shouldn't happen — `WebSecurityConfig` permits `/actuator/**` unauthenticated (needed for probes/Prometheus). A security change likely regressed it. |

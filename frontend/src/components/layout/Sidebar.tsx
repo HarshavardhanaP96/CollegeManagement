@@ -1,9 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { GraduationCap } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { getRoleStrategy } from '../../strategies/roleStrategy';
 import type { NavItem } from '../../strategies/roleStrategy';
 import { NavIcon } from './navIconMap';
+import { getAppInfo } from '../../api/version';
+import { queryKeys } from '../../api/queryKeys';
 import { clsx } from 'clsx';
 
 interface SidebarProps {
@@ -21,6 +24,15 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
 
   const strategy = getRoleStrategy(user.roleName);
   const navItems = strategy.navItems;
+
+  // Best-effort — if /actuator/info is unreachable this just stays blank, never blocks the UI.
+  const { data: appInfo } = useQuery({
+    queryKey: queryKeys.appInfo.all,
+    queryFn: () => getAppInfo(),
+    staleTime: Infinity,
+    retry: false,
+  });
+  const appVersion = appInfo?.build?.version;
 
   const groups = navItems.reduce<Record<string, NavItem[]>>((acc, item) => {
     const group = item.group || 'Other';
@@ -157,6 +169,12 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
           </svg>
           {!isCollapsed && "Disconnect"}
         </button>
+
+        {!isCollapsed && appVersion && (
+          <p className="mt-3 text-center text-[9px] font-bold text-slate-600 tracking-widest">
+            v{appVersion}{appInfo?.apiVersion ? ` · ${appInfo.apiVersion}` : ''}
+          </p>
+        )}
       </div>
     </aside>
   </>

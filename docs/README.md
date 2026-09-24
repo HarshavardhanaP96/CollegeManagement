@@ -10,5 +10,6 @@ This folder is consolidated into the main documents below.
 | [TESTING.md](TESTING.md) | Testing strategy and test execution guide. |
 | [USER_GUIDE.md](USER_GUIDE.md) | Role-oriented product usage guide. |
 | [ACCESS_CONTROL.md](ACCESS_CONTROL.md) | Frontend role-based access control: query/action/route strategies, permission matrix, known gaps. |
+| [OBSERVABILITY.md](OBSERVABILITY.md) | API versioning, structured logs, Prometheus metrics, and Discord alerting (frequent failures, slow requests, support submissions). |
 
 Infrastructure manifests now live under `../infra/`.

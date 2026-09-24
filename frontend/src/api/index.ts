@@ -9,5 +9,8 @@ export * from './enrollment';
 export * from './assignment';
 export * from './attendance';
 export * from './marks';
+export * from './examType';
+export * from './support';
+export * from './version';
 export * from './student';
 export * from './dashboard';
