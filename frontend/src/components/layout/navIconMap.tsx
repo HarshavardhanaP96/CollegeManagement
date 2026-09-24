@@ -15,6 +15,7 @@ import {
   UserCircle,
   CirclePlus,
   LifeBuoy,
+  Settings,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -33,6 +34,7 @@ const ICONS: Record<string, LucideIcon> = {
   profile: UserCircle,
   plus: CirclePlus,
   support: LifeBuoy,
+  settings: Settings,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

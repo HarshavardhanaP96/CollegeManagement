@@ -52,6 +52,7 @@ import { StudentAttendancePage } from '../pages/student/StudentAttendancePage';
 
 // Shared pages
 import { SupportPage } from '../pages/SupportPage';
+import { CollegeConfigPage } from '../pages/CollegeConfigPage';
 
 /**
  * Route → Component mapping.
@@ -63,6 +64,8 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/colleges':              CollegeListPage,
   '/colleges/new':          CollegeCreatePage,
   '/colleges/:id':          CollegeDetailPage,
+  '/colleges/:id/config':   CollegeConfigPage,
+  '/college-config':        CollegeConfigPage,
   '/departments':           DepartmentListPage,
   '/departments/new':       DepartmentCreatePage,
   '/departments/:id':       DepartmentDetailPage,

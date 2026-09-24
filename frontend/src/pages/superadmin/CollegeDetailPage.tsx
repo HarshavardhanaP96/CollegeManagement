@@ -30,7 +30,10 @@ export function CollegeDetailPage() {
             </h1>
             <p className="mt-1 text-slate-500 font-medium">Institution profile and contact details.</p>
           </div>
-          <Button variant="secondary" onClick={() => navigate('/colleges')}>Back to Colleges</Button>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={() => navigate(`/colleges/${collegeId}/config`)}>Configuration</Button>
+            <Button variant="secondary" onClick={() => navigate('/colleges')}>Back to Colleges</Button>
+          </div>
         </div>
       </header>
 

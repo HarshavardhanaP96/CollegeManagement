@@ -12,5 +12,6 @@ export * from './marks';
 export * from './examType';
 export * from './support';
 export * from './version';
+export * from './notificationConfig';
 export * from './student';
 export * from './dashboard';

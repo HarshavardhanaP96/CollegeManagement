@@ -44,7 +44,8 @@ export type Resource =
   | 'marks'
   | 'examTypes'
   | 'profile'
-  | 'support';
+  | 'support'
+  | 'collegeConfig';
 
 export interface DashboardCard {
   key: string;
@@ -101,6 +102,7 @@ const superAdminStrategy: RoleStrategy = {
     examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    collegeConfig: ALL_ACTIONS,
   },
   dashboardCards: [
     {
@@ -150,6 +152,7 @@ const collegeAdminStrategy: RoleStrategy = {
     { key: 'teachers',      label: 'Teachers',      path: '/teachers',      icon: 'teachers', group: 'Academic' },
     { key: 'classes',       label: 'Classes',       path: '/classes',       icon: 'classes', group: 'Academic' },
     { key: 'examTypes',     label: 'Exam Types',    path: '/exam-types',    icon: 'examTypes', group: 'Operations' },
+    { key: 'collegeConfig', label: 'College Config',path: '/college-config',icon: 'settings', group: 'Management' },
     { key: 'support',       label: 'Support',       path: '/support',       icon: 'support', group: 'Support' },
   ],
   permissions: {
@@ -164,6 +167,7 @@ const collegeAdminStrategy: RoleStrategy = {
     examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    collegeConfig: ['read'],
   },
   dashboardCards: [
     {

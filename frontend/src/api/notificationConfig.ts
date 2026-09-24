@@ -1,10 +1,12 @@
 import { apiClient } from './client';
-import type { ApiResponse } from './auth';
 
+// Shape matches backend com.edgepoint.notification.dto.NotificationConfigDto exactly (see
+// notification.controller.NotificationConfigController#getConfig) — secrets are never sent,
+// only *Set booleans indicating whether one is stored.
 export interface NotificationConfigDto {
-  id?: string;
-  tenantId?: string;
-  
+  id?: number;
+  collegeId: number;
+
   smtpHost?: string;
   smtpPort?: number;
   smtpUsername?: string;
@@ -21,6 +23,8 @@ export interface NotificationConfigDto {
   whatsappApiKeySet?: boolean;
 }
 
+// Matches backend NotificationConfigRequest — omitting smtpPassword/whatsappApiKey (or sending
+// blank) leaves the currently stored secret unchanged; SUPERADMIN-only endpoint.
 export interface NotificationConfigRequest {
   smtpHost?: string;
   smtpPort?: number;
@@ -38,12 +42,22 @@ export interface NotificationConfigRequest {
   whatsappEnabled?: boolean;
 }
 
-export async function getNotificationConfig(collegeId: string): Promise<ApiResponse<NotificationConfigDto>> {
-  const { data } = await apiClient.get<ApiResponse<NotificationConfigDto>>(`/institutions/${collegeId}/notification-config`);
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}
+
+export async function getNotificationConfig(collegeId: number): Promise<ApiResponse<NotificationConfigDto>> {
+  const { data } = await apiClient.get<ApiResponse<NotificationConfigDto>>(`/colleges/${collegeId}/notification-config`);
   return data;
 }
 
-export async function updateNotificationConfig(collegeId: string, payload: NotificationConfigRequest): Promise<ApiResponse<NotificationConfigDto>> {
-  const { data } = await apiClient.put<ApiResponse<NotificationConfigDto>>(`/institutions/${collegeId}/notification-config`, payload);
+export async function updateNotificationConfig(
+  collegeId: number,
+  payload: NotificationConfigRequest,
+): Promise<ApiResponse<NotificationConfigDto>> {
+  const { data } = await apiClient.put<ApiResponse<NotificationConfigDto>>(`/colleges/${collegeId}/notification-config`, payload);
   return data;
 }
