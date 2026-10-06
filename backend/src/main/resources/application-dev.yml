@@ -1,36 +1,41 @@
+# Zero-dependency local profile: H2 in-memory DB, no Docker/Postgres needed. Activate with
+# `SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run` (or the equivalent IDE run config).
+#
+# Previously broken and never activated by anything in this repo (no Dockerfile, k8s
+# manifest, docker-compose file, or the Jenkinsfile ever set SPRING_PROFILES_ACTIVE=dev):
+# `app.jwt.secret`/`app.stripe.api-key` weren't the real property paths (JwtService actually
+# reads `spring.security.jwt.secret-key`), `spring.redis.*` isn't a valid Spring Boot 3 path
+# (it's `spring.data.redis.*`), `server.port` was nested under `spring` so it bound to
+# `spring.server.port` instead of `server.port`, and it referenced a Liquibase changelog that
+# doesn't exist in this repo — the project's real migration tool is Flyway
+# (backend/src/main/resources/db/migration), not Liquibase.
 spring:
   config:
     activate:
       on-profile: dev
 
   datasource:
-    url: jdbc:h2:mem:college_management;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:edgepoint;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      # No baseline SQL / Flyway migration targets H2 (they're Postgres-specific — see
+      # db/migration/V2 and V3's `pg_constraint`/`NUMERIC`/DO-block syntax), so this is the
+      # one profile where Hibernate is allowed to generate the schema itself from the
+      # entities, matching the disposable in-memory nature of this DB.
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
 
-  liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
+  # Flyway's migrations are Postgres-specific; H2 would fail applying them. ddl-auto above
+  # builds the schema instead for this profile only.
+  flyway:
     enabled: false
 
-  redis:
-    host: localhost
-    port: 6379
-
-  server:
-    port: 8080
-
-app:
-  jwt:
-    secret: dev-secret-key-dev-secret-key-dev-secret-key
-
-  stripe:
-    api-key: stripe-test-key-placeholder-not-real
+server:
+  port: 8080
