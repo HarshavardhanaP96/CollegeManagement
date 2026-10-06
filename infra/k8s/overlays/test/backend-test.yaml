@@ -11,11 +11,8 @@ spec:
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://test-postgres-service:5432/edgepoint
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              # infra/k8s/base/db/init-db.sql only seeds the original core tables — it doesn't
-              # create subjects/classes/marks/attendance_records/notification_configs/etc., so
-              # the app can't start against `ddl-auto: validate` (the base default) without this.
-              # This is a stopgap (same one overlays/local already relies on), not a real fix —
-              # replace with a proper Flyway baseline migration covering the full schema, then
-              # remove this override.
-              value: update
+            # SPRING_JPA_HIBERNATE_DDL_AUTO=update stopgap removed 2026-10-06: the missing
+            # tables (subjects/classes/marks/attendance_records/etc.) are now created by
+            # backend/src/main/resources/db/migration/V2__add_academic_attendance_schema.sql
+            # and the courses drift is fixed by V3__fix_courses_schema_drift.sql, so this
+            # falls back to the base default `validate` — see docs/foundations/architecture.md.
