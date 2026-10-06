@@ -54,17 +54,28 @@ metadata:
   name: logstash-config
   namespace: logging
 data:
+  # Beats input, not the old TCP json_lines socket: the app itself never pushes to Logstash
+  # (backend/src/main/resources/logback-spring.xml writes structured JSON to stdout only,
+  # since the previous LogstashTcpSocketAppender was removed — see docs/OBSERVABILITY.md).
+  # filebeat.yaml's DaemonSet reads that stdout off every node and ships it here instead.
+  # Each line is itself a JSON object (LogstashEncoder's output) riding inside Filebeat's own
+  # `message` field, so this filter parses it back out into top-level fields.
   logstash.conf: |
     input {
-      tcp {
-        port => 5000
-        codec => json_lines
+      beats {
+        port => 5044
+      }
+    }
+    filter {
+      json {
+        source => "message"
+        skip_on_invalid_json => true
       }
     }
     output {
       elasticsearch {
         hosts => ["elasticsearch:9200"]
-        index => "college-management-%{+YYYY.MM.dd}"
+        index => "edgepoint-%{[kubernetes][namespace]}-%{+YYYY.MM.dd}"
       }
     }
 ---
@@ -77,9 +88,9 @@ spec:
   selector:
     app: logstash
   ports:
-  - port: 5000
-    name: tcp-json
-    targetPort: 5000
+  - port: 5044
+    name: beats
+    targetPort: 5044
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -100,7 +111,7 @@ spec:
       - name: logstash
         image: docker.elastic.co/logstash/logstash:7.17.10
         ports:
-        - containerPort: 5000
+        - containerPort: 5044
         volumeMounts:
         - name: config-volume
           mountPath: /usr/share/logstash/pipeline/

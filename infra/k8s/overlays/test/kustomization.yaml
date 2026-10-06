@@ -5,3 +5,13 @@ commonLabels:
   variant: test
 patches:
   - path: backend-test.yaml
+  - path: secrets-test.yaml
+# Independent image tag from prod's — the Jenkinsfile's "Promote to test" stage rewrites
+# newTag here on every main build. "Promote to prod" (manual) copies this same tag into
+# overlays/prod/kustomization.yaml instead of building a new image, so prod only ever runs
+# an image that already ran in test.
+images:
+  - name: your-registry-url/college-mgmt-backend
+    newTag: latest
+  - name: your-registry-url/college-mgmt-frontend
+    newTag: latest

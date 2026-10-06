@@ -6,3 +6,11 @@ commonLabels:
 patches:
   - path: backend-prod.yaml
   - path: frontend-prod.yaml
+  - path: secrets-prod.yaml
+# Only ever set by the Jenkinsfile's manual "Promote to prod" stage, copying the tag that's
+# already running in overlays/test/kustomization.yaml — never by a fresh build. See DEVOPS.md.
+images:
+  - name: your-registry-url/college-mgmt-backend
+    newTag: latest
+  - name: your-registry-url/college-mgmt-frontend
+    newTag: latest

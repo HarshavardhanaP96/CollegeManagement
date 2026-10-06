@@ -6,8 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    # REPLACE THIS with your actual Git repository URL
-    repoURL: https://github.com/your-username/CollegeManagement.git # Change this
+    repoURL: https://github.com/HarshavardhanaP96/CollegeManagement.git
     targetRevision: HEAD
     path: infra/k8s/overlays/test
   destination:
@@ -28,13 +27,58 @@ metadata:
 spec:
   project: default
   source:
-    # REPLACE THIS with your actual Git repository URL
-    repoURL: https://github.com/your-username/CollegeManagement.git # Change this
+    repoURL: https://github.com/HarshavardhanaP96/CollegeManagement.git
     targetRevision: HEAD
     path: infra/k8s/overlays/prod
   destination:
     server: https://kubernetes.default.svc
     namespace: college-mgmt-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+# Cluster-shared observability — one instance of each, not one per app environment. ELK
+# (logs, fed by the Filebeat DaemonSet) and Prometheus+Grafana (metrics) both label/namespace
+# everything they collect, so test and prod traffic stay distinguishable in Kibana/Grafana
+# without needing a separate stack per environment. See docs/OBSERVABILITY.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: college-mgmt-logging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/HarshavardhanaP96/CollegeManagement.git
+    targetRevision: HEAD
+    path: infra/k8s/logging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: college-mgmt-monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/HarshavardhanaP96/CollegeManagement.git
+    targetRevision: HEAD
+    path: infra/k8s/monitoring
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
   syncPolicy:
     automated:
       prune: true

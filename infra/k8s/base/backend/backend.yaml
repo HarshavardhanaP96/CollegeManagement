@@ -11,6 +11,13 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        # Scraped by infra/k8s/monitoring's Prometheus (kubernetes_sd_configs, pod role) —
+        # see docs/OBSERVABILITY.md. /api/v1/actuator/prometheus is permitted without auth
+        # in WebSecurityConfig for exactly this.
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/api/v1/actuator/prometheus"
+        prometheus.io/port: "8080"
     spec:
       containers:
       - name: backend
@@ -18,10 +25,6 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: LOGSTASH_HOST
-          value: "logstash.logging.svc.cluster.local"
-        - name: LOGSTASH_PORT
-          value: "5000"
         - name: SPRING_DATASOURCE_URL
           # Must match the app's real default DB name (see backend/src/main/resources/
           # application.yml) — this previously said "college_management", a name the app

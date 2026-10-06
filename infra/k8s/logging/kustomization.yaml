@@ -1,0 +1,3 @@
+resources:
+  - elk.yaml
+  - filebeat.yaml
