@@ -33,3 +33,8 @@ SystemDesignUpdate.md
 PROJECT_CONTEXT.md
 Jenkinsfile
 scripts/
+
+# logs / scratch
+*.log
+scratch_java_files.txt
+*.svg
