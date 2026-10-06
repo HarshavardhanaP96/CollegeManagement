@@ -19,11 +19,11 @@ export function TeacherListPage() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: 'fullName',
-      header: 'Educator Profile',
+      header: 'Teacher',
       enableSorting: true,
       cell: ({ row }) => (
-        <div className="flex items-center gap-4 group cursor-pointer">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-[12px] font-black text-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
             {row.original.fullName
               .split(' ')
               .map((n: string) => n[0])
@@ -32,9 +32,9 @@ export function TeacherListPage() {
               .toUpperCase()}
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-900 group-hover:text-sky-600 transition-colors">{row.original.fullName}</span>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              ID: {row.original.employeeId || row.original.userId}
+            <span className="text-sm font-semibold text-slate-900 group-hover:text-sky-600 transition-colors">{row.original.fullName}</span>
+            <span className="text-xs text-slate-400">
+              ID {row.original.employeeId || row.original.userId}
             </span>
           </div>
         </div>
@@ -42,12 +42,12 @@ export function TeacherListPage() {
     },
     {
       accessorKey: 'email',
-      header: 'Contact Info',
+      header: 'Contact',
       enableSorting: true,
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="text-[13px] font-bold text-slate-700">{row.original.email}</span>
-          <span className="text-[11px] text-slate-500 font-bold tracking-tighter">{row.original.phone}</span>
+          <span className="text-sm font-medium text-slate-700">{row.original.email}</span>
+          <span className="text-xs text-slate-500">{row.original.phone}</span>
         </div>
       ),
     },
@@ -56,7 +56,7 @@ export function TeacherListPage() {
       header: 'Qualification',
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-700 ring-1 ring-inset ring-slate-700/10 shadow-sm uppercase tracking-widest">
+        <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
           {row.original.qualification || 'Not specified'}
         </span>
       ),
@@ -66,7 +66,7 @@ export function TeacherListPage() {
       header: 'Specialization',
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="text-[13px] font-bold text-sky-600">
+        <span className="text-sm font-medium text-sky-600">
           {row.original.specialization || 'General'}
         </span>
       ),
@@ -75,7 +75,7 @@ export function TeacherListPage() {
       id: 'actions',
       cell: ({ row }) => (
         <div className="text-right pr-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/teachers/${row.original.userId}`)} className="font-black uppercase text-[10px] tracking-widest hover:bg-slate-100 h-8">
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/teachers/${row.original.userId}`)} className="font-medium text-xs hover:bg-slate-100 h-8">
             Details
           </Button>
         </div>
@@ -84,14 +84,14 @@ export function TeacherListPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+    <div className="flex flex-col h-full space-y-4">
       <header className="flex items-center justify-between px-2 shrink-0">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Faculty</h1>
+          <h1 className="font-display text-2xl font-semibold text-slate-900">Teachers</h1>
         </div>
         <Can action="create" resource="teachers">
-          <Button onClick={() => navigate('/teachers/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-            Onboard
+          <Button onClick={() => navigate('/teachers/new')} className="px-5 h-10 font-medium text-sm">
+            Add teacher
           </Button>
         </Can>
       </header>
@@ -99,7 +99,7 @@ export function TeacherListPage() {
       <div className="flex-1 min-h-0">
         {isLoading ? (
           <Card className="h-full flex items-center justify-center">
-             <Loading size="lg" text="Syncing faculty..." />
+             <Loading size="lg" text="Loading teachers…" />
           </Card>
         ) : (
           <DataTable 

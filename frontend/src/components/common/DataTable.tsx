@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="flex flex-col bg-white h-full w-full rounded-2xl overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-200/60">
+    <div className="flex flex-col bg-white h-full w-full rounded-lg overflow-hidden border border-slate-200">
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-6 py-4 bg-white border-b border-slate-100 shrink-0">
         <div className="flex-1 max-w-xl">
@@ -94,10 +94,10 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-slate-50 border-0">
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className={clsx(
-                      "px-6 py-4 text-slate-500 font-black uppercase text-[10px] tracking-[0.2em] transition-colors",
+                      "px-6 py-3.5 text-slate-500 font-semibold text-xs transition-colors",
                       header.column.getCanSort() && "cursor-pointer hover:text-slate-900"
                     )}
                     style={{ width: header.getSize() }}
@@ -141,12 +141,12 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-96 text-center">
                    <div className="flex flex-col items-center justify-center space-y-3 opacity-40">
-                      <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center">
-                        <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center">
+                        <svg className="h-7 w-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                         </svg>
                       </div>
-                      <p className="font-black uppercase tracking-[0.4em] text-[10px] text-slate-500">No Entries Detected</p>
+                      <p className="text-sm font-medium text-slate-500">No records found</p>
                    </div>
                 </TableCell>
               </TableRow>
@@ -158,22 +158,22 @@ export function DataTable<TData, TValue>({
       {/* Footer / Pagination Controls */}
       <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white shrink-0">
         <div className="flex items-center gap-8">
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            Displaying <span className="text-slate-900">{table.getRowModel().rows.length}</span> of <span className="text-slate-900">{data.length}</span> Results
+          <div className="text-xs font-medium text-slate-500 flex items-center gap-1">
+            Showing <span className="text-slate-900 font-semibold">{table.getRowModel().rows.length}</span> of <span className="text-slate-900 font-semibold">{data.length}</span>
           </div>
-          
+
           <div className="flex items-center gap-3 border-l border-slate-100 pl-8">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page Capacity</span>
+            <span className="text-xs font-medium text-slate-500">Rows per page</span>
             <div className="flex gap-1">
               {[10, 15, 25, 50].map(pageSize => (
                 <button
                   key={pageSize}
                   onClick={() => table.setPageSize(pageSize)}
                   className={clsx(
-                    "h-7 px-2 rounded-lg text-[9px] font-black uppercase transition-all border",
+                    "h-7 px-2 rounded-md text-xs font-medium transition-colors border",
                     table.getState().pagination.pageSize === pageSize
-                      ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                      : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600"
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700"
                   )}
                 >
                   {pageSize}
@@ -194,10 +194,10 @@ export function DataTable<TData, TValue>({
                     key={i}
                     onClick={() => table.setPageIndex(i)}
                     className={clsx(
-                      "h-8 px-3 rounded-xl text-[10px] font-black transition-all",
+                      "h-8 px-3 rounded-md text-xs font-medium transition-colors",
                       current === i
-                        ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20"
-                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-sky-500 text-white"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     )}
                   >
                     {i + 1}
@@ -205,7 +205,7 @@ export function DataTable<TData, TValue>({
                  );
                }
                if (i === 1 || i === count - 2) {
-                 return <span key={i} className="self-center px-1 text-slate-300 text-[10px]">...</span>;
+                 return <span key={i} className="self-center px-1 text-slate-300 text-xs">…</span>;
                }
                return null;
              })}
@@ -216,9 +216,9 @@ export function DataTable<TData, TValue>({
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="font-black uppercase text-[10px] tracking-widest h-8 px-3"
+              className="font-medium text-xs h-8 px-3"
             >
-              <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7"/></svg>
+              <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7"/></svg>
               Back
             </Button>
             <Button
@@ -226,10 +226,10 @@ export function DataTable<TData, TValue>({
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="font-black uppercase text-[10px] tracking-widest h-8 px-3"
+              className="font-medium text-xs h-8 px-3"
             >
               Next
-              <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7"/></svg>
+              <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
             </Button>
           </div>
         </div>

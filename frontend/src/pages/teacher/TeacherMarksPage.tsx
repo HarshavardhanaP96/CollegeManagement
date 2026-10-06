@@ -84,8 +84,8 @@ export function TeacherMarksPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Enter Marks</h1>
-          <p className="text-slate-500 font-medium">Evaluate and record academic results for your assigned students.</p>
+          <h1 className="font-display text-3xl font-semibold text-slate-900">Enter marks</h1>
+          <p className="text-slate-500 text-sm">Record exam results for your students.</p>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export function TeacherMarksPage() {
                   isLoading={enterMarksMutation.isPending}
                   disabled={Object.values(marksEntries).every((e) => !e.marksObtained)}
                 >
-                  Submit Marks
+                  Submit marks
                 </Button>
               </div>
             </div>
@@ -184,17 +184,14 @@ export function TeacherMarksPage() {
       </Card>
 
       {marks.length > 0 && (
-        <Card noPadding className="shadow-2xl shadow-slate-200/50">
-          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-             <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Recent Marks</h2>
-          </div>
+        <Card noPadding title="Recent marks">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Student</TableHead>
-                <TableHead>Exam Type</TableHead>
-                <TableHead>Marks Obtained</TableHead>
-                <TableHead>Max Marks</TableHead>
+                <TableHead>Exam type</TableHead>
+                <TableHead>Marks obtained</TableHead>
+                <TableHead>Max marks</TableHead>
                 <TableHead>Percentage</TableHead>
                 <TableHead>Remarks</TableHead>
               </TableRow>

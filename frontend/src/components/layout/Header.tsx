@@ -58,7 +58,7 @@ export function Header({ onToggleSidebar, isCollapsed }: HeaderProps) {
         <div className="flex items-center gap-3">
           <div className="hidden text-right md:block">
             <div className="text-sm font-bold text-slate-900 leading-none">{user.fullName}</div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-tight text-sky-600">{strategy.displayName}</div>
+            <div className="mt-0.5 text-xs font-medium text-sky-600">{strategy.displayName}</div>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-black text-white shadow-xl shadow-slate-200">
             {user.fullName

@@ -16,15 +16,15 @@ export function ExamTypeListPage() {
   const examTypes = data?.data || [];
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
+    <div className="flex flex-col h-full space-y-4">
       <header className="flex items-center justify-between px-2 shrink-0">
         <div className="space-y-1">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Exam Types</h1>
-          <p className="text-slate-500 font-medium text-sm">Assessment categories used when entering marks (Internal, External, ...).</p>
+          <h1 className="font-display text-2xl font-semibold text-slate-900">Exam types</h1>
+          <p className="text-slate-500 text-sm">Assessment categories used when entering marks (Internal, External, ...).</p>
         </div>
         <Can action="create" resource="examTypes">
-          <Button onClick={() => navigate('/exam-types/new')} className="px-6 h-10 shadow-lg shadow-sky-500/20 font-black uppercase tracking-widest text-[10px]">
-            Define
+          <Button onClick={() => navigate('/exam-types/new')} className="px-5 h-10 font-medium text-sm">
+            Add exam type
           </Button>
         </Can>
       </header>
@@ -32,23 +32,23 @@ export function ExamTypeListPage() {
       <div className="flex-1 min-h-0">
         {isLoading ? (
           <Card className="h-full flex items-center justify-center">
-            <Loading size="lg" text="Loading exam types..." />
+            <Loading size="lg" text="Loading exam types…" />
           </Card>
         ) : examTypes.length === 0 ? (
-          <Card><p className="text-center text-slate-500 py-8">No exam types defined yet.</p></Card>
+          <Card><p className="text-center text-slate-500 py-8">No exam types yet.</p></Card>
         ) : (
-          <Card noPadding className="shadow-2xl shadow-slate-200/50">
+          <Card noPadding className="border border-slate-200">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Exam Type</TableHead>
-                  <TableHead>Maximum Marks</TableHead>
+                  <TableHead>Exam type</TableHead>
+                  <TableHead>Maximum marks</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {examTypes.map((examType) => (
                   <TableRow key={examType.examTypeId}>
-                    <TableCell className="font-bold text-slate-900">{examType.examTypeName}</TableCell>
+                    <TableCell className="font-semibold text-slate-900">{examType.examTypeName}</TableCell>
                     <TableCell>{examType.maxMarks}</TableCell>
                   </TableRow>
                 ))}

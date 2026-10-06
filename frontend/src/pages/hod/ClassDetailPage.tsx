@@ -113,26 +113,26 @@ export function ClassDetailPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="mx-auto max-w-4xl space-y-6">
       <header>
         <div className="mb-4">
           <Breadcrumbs items={[{ label: 'Classes', path: '/classes' }, { label: 'Manage' }]} />
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              {isLoading ? 'Loading…' : cls?.className || 'Cohort'}
+            <h1 className="font-display text-2xl font-semibold text-slate-900">
+              {isLoading ? 'Loading…' : cls?.className || 'Class'}
             </h1>
-            <p className="mt-1 text-slate-500 font-medium">Cohort term, section and program.</p>
+            <p className="mt-1 text-slate-500 text-sm">Term, section and program for this class.</p>
           </div>
-          <Button variant="secondary" onClick={() => navigate('/classes')}>Back to Cohorts</Button>
+          <Button variant="secondary" onClick={() => navigate('/classes')}>Back to classes</Button>
         </div>
       </header>
 
       {isLoading ? (
-        <Card className="flex items-center justify-center py-16"><Loading text="Loading cohort…" /></Card>
+        <Card className="flex items-center justify-center py-16"><Loading text="Loading class…" /></Card>
       ) : isError || !cls ? (
-        <Card><p className="text-center text-slate-500">Cohort not found.</p></Card>
+        <Card><p className="text-center text-slate-500">Class not found.</p></Card>
       ) : (
         <>
           <Card>
@@ -147,7 +147,7 @@ export function ClassDetailPage() {
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-sm font-black uppercase tracking-widest text-slate-400">Subjects</h2>
+            <h2 className="mb-4 text-sm font-semibold text-slate-900">Subjects</h2>
             {classSubjects.length > 0 && (
               <Table>
                 <TableHeader>
@@ -189,7 +189,7 @@ export function ClassDetailPage() {
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-sm font-black uppercase tracking-widest text-slate-400">Teacher Assignments</h2>
+            <h2 className="mb-4 text-sm font-semibold text-slate-900">Teacher assignments</h2>
             {assignments.length > 0 && (
               <Table>
                 <TableHeader>
@@ -245,7 +245,7 @@ export function ClassDetailPage() {
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-sm font-black uppercase tracking-widest text-slate-400">Enrolled Students</h2>
+            <h2 className="mb-4 text-sm font-semibold text-slate-900">Enrolled students</h2>
             {enrollments.length > 0 && (
               <Table>
                 <TableHeader>

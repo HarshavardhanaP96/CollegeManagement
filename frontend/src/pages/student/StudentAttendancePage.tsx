@@ -18,12 +18,12 @@ export function StudentAttendancePage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Attendance</h1>
-          <p className="text-slate-500 font-medium">View your academic attendance records and status.</p>
+          <h1 className="font-display text-3xl font-semibold text-slate-900">My attendance</h1>
+          <p className="text-slate-500 text-sm">View your attendance records by subject.</p>
         </div>
         <Select
           options={[
-            { value: '', label: 'All Semesters' },
+            { value: '', label: 'All semesters' },
             { value: '1', label: 'Semester 1' },
             { value: '2', label: 'Semester 2' },
             { value: '3', label: 'Semester 3' },
@@ -40,28 +40,25 @@ export function StudentAttendancePage() {
       </div>
 
       {isLoading ? (
-        <Loading text="Loading attendance..." />
+        <Loading text="Loading attendance…" />
       ) : attendanceData ? (
         <div className="space-y-6">
-          <Card title="Overall Attendance">
+          <Card title="Overall attendance">
             <div className="text-center">
-              <p className="text-3xl font-bold text-sky-600">
+              <p className="font-display text-3xl font-semibold text-sky-600">
                 {attendanceData.overallAttendance.toFixed(2)}%
               </p>
             </div>
           </Card>
 
-          <Card noPadding title="Subject-wise Attendance" className="shadow-2xl shadow-slate-200/50">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-               <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Academic Progress: Subject Roster</h2>
-            </div>
+          <Card noPadding title="By subject">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Subject</TableHead>
                   <TableHead>Present</TableHead>
                   <TableHead>Absent</TableHead>
-                  <TableHead>Total Classes</TableHead>
+                  <TableHead>Total classes</TableHead>
                   <TableHead>Percentage</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -69,19 +66,19 @@ export function StudentAttendancePage() {
               <TableBody>
                 {attendanceData.subjectAttendances.map((subject) => (
                   <TableRow key={subject.subjectId}>
-                    <TableCell className="font-medium">{subject.subjectName}</TableCell>
+                    <TableCell className="font-medium text-slate-900">{subject.subjectName}</TableCell>
                     <TableCell>{subject.presentCount}</TableCell>
                     <TableCell>{subject.absentCount}</TableCell>
                     <TableCell>{subject.totalClasses}</TableCell>
                     <TableCell>{subject.attendancePercentage.toFixed(2)}%</TableCell>
                     <TableCell>
                       <span
-                        className={`rounded px-2 py-1 text-xs ${
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                           subject.attendancePercentage >= 75
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-emerald-50 text-emerald-700'
                             : subject.attendancePercentage >= 65
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-red-50 text-red-700'
                         }`}
                       >
                         {subject.attendancePercentage >= 75 ? 'Good' : subject.attendancePercentage >= 65 ? 'Warning' : 'Low'}

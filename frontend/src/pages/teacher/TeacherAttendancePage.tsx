@@ -78,8 +78,8 @@ export function TeacherAttendancePage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Mark Attendance</h1>
-          <p className="text-slate-500 font-medium">Record student participation for your assigned academic sessions.</p>
+          <h1 className="font-display text-3xl font-semibold text-slate-900">Mark attendance</h1>
+          <p className="text-slate-500 text-sm">Record student attendance for your classes.</p>
         </div>
       </div>
 
@@ -138,10 +138,10 @@ export function TeacherAttendancePage() {
                                 <button
                                   type="button"
                                   onClick={() => setRecord(student.studentUserId, 'isPresent', true)}
-                                  className={`rounded px-3 py-1 text-xs font-bold ${
+                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                                     record && isPresent
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-slate-100 text-slate-600'
+                                      ? 'bg-emerald-600 text-white'
+                                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                   }`}
                                 >
                                   Present
@@ -149,10 +149,10 @@ export function TeacherAttendancePage() {
                                 <button
                                   type="button"
                                   onClick={() => setRecord(student.studentUserId, 'isPresent', false)}
-                                  className={`rounded px-3 py-1 text-xs font-bold ${
+                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                                     record && !isPresent
                                       ? 'bg-red-600 text-white'
-                                      : 'bg-slate-100 text-slate-600'
+                                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                   }`}
                                 >
                                   Absent
@@ -179,7 +179,7 @@ export function TeacherAttendancePage() {
                   isLoading={markMutation.isPending}
                   disabled={Object.keys(attendanceRecords).length === 0}
                 >
-                  Submit Attendance
+                  Submit attendance
                 </Button>
               </div>
             </div>
@@ -188,10 +188,7 @@ export function TeacherAttendancePage() {
       </Card>
 
       {attendance.length > 0 && (
-        <Card noPadding className="shadow-2xl shadow-slate-200/50">
-          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-             <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Recent Attendance Records</h2>
-          </div>
+        <Card noPadding title="Recent records">
           <Table>
             <TableHeader>
               <TableRow>
@@ -208,10 +205,10 @@ export function TeacherAttendancePage() {
                   <TableCell>{record.studentName}</TableCell>
                   <TableCell>
                     <span
-                      className={`rounded px-2 py-1 text-xs ${
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                         record.isPresent
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-red-50 text-red-700'
                       }`}
                     >
                       {record.isPresent ? 'Present' : 'Absent'}

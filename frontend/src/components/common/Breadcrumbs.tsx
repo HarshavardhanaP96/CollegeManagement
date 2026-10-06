@@ -13,7 +13,7 @@ export interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
-    <nav className={clsx('flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400', className)}>
+    <nav className={clsx('flex items-center gap-2 text-[13px] font-medium text-slate-500', className)}>
       <Link to="/" className="transition-colors hover:text-slate-900">
         Home
       </Link>

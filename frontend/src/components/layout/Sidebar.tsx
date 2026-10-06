@@ -68,15 +68,15 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
         onClick={isCollapsed ? onToggle : undefined}
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-500/20">
-            <GraduationCap size={22} strokeWidth={2.25} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500 text-white">
+            <GraduationCap size={20} strokeWidth={2.25} />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-black text-white tracking-widest uppercase">
+              <span className="font-display text-base font-semibold text-white leading-tight">
                 Portal+
               </span>
-              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter">
+              <span className="text-[11px] font-medium text-sky-400">
                 Academic Suite
               </span>
             </div>
@@ -103,12 +103,12 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
         {Object.entries(groups).map(([groupName, items]) => (
           <div key={groupName}>
             {!isCollapsed && (
-              <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500/80 truncate">
+              <p className="mb-3 px-4 text-[11px] font-semibold text-slate-500/80 truncate">
                 {groupName}
               </p>
             )}
             {isCollapsed && <div className="h-px bg-slate-800/50 mx-4 mb-4" />}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {items.map((item) => {
                 const isActive =
                   item.path === '/'
@@ -120,20 +120,17 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
                     to={item.path}
                     title={isCollapsed ? item.label : undefined}
                     className={clsx(
-                      "flex items-center gap-4 rounded-xl transition-all duration-200",
-                      isCollapsed ? "justify-center px-0 py-3 mx-2" : "px-4 py-3 text-[13px] font-bold mx-2",
+                      "flex items-center gap-3 rounded-md border-l-2 transition-colors duration-150",
+                      isCollapsed ? "justify-center px-0 py-3 mx-2 border-l-0" : "pl-[14px] pr-4 py-2.5 text-[13px] font-medium mx-2",
                       isActive
-                        ? "bg-slate-800 text-sky-400 shadow-xl shadow-black/20 ring-1 ring-white/5"
-                        : "hover:bg-slate-800/50 hover:text-white"
+                        ? "bg-sky-500/10 border-sky-500 text-sky-400"
+                        : "border-transparent hover:bg-slate-800/50 hover:text-white"
                     )}
                   >
-                    <span className={clsx("shrink-0 transition-transform duration-200", isActive ? "scale-110" : "")}>
+                    <span className="shrink-0">
                       <NavIcon name={item.icon} size={18} />
                     </span>
                     {!isCollapsed && item.label}
-                    {!isCollapsed && isActive && (
-                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-400 shadow-lg shadow-sky-400" />
-                    )}
                   </Link>
                 );
               })}
@@ -143,35 +140,35 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggle }: SidebarProps
       </nav>
 
       {/* User Session Footer */}
-      <div className={clsx("border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm", isCollapsed ? "p-4" : "p-6")}>
-        <div className={clsx("flex items-center mb-6", isCollapsed ? "justify-center" : "gap-3")}>
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-black/20">
+      <div className={clsx("border-t border-slate-800", isCollapsed ? "p-4" : "p-5")}>
+        <div className={clsx("flex items-center mb-4", isCollapsed ? "justify-center" : "gap-3")}>
+          <div className="h-9 w-9 shrink-0 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-white text-sm">
             {user.fullName[0].toUpperCase()}
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-               <div className="text-sm font-bold text-white truncate leading-none mb-1">{user.fullName}</div>
-               <div className="text-[9px] font-black text-sky-500 uppercase tracking-widest truncate">{strategy.displayName}</div>
+               <div className="text-sm font-semibold text-white truncate leading-none mb-1">{user.fullName}</div>
+               <div className="text-xs font-medium text-sky-400 truncate">{strategy.displayName}</div>
             </div>
           )}
         </div>
-        
+
         <button
           onClick={logout}
-          title={isCollapsed ? "Logout" : undefined}
+          title={isCollapsed ? "Log out" : undefined}
           className={clsx(
-            "group flex items-center justify-center gap-3 rounded-xl bg-slate-800 transition-all hover:bg-red-500/10 hover:text-red-400 border border-slate-700 hover:border-red-500/20 shadow-lg shadow-black/10",
-            isCollapsed ? "w-full p-3" : "w-full px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400"
+            "group flex items-center justify-center gap-2.5 rounded-md border border-slate-800 text-slate-400 transition-colors duration-150 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20",
+            isCollapsed ? "w-full p-3" : "w-full px-4 py-2.5 text-[13px] font-medium"
           )}
         >
-          <svg className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 16l4-4m0 0l-4-4m4 4H7" />
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7" />
           </svg>
-          {!isCollapsed && "Disconnect"}
+          {!isCollapsed && "Log out"}
         </button>
 
         {!isCollapsed && appVersion && (
-          <p className="mt-3 text-center text-[9px] font-bold text-slate-600 tracking-widest">
+          <p className="mt-3 text-center text-[11px] text-slate-600">
             v{appVersion}{appInfo?.apiVersion ? ` · ${appInfo.apiVersion}` : ''}
           </p>
         )}

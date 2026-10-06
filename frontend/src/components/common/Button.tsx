@@ -12,7 +12,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] shadow-sm';
     
     const variants = {
-      primary: 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900 border border-transparent',
+      primary: 'bg-[#9c6b1a] text-white hover:bg-[#7c5414] focus:ring-[#9c6b1a] border border-transparent',
       secondary: 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 focus:ring-slate-200',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-transparent',
       outline: 'border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-300',

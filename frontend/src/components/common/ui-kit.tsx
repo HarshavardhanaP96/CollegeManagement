@@ -9,7 +9,7 @@ export function PageTitle({ title, subtitle, action }: { title: string; subtitle
   return (
     <div className="flex items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="font-display text-[26px] font-semibold tracking-tight text-slate-900">{title}</h1>
         {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
       </div>
       {action}
@@ -23,11 +23,11 @@ export function Kpi({ label, value, delta, deltaTone = "muted" }: { label: strin
     deltaTone === "down" ? "text-red-600" :
     "text-slate-500";
   return (
-    <div className="p-4 bg-white ring-1 ring-slate-200/80 rounded-lg shadow-sm shadow-slate-100">
-      <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tracking-tight tabular-nums text-slate-900">{value}</span>
-        {delta && <span className={`text-[10px] font-medium ${tone}`}>{delta}</span>}
+    <div className="p-4 bg-white border border-slate-200 rounded-lg">
+      <p className="text-xs font-medium text-slate-500">{label}</p>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <span className="font-display text-2xl font-semibold tracking-tight tabular-nums text-slate-900">{value}</span>
+        {delta && <span className={`text-xs font-medium ${tone}`}>{delta}</span>}
       </div>
     </div>
   );
@@ -35,10 +35,10 @@ export function Kpi({ label, value, delta, deltaTone = "muted" }: { label: strin
 
 export function Panel({ title, action, children, padded = true }: { title?: string; action?: ReactNode; children: ReactNode; padded?: boolean }) {
   return (
-    <div className="bg-white ring-1 ring-slate-200/80 rounded-xl overflow-hidden shadow-sm shadow-slate-100">
+    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       {title && (
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
           {action}
         </div>
       )}
@@ -62,11 +62,11 @@ export function Btn({
   variant = "secondary", children, onClick, type = "button", className = "",
 }: { variant?: "primary" | "secondary" | "ghost"; children: ReactNode; onClick?: () => void; type?: "button" | "submit"; className?: string }) {
   const cls =
-    variant === "primary" ? "bg-slate-900 text-white hover:bg-slate-800 shadow-sm"
+    variant === "primary" ? "bg-[#9c6b1a] text-white hover:bg-[#7c5414]"
     : variant === "ghost" ? "text-slate-700 hover:bg-slate-100"
-    : "bg-white ring-1 ring-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm";
+    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50";
   return (
-    <button type={type} onClick={onClick} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center justify-center gap-1.5 ${cls} ${className}`}>
+    <button type={type} onClick={onClick} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 inline-flex items-center justify-center gap-1.5 ${cls} ${className}`}>
       {children}
     </button>
   );

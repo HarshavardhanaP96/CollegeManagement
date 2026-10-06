@@ -8,7 +8,7 @@ export interface TableProps extends TableHTMLAttributes<HTMLTableElement> {
 export function Table({ className, children, ...props }: TableProps) {
   return (
     <div className="w-full overflow-x-auto">
-      <table className={clsx('w-full border-collapse text-base', className)} {...props}>
+      <table className={clsx('w-full border-collapse text-sm', className)} {...props}>
         {children}
       </table>
     </div>
@@ -19,7 +19,7 @@ export function TableHeader({ children, className, ...props }: HTMLAttributes<HT
   return (
     <thead
       className={clsx(
-        'bg-slate-50/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10',
+        'bg-slate-50 border-b border-slate-200 sticky top-0 z-10',
         className
       )}
       {...props}
@@ -39,12 +39,12 @@ export function TableBody({ children, className, ...props }: HTMLAttributes<HTML
 
 export function TableRow({ children, className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr 
+    <tr
       className={clsx(
         'group transition-colors duration-150',
         props.onClick ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50/50',
         className
-      )} 
+      )}
       {...props}
     >
       {children}
@@ -54,7 +54,7 @@ export function TableRow({ children, className, ...props }: HTMLAttributes<HTMLT
 
 export function TableHead({ children, className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className={clsx('px-6 py-5 text-left text-xs font-black uppercase tracking-[0.2em] text-slate-500', className)} {...props}>
+    <th className={clsx('px-6 py-3.5 text-left text-xs font-semibold text-slate-500', className)} {...props}>
       {children}
     </th>
   );
@@ -62,7 +62,7 @@ export function TableHead({ children, className, ...props }: ThHTMLAttributes<HT
 
 export function TableCell({ children, className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={clsx('px-6 py-5 text-slate-600 font-medium', className)} {...props}>
+    <td className={clsx('px-6 py-3.5 text-slate-700', className)} {...props}>
       {children}
     </td>
   );

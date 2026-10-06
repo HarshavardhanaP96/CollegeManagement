@@ -18,12 +18,12 @@ export function StudentMarksPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Marks</h1>
-          <p className="text-slate-500 font-medium">View your academic performance and evaluation metrics.</p>
+          <h1 className="font-display text-3xl font-semibold text-slate-900">My marks</h1>
+          <p className="text-slate-500 text-sm">View your exam results by subject.</p>
         </div>
         <Select
           options={[
-            { value: '', label: 'All Semesters' },
+            { value: '', label: 'All semesters' },
             { value: '1', label: 'Semester 1' },
             { value: '2', label: 'Semester 2' },
             { value: '3', label: 'Semester 3' },
@@ -40,22 +40,17 @@ export function StudentMarksPage() {
       </div>
 
       {isLoading ? (
-        <Loading text="Loading marks..." />
+        <Loading text="Loading marks…" />
       ) : marksData ? (
         <div className="space-y-6">
           {marksData.subjectMarks.map((subject) => (
-            <Card key={subject.subjectId} noPadding className="shadow-2xl shadow-slate-200/50">
-              <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
-                 <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">
-                    {subject.subjectName} ({subject.subjectCode})
-                 </h2>
-              </div>
+            <Card key={subject.subjectId} noPadding title={`${subject.subjectName} (${subject.subjectCode})`}>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Exam Type</TableHead>
-                    <TableHead>Marks Obtained</TableHead>
-                    <TableHead>Maximum Marks</TableHead>
+                    <TableHead>Exam type</TableHead>
+                    <TableHead>Marks obtained</TableHead>
+                    <TableHead>Maximum marks</TableHead>
                     <TableHead>Percentage</TableHead>
                   </TableRow>
                 </TableHeader>
