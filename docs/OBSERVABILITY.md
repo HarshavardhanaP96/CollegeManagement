@@ -32,10 +32,14 @@ footer, so you can always tell which build is running in a given environment.
 ## Structured logs
 
 `backend/src/main/resources/logback-spring.xml` writes JSON (via `logstash-logback-encoder`'s
-`LogstashEncoder`) to stdout. There is no log-shipping server involved — any collector reading
-container stdout (`kubectl logs`, Fluent Bit, CloudWatch, etc.) gets structured JSON for free.
-This replaced a previous `LogstashTcpSocketAppender` that required a reachable Logstash host and
-otherwise logged a connection-failure warning on a retry loop.
+`LogstashEncoder`) to stdout. The app itself never talks to a log-shipping server directly — this
+replaced a previous `LogstashTcpSocketAppender` that required a reachable Logstash host and
+otherwise logged a connection-failure warning on a retry loop. In k8s, a Filebeat DaemonSet
+(`infra/k8s/logging/filebeat.yaml`) reads that stdout off every node (`/var/log/containers`) and
+ships it to Logstash → Elasticsearch, with Kibana on top (`infra/k8s/logging/elk.yaml`) — as of
+2026-10-06 this is actually wired into its own ArgoCD Application (`college-mgmt-logging`);
+before that, `elk.yaml` existed but was deployed by nothing and fed by nothing. Outside k8s (bare
+`docker logs`/`kubectl logs`, local dev), the stdout JSON is still there for any ad-hoc collector.
 
 Each line includes `app_name`, standard fields (`level`, `logger_name`, `message`, `timestamp`,
 `thread_name`), and stack traces for exceptions. Adjust log level per-package under `logging.level`
@@ -45,10 +49,12 @@ in `application.yml`.
 
 `spring-boot-starter-actuator` + `micrometer-registry-prometheus` expose Prometheus-format
 metrics at `GET /api/v1/actuator/prometheus` (JVM memory/GC, HTTP request timings, Hikari pool
-stats, etc. — all auto-instrumented by Micrometer's Spring Boot integration). Nothing scrapes it
-by default; point a Prometheus server at that path (`infra/k8s` has no Prometheus/Grafana
-manifests yet — add a `ServiceMonitor`/scrape config there if/when a metrics backend is stood
-up).
+stats, etc. — all auto-instrumented by Micrometer's Spring Boot integration). As of 2026-10-06,
+`infra/k8s/monitoring` deploys Prometheus (scraping any pod annotated
+`prometheus.io/scrape: "true"` — set on the backend Deployment in
+`infra/k8s/base/backend/backend.yaml`) and Grafana on top, pre-wired with a Prometheus
+datasource. Deployed via its own ArgoCD Application (`college-mgmt-monitoring`), once per
+cluster — not per test/prod overlay.
 
 `/actuator/health`, `/actuator/info`, and `/actuator/metrics` are also exposed. All
 `/actuator/**` paths are permitted without authentication in `WebSecurityConfig` — this is
@@ -62,9 +68,10 @@ management port instead of relaxing this further.
 `core/alerting/DiscordAlertService` posts embeds to a Discord incoming webhook URL
 (`app.discord.webhook-url`, env var `DISCORD_WEBHOOK_URL`). If unset, it logs a warning and does
 nothing — safe default for local dev/CI. To enable: create a webhook in your Discord channel's
-integration settings and set `DISCORD_WEBHOOK_URL` (see `infra/k8s/base/secrets.yaml`, which has
-a placeholder entry — replace it with the real URL per environment, never commit a real webhook
-URL to git).
+integration settings and set `DISCORD_WEBHOOK_URL` (see `infra/k8s/overlays/test/secrets-test.yaml`
+and `infra/k8s/overlays/prod/secrets-prod.yaml` — each environment now has its own placeholder
+`discord-secret` instead of sharing one via `infra/k8s/base/secrets.yaml`; replace with the real
+per-environment URL, never commit a real webhook URL to git).
 
 Three triggers, tunable under `app.alerting.*` in `application.yml`:
 

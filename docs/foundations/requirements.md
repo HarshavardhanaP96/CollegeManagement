@@ -120,9 +120,8 @@ Self-service only, scoped to their own `userId`.
   `com.edgepoint.academic.dto.StudentMarkDTO`, and the `StudentAttendanceDTO`
   equivalent) — confusing to grep, worth a rename pass before adding more
   student-facing DTOs in either package.
-- `API.md` and `APIdoc.md` in `docs/` appear to be duplicates (same title,
-  same TOC) — and `User-Guide.md`/`USER_GUIDE.md` likewise. Confirm which is
-  canonical before editing either; don't let a future API change update only
-  one copy.
+- Resolved: `APIdoc.md` (stale fork, missing Support/Observability sections)
+  and `User-Guide.md` (byte-identical dup of `USER_GUIDE.md`) were deleted.
+  `API.md` and `USER_GUIDE.md` are now the sole canonical copies.
 - No endpoint-level versioning strategy beyond the `/api/v1` prefix — decide
   this before the first breaking change to a role's contract.

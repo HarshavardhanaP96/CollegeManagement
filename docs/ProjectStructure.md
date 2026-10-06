@@ -74,10 +74,14 @@ backend/src/main/resources/
 ├── application-dev.yml
 ├── logback-spring.xml
 └── db/
-    ├── migration/              # Flyway SQL migrations — INCREMENTAL changes only, on top of the baseline below
-    │   └── V1__init_notification.sql
-    └── changelog/               # unused Liquibase leftover from an earlier iteration (empty, not wired up)
+    └── migration/              # Flyway SQL migrations — INCREMENTAL changes only, on top of the baseline below
+        ├── V1__init_notification.sql
+        ├── V2__add_academic_attendance_schema.sql
+        └── V3__fix_courses_schema_drift.sql
 ```
+(The `changelog/` directory — an unused Liquibase leftover, empty and never wired up since
+Liquibase was never on the classpath — was deleted 2026-10-06, along with the dangling
+Liquibase reference in `application-dev.yml`.)
 
 `backend/src/main/resources/application.properties` (a pre-Maven-migration leftover) was **removed** — it
 silently took precedence over `application.yml` and pointed the datasource at a nonexistent
@@ -86,13 +90,25 @@ start against the real `edgepoint` database. If a `.properties` file reappears h
 `application.yml`, treat it as a bug, not an intentional override.
 
 ### Baseline schema vs. Flyway
-Hibernate runs with `ddl-auto: validate` — it never creates tables. The **baseline** schema (colleges,
-users, departments, courses, attendance, marks, …) lives in `docker/postgres/init-db.sql` and is applied
-once, outside of Flyway, when the Postgres container first initializes (`docker-entrypoint-initdb.d`).
-Flyway (`db/migration/V*.sql`) only carries *incremental* changes on top of that baseline (currently just
-`notification_configs`). `docker/postgres/init-db.sql` also seeds one demo college and one user per role
-(`admin` / `cadmin` / `hod_cse` / `teacher1` / `student1`, password `password123` for all) — useful for
-local login/visual testing.
+Hibernate runs with `ddl-auto: validate` in test/prod — it never creates tables (`local` and the
+new `dev` Spring profile are the two exceptions; see below). The **baseline** schema (colleges,
+users, departments, courses, student/teacher profiles) lives in `infra/k8s/base/db/init-db.sql`
+and is applied once, outside of Flyway, when the Postgres container/pod first initializes
+(`docker-entrypoint-initdb.d`). Flyway (`db/migration/V*.sql`) carries *incremental* changes on
+top of that baseline: `V1` adds `notification_configs`, `V2` adds every table the baseline never
+created (subjects/classes/class_subjects/teacher_assignments/student_enrollments/exam_types/
+marks/attendance_records), and `V3` fixes a `courses` column drift (`college_id`/`duration_years`
+the `Course` entity needs but the baseline never had). `infra/k8s/base/db/init-db.sql` also seeds
+one demo college and one user per role
+(`admin` / `cadmin` / `hod_cse` / `teacher1` / `student1`, password `password123` for all) — useful
+for local login/visual testing.
+
+The `local` k8s overlay still runs with `ddl-auto: update` as a deliberate dev convenience (fast
+entity iteration without writing a migration per tweak) — that's a choice, not a gap, now that
+`validate` actually works in test/prod. There's also a `dev` Spring profile
+(`application-dev.yml`, activate with `SPRING_PROFILES_ACTIVE=dev`) for a zero-dependency H2
+in-memory run with no Docker/Postgres at all — Flyway is disabled for it since the migrations
+above are Postgres-specific, and Hibernate builds the schema itself instead (`create-drop`).
 
 ### Tests
 ```

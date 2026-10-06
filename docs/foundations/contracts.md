@@ -1,8 +1,9 @@
 # Data Model & Interface Contracts
 
-Full request/response payloads live in [docs/API.md](../API.md) (treat
-[docs/APIdoc.md](../APIdoc.md) as its likely-duplicate until that's
-resolved — see [architecture.md](architecture.md)). This doc is the
+Full request/response payloads live in [docs/API.md](../API.md) (the
+former `docs/APIdoc.md` duplicate was deleted — it had drifted and was
+missing the Support/Observability sections `API.md` has; `API.md` is now
+the single canonical copy). This doc is the
 role-authorization map: which endpoint, which role, extracted directly from
 each controller's `@PreAuthorize` (current as of commit `ed474e0`) — the
 part existing docs don't make scannable in one place.

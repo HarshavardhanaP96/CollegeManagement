@@ -4,6 +4,20 @@
 **Target Environment:** Production  
 **Phase:** 1
 
+> **Legacy / not applicable to the current stack.** This is a generic
+> bare-metal runbook (MySQL, systemd, Nginx reverse proxy on a single VM)
+> written before the project settled on its actual stack: PostgreSQL,
+> Spring Boot run as a container, Docker Compose for local dev, and
+> Kubernetes + ArgoCD for test/prod (`infra/`). Hardware sizing, the DB
+> engine, and the install steps below do not match how this app is actually
+> deployed today. For the real, current deployment process see
+> [DEVOPS.md](DEVOPS.md), [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
+> and [OBSERVABILITY.md](OBSERVABILITY.md) (the "Monitoring" line in §1 below
+> is stale too — Prometheus + Grafana are no longer "optional," they're
+> stood up by `infra/k8s/monitoring` and scrape the app's real
+> `/api/v1/actuator/prometheus` endpoint). Kept here for whatever reference
+> value the general on-prem sizing/Nginx/systemd content still has.
+
 ---
 
 ## 1. System Requirements

@@ -5,8 +5,11 @@ Infrastructure files are grouped here so deployment assets live in one place.
 | Path | Purpose |
 |---|---|
 | `docker/` | Docker Compose files and Docker-only service config. |
-| `k8s/` | Kubernetes base manifests, overlays, logging, and the shared DB seed. |
-| `argocd/` | ArgoCD Application manifests. |
+| `k8s/base` | Common backend/frontend/db Deployments + the shared DB seed. |
+| `k8s/overlays/{local,test,prod}` | Per-environment patches (replicas, ddl-auto, image tags, per-env secrets). |
+| `k8s/logging` | Cluster-shared ELK + Filebeat DaemonSet (one deployment, not per environment). |
+| `k8s/monitoring` | Cluster-shared Prometheus + Grafana. |
+| `argocd/` | ArgoCD Application manifests — `college-mgmt-{test,prod,logging,monitoring}`. |
 
 ## Local Docker
 

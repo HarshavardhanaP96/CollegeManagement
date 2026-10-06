@@ -22,21 +22,40 @@ Feature-vertical monolith backend + SPA frontend, multi-tenant by college.
   `@PreAuthorize` per controller — the actual authorization boundary (the
   frontend strategies are UX only).
 - **Data:** PostgreSQL. Baseline schema applied once via
-  `docker/postgres/init-db.sql` (Hibernate runs `ddl-auto: validate`, never
-  creates tables); Flyway (`db/migration/V*.sql`) carries incremental changes
-  only. See [docs/DatabaseMigration.md](../DatabaseMigration.md).
+  `infra/k8s/base/db/init-db.sql` (Hibernate runs `ddl-auto: validate` in
+  test/prod, never creates tables there); Flyway (`db/migration/V*.sql`)
+  carries incremental changes — as of 2026-10-06 this includes `V2`/`V3`,
+  which finally cover every table/column `validate` needs (see "Key
+  decisions" below; this replaced the `ddl-auto: update` stopgap that used
+  to be required in the test/prod k8s overlays). See
+  [docs/DatabaseMigration.md](../DatabaseMigration.md).
 - **Secrets:** per-college SMTP/WhatsApp credentials encrypted at rest via
   AES-256-GCM (`EncryptedStringConverter`), key from `ENCRYPTION_KEY` env var.
-- **Observability:** ELK (Elasticsearch/Logstash/Kibana) for logs, Discord
-  webhook alerts on failure-rate/slow-request thresholds. See
+- **Observability:** logs are structured JSON to stdout
+  (`logback-spring.xml`) — the app itself never pushes to Logstash (a prior
+  `LogstashTcpSocketAppender` was deliberately removed). In k8s, a Filebeat
+  DaemonSet (`infra/k8s/logging/filebeat.yaml`) ships that stdout to
+  Logstash → Elasticsearch, with Kibana on top (`infra/k8s/logging/elk.yaml`)
+  — this is new as of 2026-10-06; previously `elk.yaml` was deployed-but-
+  unwired (not in any overlay's kustomization) and nothing fed it logs.
+  Metrics are Prometheus-format at `/api/v1/actuator/prometheus`
+  (`micrometer-registry-prometheus`), scraped by `infra/k8s/monitoring`
+  (Prometheus + Grafana, also new 2026-10-06 — previously nothing scraped
+  this endpoint at all). Discord webhook alerts on failure-rate/slow-request
+  thresholds are a separate, in-process path (`FailureRateMonitor`/
+  `SlowRequestInterceptor` fed directly by `GlobalExceptionHandler`/a
+  `HandlerInterceptor`) — **not** routed through ELK, unlike what the old
+  version of this diagram implied. See
   [docs/OBSERVABILITY.md](../OBSERVABILITY.md).
-- **Infra:** Docker Compose for local dev; Kubernetes + ArgoCD for
-  deployment (`infra/k8s`, `infra/argocd`). See
+- **Infra:** Docker Compose for local dev (`infra/docker/`); Kubernetes +
+  ArgoCD for test/prod deployment plus a cluster-shared logging/monitoring
+  stack (`infra/k8s`, `infra/argocd`). See
   [docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
   [docs/DEVOPS.md](../DEVOPS.md), [docs/OPERATIONS.md](../OPERATIONS.md).
 - **Provisioned but unused:** Redis and Kafka connection settings exist in
   `application.yml`; nothing in the codebase currently uses either. Stripe
-  API key/webhook secret are provisioned; no payment flow calls them yet.
+  API key/webhook secret and the AWS S3 SDK (`backend/pom.xml`) are
+  provisioned; no payment flow or file-storage code calls them yet.
 
 ## System diagram (HLD)
 ```mermaid
@@ -60,8 +79,10 @@ graph TB
     REDIS[("Redis — configured,<br/>unused")]
     KAFKA[("Kafka — configured,<br/>unused")]
     STRIPE["Stripe — key provisioned,<br/>no flow calls it"]
-    ELK["ELK stack<br/>(Elasticsearch/Logstash/Kibana)"]
-    DISCORD["Discord webhook<br/>(FailureRateMonitor,<br/>SlowRequestInterceptor)"]
+    S3["S3 — SDK provisioned,<br/>no code calls it"]
+    ELK["ELK stack<br/>(Elasticsearch/Logstash/Kibana,<br/>fed by Filebeat DaemonSet)"]
+    PROM["Prometheus + Grafana<br/>(scrapes /actuator/prometheus)"]
+    DISCORD["Discord webhook<br/>(FailureRateMonitor,<br/>SlowRequestInterceptor —<br/>in-process, bypasses ELK)"]
 
     FE -->|"JWT Bearer, /api/v1/**"| AUTH
     FE --> CORE
@@ -95,18 +116,22 @@ graph TB
     ACAD -.->|configured, idle| KAFKA
     ACAD -.->|configured, idle| REDIS
     CORE -.->|configured, idle| STRIPE
+    CORE -.->|configured, idle| S3
 
-    AUTH -.->|structured logs| ELK
-    ACAD -.->|structured logs| ELK
-    ELK -.->|threshold breach| DISCORD
+    AUTH -.->|"stdout JSON → Filebeat"| ELK
+    ACAD -.->|"stdout JSON → Filebeat"| ELK
+    ACAD -.->|"/actuator/prometheus"| PROM
+    GEH -.->|"5xx / slow request (direct, no ELK)"| DISCORD
 ```
 Dotted edges are cross-cutting (tenancy scoping, logging, alerting, or
-configured-but-unused integrations) rather than direct request flow.
+configured-but-unused integrations) rather than direct request flow. ELK and
+Discord are two independent observability paths, not a pipeline — Discord
+alerts never go through ELK.
 
 ## Deployment diagram (HLD)
 ```mermaid
 graph LR
-    subgraph "Local dev — docker-compose.dev.yml"
+    subgraph "Local dev — infra/docker/docker-compose(.dev).yml"
         D_FE["frontend (vite, :5173)"]
         D_BE["backend (mvn spring-boot:run, :8080)"]
         D_PG[("postgres (:5433 host)")]
@@ -115,13 +140,19 @@ graph LR
         D_PGA --> D_PG
     end
 
-    subgraph "Staging / Prod — Kubernetes + ArgoCD"
-        GIT["Git repo<br/>(infra/k8s overlays)"] -->|sync| ARGO["ArgoCD"]
-        ARGO --> K_FE["frontend Deployment"]
-        ARGO --> K_BE["backend Deployment"]
+    subgraph "local/test/prod — Kubernetes + ArgoCD"
+        GIT["Git repo<br/>(infra/k8s overlays)"] -->|sync| ARGO["ArgoCD<br/>(4 Applications: test, prod,<br/>logging, monitoring)"]
+        ARGO --> K_FE["frontend Deployment<br/>(per overlay)"]
+        ARGO --> K_BE["backend Deployment<br/>(per overlay)"]
         K_BE --> K_PG[("Postgres<br/>(managed or in-cluster)")]
-        K_BE --> K_ELK["ELK logging stack<br/>(infra/k8s/logging)"]
-        K_ELK --> K_DISC["Discord alert webhook"]
+
+        subgraph "Cluster-shared (one instance, not per overlay)"
+            K_FB["Filebeat DaemonSet"] --> K_ELK["ELK<br/>(infra/k8s/logging)"]
+            K_PROM["Prometheus + Grafana<br/>(infra/k8s/monitoring)"]
+        end
+        K_BE -.->|stdout logs| K_FB
+        K_PROM -.->|scrapes| K_BE
+        K_BE -->|"direct, in-process"| K_DISC["Discord alert webhook"]
     end
 ```
 See [docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md)
@@ -129,6 +160,19 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-06: Closed the gap between this doc set and the actual infra/observability code:
+  (1) added Flyway `V2`/`V3` migrations covering every table/column `ddl-auto: validate` needs
+  (subjects/classes/marks/attendance/etc. plus a `courses` drift fix), so the `ddl-auto: update`
+  stopgap in the test/prod k8s overlays is gone — verified by booting the app against a real
+  Postgres with `validate` after applying the migrations; (2) wired `infra/k8s/logging/elk.yaml`
+  into a Filebeat DaemonSet + its own ArgoCD Application (it was deployed-but-unfed before);
+  (3) added `infra/k8s/monitoring` (Prometheus + Grafana) scraping the previously-unscraped
+  `/actuator/prometheus` endpoint; (4) gave test and prod distinct (still-placeholder) secrets
+  instead of sharing one set; (5) fixed the broken/orphaned `application-dev.yml` profile into a
+  working zero-dependency H2 local option; (6) deleted stale doc duplicates (`APIdoc.md`,
+  `User-Guide.md`) and the stale root `docker-compose*.yml`/`docker/` duplicates of
+  `infra/docker/`; (7) added a Jenkinsfile test→prod promotion gate (previously one
+  unconditional update fed both). Still active.
 - 2026-09-24: Per-college notification config (SMTP + WhatsApp) added with a
   split-privilege model — SUPERADMIN can read and write, COLLEGEADMIN can
   only read — because notification credentials are platform-sensitive
@@ -154,7 +198,6 @@ one-screen map, not a replacement for that runbook.
   any route in `frontend/src/routes/index.tsx`. Decide whether to delete it
   or migrate its ideas (billing UI in particular) into the real app before
   it rots further out of sync with `roleStrategy.ts`.
-- `docs/API.md` and `docs/APIdoc.md` appear to be duplicate files (identical
-  title/TOC) — same for `docs/User-Guide.md`/`docs/USER_GUIDE.md`. Resolve
-  which is canonical before this doc set's [contracts.md](contracts.md)
-  links to either.
+- Resolved (2026-10-06): `docs/APIdoc.md` and `docs/User-Guide.md` were
+  duplicates/stale forks of `docs/API.md` and `docs/USER_GUIDE.md` — both
+  deleted, the latter two are now the sole canonical copies.

@@ -29,16 +29,22 @@ summary + the rule for keeping new role/API work covered.
   their `@PreAuthorize` claimed to allow.
 
 ## Rollout plan
-- **Local dev:** Docker Compose (`docker-compose.dev.yml`) — Postgres, pgAdmin,
-  backend (`mvn spring-boot:run`, port 8080), frontend (Vite, port 5173).
-- **Staging/prod:** Kubernetes via ArgoCD (`infra/k8s`, `infra/argocd`) — see
+- **Local dev:** Docker Compose (`infra/docker/docker-compose.yml` +
+  `.dev.yml`) — Postgres, pgAdmin, backend (`mvn spring-boot:run`, port
+  8080), frontend (Vite, port 5173). Or `SPRING_PROFILES_ACTIVE=dev` for a
+  Docker-free H2 in-memory run (`application-dev.yml`).
+- **test/prod:** Kubernetes via ArgoCD (`infra/k8s`, `infra/argocd`) — see
   the k8s runbook linked above for the actual deploy sequence and overlay
-  structure (`infra/k8s/overlays`).
+  structure (`infra/k8s/overlays`). Two more ArgoCD Applications
+  (`college-mgmt-logging`, `college-mgmt-monitoring`) deploy the
+  cluster-shared ELK and Prometheus/Grafana stacks once, not per overlay.
 - **Schema changes:** baseline schema is fixed
-  (`docker/postgres/init-db.sql`, applied once); every schema change after
+  (`infra/k8s/base/db/init-db.sql`, applied once); every schema change after
   that is an incremental Flyway migration under
-  `backend/src/main/resources/db/migration/`. Never edit the baseline file
-  for an already-deployed environment — add a new `V{n}__*.sql` instead.
+  `backend/src/main/resources/db/migration/` (`V1`–`V3` today). Never edit
+  the baseline file for an already-deployed environment — add a new
+  `V{n}__*.sql` instead, as `V2`/`V3` did to retire the old
+  `ddl-auto: update` stopgap.
 - **New-role-capability rollout order** (for the "many APIs to add/modify"
   work this doc set exists to prepare for): land the backend endpoint +
   `@PreAuthorize` + tests first, confirm it in `docs/contracts.md`'s
@@ -49,11 +55,16 @@ summary + the rule for keeping new role/API work covered.
   gate as a substitute for the backend guard.
 
 ## Rollback / monitoring
-- **Logs:** ELK stack (Elasticsearch/Logstash/Kibana), structured logging —
-  see [docs/OBSERVABILITY.md](../OBSERVABILITY.md).
+- **Logs:** structured JSON to stdout, shipped by a Filebeat DaemonSet into
+  ELK (Elasticsearch/Logstash/Kibana) — see
+  [docs/OBSERVABILITY.md](../OBSERVABILITY.md).
+- **Metrics:** Prometheus scrapes `/api/v1/actuator/prometheus`; Grafana on
+  top (`infra/k8s/monitoring`) — JVM/HTTP/Hikari metrics, auto-instrumented
+  by Micrometer.
 - **Alerting:** Discord webhook on elevated failure rate or slow requests
   (`DiscordAlertService`, `FailureRateMonitor`, `SlowRequestInterceptor`) —
-  this is the first signal a bad rollout shows up on.
+  this is the first signal a bad rollout shows up on, and it's independent
+  of ELK/Prometheus (fires directly from in-process request handling).
 - **Build identification:** `GET /api/v1/actuator/info` exposes
   `apiVersion` + `build.version` (Maven project version), surfaced in the
   frontend sidebar footer — use this to confirm which build is live before

@@ -170,7 +170,7 @@ is only one source of truth (`roleStrategy.ts`'s `navItems`), not two.
   pattern in that class).
 - **No environment-specific config here** — this layer doesn't read env vars
   or touch deployment. See `docs/ProjectStructure.md` for the real env var
-  list and `docker/postgres/init-db.sql` for the demo seed data / credentials
+  list and `infra/k8s/base/db/init-db.sql` for the demo seed data / credentials
   used in local dev (do not reuse those credentials anywhere but local dev).
 
 ---

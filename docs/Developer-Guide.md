@@ -826,7 +826,9 @@ interface UserSummaryProjection {
 - [ ] Create database backup strategy
 
 ### Database Migration
-- Use Flyway or Liquibase for versioned migrations
+- Flyway is the project's migration tool (`backend/src/main/resources/db/migration`) — see
+  [DatabaseMigration.md](DatabaseMigration.md). An earlier Liquibase setup was never actually
+  wired up and has been removed.
 - Never use Hibernate DDL auto-update in production
 - Always backup database before migrations
 
