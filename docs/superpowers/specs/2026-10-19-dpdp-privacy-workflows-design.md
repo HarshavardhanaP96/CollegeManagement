@@ -115,3 +115,20 @@ Responses use `ApiResponse<T>`; authorisation uses `@PreAuthorize`.
 - Counsel to confirm the response deadline (D5) and the legal-hold rules for academic records.
 - The college sets real retention durations (D7); the placeholders are not legal advice.
 - Assign a CM functionality ID via a CHG record.
+
+## 9. Implementation amendments (added while writing the plan)
+
+Findings from reading the code that change or sharpen the design above:
+
+1. **H2/dev and tests do not run Flyway.** `application-dev.yml` and `application-test.properties` set `spring.flyway.enabled=false` with `ddl-auto: create-drop`, so entities build the schema there. The SQL migration targets PostgreSQL only and is verified separately (Task 1, Step 8). This supersedes the "must run on H2" sentence in section 3.
+2. **Migration number** is not fixed at V5: it is the next free version when the work lands (another uncommitted V4 exists today).
+3. **`retention_policies.action`** only has `ANONYMISE` in this cut. `DELETE` would break the "keep academic records" decision (D2). **`trigger_event`** only has `ACCOUNT_DEACTIVATED`; the model has no graduation date.
+4. **Retention eligibility** = user with role `STUDENT` or `TEACHER`, `is_active = false`, `anonymised_at IS NULL`, and `COALESCE(deleted_at, updated_at, created_at)` older than the policy's `retention_days`. There is no explicit deactivation timestamp today, so this is the best available reference date.
+5. **Scheduler dry-run** is a global property `app.privacy.retention-dry-run` (default `true`), not a per-college switch. Policies are per college and ship disabled.
+6. **`data_requests.export_payload TEXT`** is added to hold the access bundle; **`data_request_events.occurred_at`** replaces the column called `at`.
+7. **Request status `CANCELLED`** is added to the lifecycle (the spec allowed cancelling but listed no status).
+8. **Extra endpoints:** `GET /privacy/requests/{id}` (requester's detail with history) and `GET /privacy/admin/requests/{id}` (admin detail), needed by the UI.
+9. **PARTIALLY_COMPLETED** is only valid for ERASURE requests and needs a note naming what was retained; every resolve needs a note.
+10. **SUPERADMIN** reads admin data for one college by passing `collegeId`; COLLEGEADMIN always gets their own college and any `collegeId` is ignored. Write endpoints are COLLEGEADMIN only.
+11. **Frontend tests** need a runner: the repo has none, so Vitest + Testing Library are added as devDependencies (Task 9).
+12. The existing generic `audit` package (uncommitted at planning time) is not reused: `privacy_audit_log` needs `subject_user_id` and must not depend on uncommitted code.
