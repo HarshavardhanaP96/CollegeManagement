@@ -1,6 +1,7 @@
 // src/main/java/com/collegeManagement/service/auth/AuthServiceImpl.java
 package com.edgepoint.core.security;
 
+import com.edgepoint.audit.service.AuditService;
 import com.edgepoint.core.dto.ChangePasswordRequest;
 import com.edgepoint.core.dto.LoginRequest;
 import com.edgepoint.core.dto.RefreshTokenRequest;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final TenantContext tenantContext;
+    private final AuditService auditService;
 
     @Value("${spring.security.jwt.expiration}")
     private Long jwtExpiration;
@@ -39,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new AuthenticationException("No account found with the provided username or email"));
 
         if (!user.getIsActive()) {
+            auditService.recordLogin(user, false);
             throw new AuthenticationException("Your account is currently inactive. Please contact the administrator.");
         }
 
@@ -47,11 +50,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            auditService.recordLogin(user, false);
             throw new AuthenticationException("Wrong password. Please check your credentials and try again.");
         }
 
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+        auditService.recordLogin(user, true);
 
         UserResponseDTO userDTO = mapToUserDTO(user);
 

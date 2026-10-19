@@ -16,6 +16,7 @@ import {
   CirclePlus,
   LifeBuoy,
   Settings,
+  ScrollText,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -35,6 +36,7 @@ const ICONS: Record<string, LucideIcon> = {
   plus: CirclePlus,
   support: LifeBuoy,
   settings: Settings,
+  auditLog: ScrollText,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

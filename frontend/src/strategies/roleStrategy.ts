@@ -45,7 +45,8 @@ export type Resource =
   | 'examTypes'
   | 'profile'
   | 'support'
-  | 'collegeConfig';
+  | 'collegeConfig'
+  | 'auditLog';
 
 export interface DashboardCard {
   key: string;
@@ -87,6 +88,7 @@ const superAdminStrategy: RoleStrategy = {
     { key: 'attendance',    label: 'Attendance',     path: '/attendance',         icon: 'attendance', group: 'Operations' },
     { key: 'marks',         label: 'Marks',          path: '/marks',             icon: 'marks', group: 'Operations' },
     { key: 'examTypes',     label: 'Exam Types',     path: '/exam-types',        icon: 'examTypes', group: 'Operations' },
+    { key: 'auditLog',      label: 'Audit log',      path: '/audit-log',         icon: 'auditLog', group: 'Management' },
     { key: 'support',       label: 'Support',        path: '/support',           icon: 'support', group: 'Support' },
   ],
   permissions: {
@@ -103,6 +105,7 @@ const superAdminStrategy: RoleStrategy = {
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
     collegeConfig: ALL_ACTIONS,
+    auditLog: ['read'],
   },
   dashboardCards: [
     {
@@ -153,6 +156,7 @@ const collegeAdminStrategy: RoleStrategy = {
     { key: 'classes',       label: 'Classes',       path: '/classes',       icon: 'classes', group: 'Academic' },
     { key: 'examTypes',     label: 'Exam Types',    path: '/exam-types',    icon: 'examTypes', group: 'Operations' },
     { key: 'collegeConfig', label: 'College Config',path: '/college-config',icon: 'settings', group: 'Management' },
+    { key: 'auditLog',      label: 'Audit log',     path: '/audit-log',     icon: 'auditLog', group: 'Management' },
     { key: 'support',       label: 'Support',       path: '/support',       icon: 'support', group: 'Support' },
   ],
   permissions: {
@@ -168,6 +172,7 @@ const collegeAdminStrategy: RoleStrategy = {
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
     collegeConfig: ['read'],
+    auditLog: ['read'],
   },
   dashboardCards: [
     {
