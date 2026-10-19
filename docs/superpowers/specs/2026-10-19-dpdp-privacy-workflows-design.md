@@ -28,9 +28,9 @@ Backend and UI are both in scope.
 | D6 | Consent-based purposes start as not granted; nothing is pre-ticked | Assumption |
 | D7 | Retention policies ship disabled with placeholder durations; the scheduler defaults to dry-run | Assumption |
 
-## 3. Data model — `V4__privacy_workflows.sql`
+## 3. Data model — `V5__privacy_workflows.sql`
 
-Conventions follow V2: `SERIAL` primary keys, standard audit columns, `IF NOT EXISTS`. The migration must run on Postgres (prod) and H2 (`dev` profile).
+An uncommitted `V4__add_notification_channel_rules.sql` already exists in the working tree, so this migration takes V5; renumber at implementation time if that changes. Conventions follow V2: `SERIAL` primary keys, standard audit columns, `IF NOT EXISTS`. The migration must run on Postgres (prod) and H2 (`dev` profile).
 
 | Table | Purpose | Key columns |
 |---|---|---|
@@ -106,7 +106,7 @@ Responses use `ApiResponse<T>`; authorisation uses `@PreAuthorize`.
 - Invalid transitions raise `BusinessRuleViolationException`; unknown requests raise `ResourceNotFoundException`.
 - **TDD throughout** (red, green, refactor):
   - Unit: state machine, consent ledger, contributor anonymisation, retention selection.
-  - Integration: Flyway migration on Postgres and H2, controller role checks, cross-tenant isolation (a college cannot see another college's requests).
+  - Integration: Flyway migration (V5) on Postgres and H2, controller role checks, cross-tenant isolation (a college cannot see another college's requests).
   - Destructive path: after erasure, marks and attendance remain and personal fields are gone.
   - Frontend: consent gate and request form.
 
