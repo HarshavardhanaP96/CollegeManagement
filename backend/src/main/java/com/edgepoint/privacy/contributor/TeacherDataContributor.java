@@ -42,6 +42,11 @@ public class TeacherDataContributor implements PersonalDataContributor {
     }
 
     @Override
+    public boolean appliesTo(Integer userId) {
+        return false;
+    }
+
+    @Override
     public void anonymise(Integer userId) {
         // employee_id is the pseudonymous record key and the other columns are not direct identifiers,
         // so nothing is cleared here; the account contributor removes the name, email and phone.

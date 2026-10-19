@@ -70,6 +70,11 @@ public class StudentDataContributor implements PersonalDataContributor {
     }
 
     @Override
+    public boolean appliesTo(Integer userId) {
+        return profiles.existsById(userId);
+    }
+
+    @Override
     public void anonymise(Integer userId) {
         profiles.findById(userId).ifPresent(p -> {
             p.setDateOfBirth(null);

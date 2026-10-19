@@ -110,4 +110,12 @@ class UserDataContributorTest {
         when(users.findById(7)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> contributor.anonymise(7)).isInstanceOf(ResourceNotFoundException.class);
     }
+
+    @Test
+    void appliesToExistingUsersOnly() {
+        when(users.existsById(42)).thenReturn(true);
+        when(users.existsById(43)).thenReturn(false);
+        assertThat(contributor.appliesTo(42)).isTrue();
+        assertThat(contributor.appliesTo(43)).isFalse();
+    }
 }

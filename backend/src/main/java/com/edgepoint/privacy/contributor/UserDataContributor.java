@@ -62,6 +62,11 @@ public class UserDataContributor implements PersonalDataContributor {
     }
 
     @Override
+    public boolean appliesTo(Integer userId) {
+        return users.existsById(userId);
+    }
+
+    @Override
     public void anonymise(Integer userId) {
         User u = load(userId);
         if (u.getAnonymisedAt() != null) {

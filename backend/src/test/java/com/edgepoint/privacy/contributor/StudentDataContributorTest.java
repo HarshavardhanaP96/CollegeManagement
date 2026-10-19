@@ -98,4 +98,12 @@ class StudentDataContributorTest {
         contributor.anonymise(7);
         verify(profiles, never()).save(any());
     }
+
+    @Test
+    void appliesOnlyToUsersWithAStudentProfile() {
+        when(profiles.existsById(42)).thenReturn(true);
+        when(profiles.existsById(5)).thenReturn(false);
+        assertThat(contributor.appliesTo(42)).isTrue();
+        assertThat(contributor.appliesTo(5)).isFalse();
+    }
 }

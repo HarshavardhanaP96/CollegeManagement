@@ -60,6 +60,8 @@ class DataRequestServiceTest {
         service = new DataRequestService(requests, events, List.of(account, student), erasure, audit, tenant, properties, mapper);
         when(tenant.collegeId()).thenReturn(COLLEGE);
         when(tenant.userId()).thenReturn(STUDENT);
+        when(account.appliesTo(STUDENT)).thenReturn(true);
+        when(student.appliesTo(STUDENT)).thenReturn(true);
         when(account.section()).thenReturn("account");
         when(account.correctableFields()).thenReturn(Set.of("fullName", "phone"));
         when(account.export(STUDENT)).thenReturn(Map.of("fullName", "Asha Rao"));
@@ -384,5 +386,31 @@ class DataRequestServiceTest {
     void mineListsTheCallersRequests() {
         when(requests.findByUserIdOrderBySubmittedAtDesc(STUDENT)).thenReturn(List.of(new DataRequest()));
         assertThat(service.mine()).hasSize(1);
+    }
+
+    @Test
+    void aFieldOwnedByAContributorThatDoesNotApplyToTheUserIsRejectedAtSubmit() {
+        when(student.appliesTo(STUDENT)).thenReturn(false);
+        assertThatThrownBy(() -> service.submit(RequestType.CORRECTION, null, Map.of("address", "7 New Street")))
+                .isInstanceOf(BusinessRuleViolationException.class);
+        verify(requests, never()).save(any());
+    }
+
+    @Test
+    void resolveRefusesACorrectionWhoseFieldNoApplicableContributorOwns() {
+        actAsAdmin();
+        DataRequest r = existing(STUDENT, RequestType.CORRECTION, RequestStatus.IN_REVIEW);
+        r.setCorrectionPayload("{\"phone\":\"8888888888\",\"address\":\"7 New Street\"}");
+        when(student.appliesTo(STUDENT)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.resolve(11, RequestStatus.COMPLETED, "Updated"))
+                .isInstanceOf(BusinessRuleViolationException.class)
+                .hasMessageContaining("address");
+
+        assertThat(r.getStatus()).isEqualTo(RequestStatus.IN_REVIEW);
+        verify(requests, never()).save(any());
+        verify(account, never()).correct(any(), any());
+        verify(student, never()).correct(any(), any());
+        verify(audit, never()).record(any(), any(), any(), any(), any());
     }
 }

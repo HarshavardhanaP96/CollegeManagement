@@ -189,7 +189,20 @@ public class DataRequestService {
 
     private void applyCorrection(DataRequest r, Integer admin) {
         Map<String, String> payload = fromJson(r.getCorrectionPayload());
-        for (PersonalDataContributor c : contributors) {
+        List<PersonalDataContributor> applicable = contributors.stream()
+                .filter(c -> c.appliesTo(r.getUserId()))
+                .toList();
+        Set<String> unowned = new TreeSet<>();
+        for (String key : payload.keySet()) {
+            if (applicable.stream().noneMatch(c -> c.correctableFields().contains(key))) {
+                unowned.add(key);
+            }
+        }
+        if (!unowned.isEmpty()) {
+            throw new BusinessRuleViolationException(
+                    "Cannot apply correction for field(s): " + unowned + "; reject the request with a reason");
+        }
+        for (PersonalDataContributor c : applicable) {
             Map<String, String> mine = payload.entrySet().stream()
                     .filter(e -> c.correctableFields().contains(e.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -205,7 +218,9 @@ public class DataRequestService {
         if (correction == null || correction.isEmpty()) {
             throw new BusinessRuleViolationException("Say which field to correct and the new value");
         }
+        Integer self = tenant.userId();
         Set<String> allowed = contributors.stream()
+                .filter(c -> c.appliesTo(self))
                 .flatMap(c -> c.correctableFields().stream())
                 .collect(Collectors.toSet());
         for (Map.Entry<String, String> e : correction.entrySet()) {

@@ -21,6 +21,9 @@ public interface PersonalDataContributor {
     /** Apply a correction; callers pass only keys from {@link #correctableFields()}. */
     void correct(Integer userId, Map<String, String> fields);
 
+    /** True when this module holds correctable data for the user. */
+    boolean appliesTo(Integer userId);
+
     /** Remove direct identifiers while keeping the record. Must be safe to call twice. */
     void anonymise(Integer userId);
 }

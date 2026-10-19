@@ -53,4 +53,9 @@ class TeacherDataContributorTest {
 
         verify(profiles, never()).save(any());
     }
+
+    @Test
+    void neverAppliesBecauseNothingIsCorrectable() {
+        assertThat(new TeacherDataContributor(profiles).appliesTo(5)).isFalse();
+    }
 }
