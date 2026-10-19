@@ -178,6 +178,11 @@ one-screen map, not a replacement for that runbook.
   only read — because notification credentials are platform-sensitive
   (shared delivery infrastructure) even though they're scoped per college.
   Still active.
+- 2026-10-19: Per-event channel routing (`notification_channel_rules`, V4)
+  added. Unlike the credentials above, COLLEGEADMIN can write these for their
+  own college — they only choose *which* channel carries an event, not the
+  shared delivery credentials. Stored only; no dispatcher reads it yet. Still
+  active.
 - 2026-09-24: Marks/attendance/enrollment pipeline added; k8s environment
   configs fixed; observability (ELK) + Discord failure/slow-request
   alerting added. Still active.

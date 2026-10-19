@@ -25,6 +25,10 @@ Runs one college. Scoped to their own `collegeId` via `TenantContext`.
       (`DepartmentController`, `CourseController`)
 - [x] FR-CA2: Configure exam types for their college. (`ExamTypeController`)
 - [x] FR-CA3: Read (not write) notification config for their college.
+- [x] FR-CA5: Choose, per event type (absence, marks published, fee reminder,
+      announcement), whether email and/or WhatsApp is used for their college.
+      SUPERADMIN can do the same for any college. Settings are stored only —
+      no sender consumes them yet. (`NotificationChannelRuleController`)
 - [x] FR-CA4: CRUD students, teachers, classes, subjects — same endpoints HOD
       uses, scoped by college instead of department.
 - [ ] FR-CA5 (gap): No per-college branding/settings page beyond
