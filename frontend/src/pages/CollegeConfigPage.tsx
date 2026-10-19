@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Input, Breadcrumbs, Loading } from '../components/common';
+import { NotificationChannelRulesCard } from '../components/NotificationChannelRulesCard';
 import { getNotificationConfig, updateNotificationConfig } from '../api/notificationConfig';
 import type { NotificationConfigRequest } from '../api/notificationConfig';
 import { getCollegeById } from '../api/college';
@@ -227,6 +228,8 @@ export function CollegeConfigPage() {
           )}
         </Card>
       )}
+
+      <NotificationChannelRulesCard collegeId={collegeId} />
     </div>
   );
 }

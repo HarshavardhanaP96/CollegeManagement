@@ -32,6 +32,9 @@ export const queryKeys = {
   notificationConfig: {
     byCollege: (collegeId: number) => ['notification-config', collegeId] as const,
   },
+  notificationChannelRules: {
+    byCollege: (collegeId: number) => ['notification-channel-rules', collegeId] as const,
+  },
   departments: {
     all: ['departments'] as const,
     byId: (id: number) => ['departments', id] as const,
