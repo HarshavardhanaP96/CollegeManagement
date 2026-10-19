@@ -202,4 +202,44 @@ class RetentionServiceTest {
         service.runs(3, PageRequest.of(0, 10));
         verify(runRepository).findByCollegeIdOrderByRunIdDesc(eq(COLLEGE), any());
     }
+
+    @Test
+    void finalSaveFailureDoesNotThrowAndKeepsCounts() {
+        when(candidates.findExpiredInactive(eq(COLLEGE), any(), eq(ROLES))).thenReturn(List.of(user(1), user(2)));
+        doAnswer(i -> { RetentionRun r = i.getArgument(0); r.setRunId(5); return r; })
+                .doThrow(new IllegalStateException("db down")).when(runRepository).save(any());
+
+        RetentionRun run = service.run(COLLEGE, false, null);
+
+        verify(erasure).erase(COLLEGE, 1, null, "Retention policy ACCOUNT_RECORDS");
+        verify(erasure).erase(COLLEGE, 2, null, "Retention policy ACCOUNT_RECORDS");
+        assertThat(run.getRecordsProcessed()).isEqualTo(2);
+        assertThat(run.getRecordsFailed()).isZero();
+        assertThat(run.getStatus()).isEqualTo(RetentionRunStatus.COMPLETED);
+        verify(audit).record(COLLEGE, null, null, "RETENTION_RUN", "runId=5, processed=2, failed=0");
+    }
+
+    @Test
+    void auditFailureDoesNotThrowAndRunStaysCompleted() {
+        when(candidates.findExpiredInactive(eq(COLLEGE), any(), eq(ROLES))).thenReturn(List.of(user(1)));
+        doThrow(new IllegalStateException("audit down")).when(audit).record(any(), any(), any(), any(), any());
+
+        RetentionRun run = service.run(COLLEGE, false, null);
+
+        assertThat(run.getStatus()).isEqualTo(RetentionRunStatus.COMPLETED);
+        assertThat(run.getRecordsProcessed()).isEqualTo(1);
+    }
+
+    @Test
+    void liveErasuresHappenEvenWhenSaveAndAuditBothFail() {
+        when(candidates.findExpiredInactive(eq(COLLEGE), any(), eq(ROLES))).thenReturn(List.of(user(1), user(2)));
+        doAnswer(i -> { RetentionRun r = i.getArgument(0); r.setRunId(5); return r; })
+                .doThrow(new IllegalStateException("db down")).when(runRepository).save(any());
+        doThrow(new IllegalStateException("audit down")).when(audit).record(any(), any(), any(), any(), any());
+
+        RetentionRun run = service.run(COLLEGE, false, null);
+
+        verify(erasure, times(2)).erase(eq(COLLEGE), any(), eq(null), eq("Retention policy ACCOUNT_RECORDS"));
+        assertThat(run.getRecordsProcessed()).isEqualTo(2);
+    }
 }

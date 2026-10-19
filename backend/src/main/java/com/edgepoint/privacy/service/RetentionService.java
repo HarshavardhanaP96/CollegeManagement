@@ -117,9 +117,18 @@ public class RetentionService {
         run.setRecordsProcessed(processed);
         run.setRecordsFailed(failed);
         run.setFinishedAt(LocalDateTime.now());
-        run = runRepository.save(run);
-        audit.record(collegeId, actorId, null, dryRun ? "RETENTION_DRY_RUN" : "RETENTION_RUN",
-                "runId=" + run.getRunId() + ", processed=" + processed + ", failed=" + failed);
+        try {
+            run = runRepository.save(run);
+        } catch (RuntimeException e) {
+            log.error("Could not finalise retention run {} for college {} (processed={}, failed={}): {}",
+                    run.getRunId(), collegeId, processed, failed, e.toString());
+        }
+        try {
+            audit.record(collegeId, actorId, null, dryRun ? "RETENTION_DRY_RUN" : "RETENTION_RUN",
+                    "runId=" + run.getRunId() + ", processed=" + processed + ", failed=" + failed);
+        } catch (RuntimeException e) {
+            log.error("Could not audit retention run {} for college {}: {}", run.getRunId(), collegeId, e.toString());
+        }
         return run;
     }
 
