@@ -185,9 +185,23 @@ class DataRequestServiceTest {
     void aRequestFromAnotherCollegeLooksNonexistentToTheAdmin() {
         actAsAdmin();
         when(requests.findByRequestIdAndCollegeId(11, COLLEGE)).thenReturn(Optional.empty());
+        when(tenant.collegeId(null)).thenReturn(COLLEGE);
         assertThatThrownBy(() -> service.review(11)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> service.resolve(11, RequestStatus.COMPLETED, "ok")).isInstanceOf(ResourceNotFoundException.class);
-        assertThatThrownBy(() -> service.detailAdmin(11)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.detailAdmin(11, null)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void adminDetailUsesTheCollegeNamedByASuperAdmin() {
+        DataRequest r = existing(STUDENT, RequestType.ACCESS, RequestStatus.SUBMITTED);
+        when(tenant.collegeId(3)).thenReturn(COLLEGE);
+        when(events.findByRequestIdOrderByEventId(11)).thenReturn(List.of());
+
+        DataRequestDetail detail = service.detailAdmin(11, 3);
+
+        assertThat(detail.request().requestId()).isEqualTo(11);
+        verify(requests).findByRequestIdAndCollegeId(11, COLLEGE);
+        verify(tenant).collegeId(3);
     }
 
     @Test

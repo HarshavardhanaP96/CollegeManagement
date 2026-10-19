@@ -118,8 +118,8 @@ public class DataRequestService {
     }
 
     @Transactional(readOnly = true)
-    public DataRequestDetail detailAdmin(Integer requestId) {
-        return detail(load(requestId, tenant.collegeId()));
+    public DataRequestDetail detailAdmin(Integer requestId, Integer collegeParam) {
+        return detail(load(requestId, tenant.collegeId(collegeParam)));
     }
 
     @Transactional

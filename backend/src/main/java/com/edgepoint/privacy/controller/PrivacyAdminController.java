@@ -52,8 +52,9 @@ public class PrivacyAdminController {
 
     @GetMapping("/requests/{id}")
     @Operation(summary = "One request with its history")
-    public ResponseEntity<ApiResponse<DataRequestDetail>> request(@PathVariable Integer id) {
-        return ResponseEntity.ok(ApiResponse.success(requestService.detailAdmin(id), "Request"));
+    public ResponseEntity<ApiResponse<DataRequestDetail>> request(@PathVariable Integer id,
+                                                                @RequestParam(required = false) Integer collegeId) {
+        return ResponseEntity.ok(ApiResponse.success(requestService.detailAdmin(id, collegeId), "Request"));
     }
 
     @PostMapping("/requests/{id}/review")

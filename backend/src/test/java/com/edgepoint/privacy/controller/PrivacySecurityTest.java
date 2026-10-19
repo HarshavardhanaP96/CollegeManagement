@@ -21,10 +21,19 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -51,7 +60,8 @@ class PrivacySecurityTest {
 
     @Test
     void anonymousCallersAreRejected() throws Exception {
-        mvc.perform(get("/privacy/notice/current")).andExpect(status().is4xxClientError());
+        // the app has no custom entry point, so Spring Security's default answers 403 for anonymous callers
+        mvc.perform(get("/privacy/notice/current")).andExpect(status().isForbidden());
     }
 
     @Test
@@ -135,5 +145,132 @@ class PrivacySecurityTest {
                 .content("{\"outcome\":\"COMPLETED\"}")).andExpect(status().isBadRequest());
         mvc.perform(post("/privacy/admin/notices").contentType(MediaType.APPLICATION_JSON).content("{\"body\":\" \"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ------------------------------------------------------------------ access matrix
+    // The services are mocks returning stubbed values, so a missing @PreAuthorize would answer 200, not 403.
+
+    static final String JSON = MediaType.APPLICATION_JSON_VALUE;
+    static final String ROLE_BODY_CONSENT = "{\"purposeId\":2,\"status\":\"GRANTED\"}";
+    static final String POLICY_BODY = "[{\"dataCategory\":\"ACCOUNT_RECORDS\",\"retentionDays\":1825,"
+            + "\"triggerEvent\":\"ACCOUNT_DEACTIVATED\",\"action\":\"ANONYMISE\",\"enabled\":false}]";
+
+    void stubHappyPaths() {
+        when(requestService.cancel(any())).thenReturn(aRequest());
+        when(requestService.review(any())).thenReturn(aRequest());
+        when(requestService.resolve(any(), any(), any())).thenReturn(aRequest());
+        when(requestService.queue(any(), any(), anyBoolean(), any())).thenReturn(Page.empty());
+        when(requestService.exportFor(any())).thenReturn("{\"account\":{}}");
+        when(retentionService.runNow(anyBoolean())).thenReturn(new RetentionRun());
+    }
+
+    int statusOf(String role, MockHttpServletRequestBuilder request) throws Exception {
+        return mvc.perform(request.with(user("tester").roles(role))).andReturn().getResponse().getStatus();
+    }
+
+    void assertAll(int expected, List<String> roles, List<MockHttpServletRequestBuilder> requests) throws Exception {
+        stubHappyPaths();
+        for (String role : roles) {
+            for (MockHttpServletRequestBuilder request : requests) {
+                MvcResult result = mvc.perform(request.with(user("tester").roles(role))).andReturn();
+                String label = role + " " + result.getRequest().getMethod() + " " + result.getRequest().getRequestURI();
+                int actual = result.getResponse().getStatus();
+                if (expected == 200) {
+                    assertThat(actual).as(label).isBetween(200, 201);
+                } else {
+                    assertThat(actual).as(label).isEqualTo(expected);
+                }
+            }
+        }
+    }
+
+    List<MockHttpServletRequestBuilder> principalEndpoints() {
+        return List.of(get("/privacy/requests/1"), post("/privacy/requests/1/cancel"), get("/privacy/requests/1/export"));
+    }
+
+    List<MockHttpServletRequestBuilder> adminReads() {
+        return List.of(get("/privacy/admin/requests?collegeId=3"), get("/privacy/admin/requests/1?collegeId=3"),
+                get("/privacy/admin/notices?collegeId=3"), get("/privacy/admin/retention-policies?collegeId=3"),
+                get("/privacy/admin/retention/runs?collegeId=3"), get("/privacy/admin/audit?collegeId=3"));
+    }
+
+    List<MockHttpServletRequestBuilder> adminWrites() {
+        return List.of(post("/privacy/admin/requests/1/review"),
+                post("/privacy/admin/requests/1/resolve").contentType(JSON).content("{\"outcome\":\"COMPLETED\",\"note\":\"done\"}"),
+                post("/privacy/admin/notices").contentType(JSON).content("{\"body\":\"x\"}"),
+                put("/privacy/admin/retention-policies").contentType(JSON).content(POLICY_BODY),
+                post("/privacy/admin/retention/run?dryRun=false"));
+    }
+
+    @Test
+    void studentsAndTeachersMayUseThePrincipalEndpoints() throws Exception {
+        assertAll(200, List.of("STUDENT", "TEACHER"), principalEndpoints());
+    }
+
+    @Test
+    void nobodyElseMayUseThePrincipalEndpoints() throws Exception {
+        assertAll(403, List.of("COLLEGEADMIN", "HOD", "SUPERADMIN"), principalEndpoints());
+    }
+
+    @Test
+    void exportIsAnAttachmentOfJson() throws Exception {
+        stubHappyPaths();
+        for (String role : List.of("STUDENT", "TEACHER")) {
+            mvc.perform(get("/privacy/requests/1/export").with(user("tester").roles(role)))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.startsWith("attachment")))
+                    .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith(JSON)));
+        }
+    }
+
+    @Test
+    void anyAuthenticatedRoleMayRecordConsent() throws Exception {
+        for (String role : List.of("STUDENT", "TEACHER", "HOD", "COLLEGEADMIN", "SUPERADMIN")) {
+            assertThat(statusOf(role, post("/privacy/consents").contentType(JSON).content(ROLE_BODY_CONSENT)))
+                    .as(role).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void aCollegeAdminMayReadAndWriteTheAdminEndpoints() throws Exception {
+        assertAll(200, List.of("COLLEGEADMIN"), adminReads());
+        assertAll(200, List.of("COLLEGEADMIN"), adminWrites());
+    }
+
+    @Test
+    void aSuperAdminMayReadEveryAdminEndpoint() throws Exception {
+        assertAll(200, List.of("SUPERADMIN"), adminReads());
+    }
+
+    @Test
+    void aSuperAdminCannotWriteAnyAdminEndpoint() throws Exception {
+        assertAll(403, List.of("SUPERADMIN"), adminWrites());
+    }
+
+    @Test
+    void aHodHasNoAdminAccessAtAll() throws Exception {
+        assertAll(403, List.of("HOD"), adminReads());
+        assertAll(403, List.of("HOD"), adminWrites());
+    }
+
+    @Test
+    void studentsAndTeachersCannotReachAnyAdminEndpoint() throws Exception {
+        assertAll(403, List.of("STUDENT", "TEACHER"), adminReads());
+        assertAll(403, List.of("STUDENT", "TEACHER"), adminWrites());
+    }
+
+    @Test
+    void retentionRunWithDryRunFalseReachesTheServiceAsFalse() throws Exception {
+        stubHappyPaths();
+        mvc.perform(post("/privacy/admin/retention/run?dryRun=false").with(user("tester").roles("COLLEGEADMIN")))
+                .andExpect(status().isOk());
+        verify(retentionService).runNow(false);
+    }
+
+    @Test
+    void aSuperAdminNamesTheCollegeForRequestDetail() throws Exception {
+        mvc.perform(get("/privacy/admin/requests/1?collegeId=3").with(user("tester").roles("SUPERADMIN")))
+                .andExpect(status().isOk());
+        verify(requestService).detailAdmin(1, 3);
     }
 }
