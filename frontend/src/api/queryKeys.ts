@@ -134,4 +134,15 @@ export const queryKeys = {
     subjects: ['analytics', 'subjects'] as const,
     classes: ['analytics', 'classes'] as const,
   },
+  privacy: {
+    notice: ['privacy', 'notice'] as const,
+    myRequests: ['privacy', 'requests', 'me'] as const,
+    myRequest: (id: number) => ['privacy', 'requests', 'me', id] as const,
+    adminRequests: (filters: object) => ['privacy', 'admin', 'requests', filters] as const,
+    adminRequest: (id: number) => ['privacy', 'admin', 'requests', id] as const,
+    notices: ['privacy', 'admin', 'notices'] as const,
+    policies: ['privacy', 'admin', 'policies'] as const,
+    runs: ['privacy', 'admin', 'runs'] as const,
+    audit: (page: number) => ['privacy', 'admin', 'audit', page] as const,
+  },
 } as const;
