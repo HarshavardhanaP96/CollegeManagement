@@ -27,8 +27,12 @@ Runs one college. Scoped to their own `collegeId` via `TenantContext`.
 - [x] FR-CA3: Read (not write) notification config for their college.
 - [x] FR-CA5: Choose, per event type (absence, marks published, fee reminder,
       announcement), whether email and/or WhatsApp is used for their college.
-      SUPERADMIN can do the same for any college. Settings are stored only —
-      no sender consumes them yet. (`NotificationChannelRuleController`)
+      SUPERADMIN can do the same for any college. (`NotificationChannelRuleController`)
+- [x] FR-N1: When a teacher marks a student absent, the parent is notified on
+      the channels enabled for ATTENDANCE_ABSENCE (default email only), using the
+      college's SMTP/WhatsApp config. Async, best effort, no retry. Only the
+      absence event is wired; other event types have no trigger yet.
+      (`NotificationDispatcher`, `AttendanceServiceImpl`)
 - [x] FR-CA4: CRUD students, teachers, classes, subjects — same endpoints HOD
       uses, scoped by college instead of department.
 - [ ] FR-CA5 (gap): No per-college branding/settings page beyond

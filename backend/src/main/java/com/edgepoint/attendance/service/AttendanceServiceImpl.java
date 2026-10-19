@@ -20,8 +20,11 @@ import com.edgepoint.academic.repository.TeacherAssignmentRepository;
 import com.edgepoint.student.domain.StudentProfile;
 import com.edgepoint.student.repository.StudentProfileRepository;
 import com.edgepoint.core.security.TenantContext;
+import com.edgepoint.notification.dispatch.NotificationMessage;
+import com.edgepoint.notification.domain.NotificationEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final StudentEnrollmentRepository enrollmentRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final TenantContext tenantContext;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -94,6 +98,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         attendanceRepository.saveAll(records);
         log.info("Attendance marked for {} students on {}", markedCount, request.getRecordDate());
 
+        notifyAbsences(request);
+
         return AttendanceSummaryDTO.builder()
                 .assignmentId(request.getAssignmentId())
                 .recordDate(request.getRecordDate())
@@ -104,6 +110,28 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .unmarkedCount(enrollments.size() - markedCount)
                 .attendancePercentage(calculatePercentage(presentCount, markedCount))
                 .build();
+    }
+
+    /** Best effort: a problem notifying a parent must never fail attendance marking. */
+    private void notifyAbsences(AttendanceCreateRequest request) {
+        Integer collegeId = tenantContext.getCollegeId();
+        for (StudentAttendanceDTO att : request.getStudentAttendances()) {
+            if (Boolean.TRUE.equals(att.getIsPresent())) continue;
+            try {
+                studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(att.getStudentUserId())
+                        .ifPresent(student -> {
+                            String name = student.getUser() != null ? student.getUser().getFullName() : student.getRollNumber();
+                            eventPublisher.publishEvent(new NotificationMessage(
+                                    collegeId, NotificationEventType.ATTENDANCE_ABSENCE,
+                                    student.getParentEmail(), student.getParentPhone(),
+                                    "Absence notice: " + name,
+                                    name + " (roll no. " + student.getRollNumber() + ") was marked absent on "
+                                            + request.getRecordDate() + "."));
+                        });
+            } catch (RuntimeException e) {
+                log.warn("Could not queue absence notification for student {}: {}", att.getStudentUserId(), e.getMessage());
+            }
+        }
     }
 
     @Override
