@@ -19,6 +19,10 @@ function parseCorrection(payload: string | null): [string, string][] {
 
 export function PrivacyRequestDetailPage() {
   const requestId = Number(useParams().id);
+  return <RequestDetail key={requestId} requestId={requestId} />;
+}
+
+function RequestDetail({ requestId }: { requestId: number }) {
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: queryKeys.privacy.adminRequest(requestId),
@@ -35,12 +39,18 @@ export function PrivacyRequestDetailPage() {
 
   const review = useMutation({
     mutationFn: () => reviewRequest(requestId),
-    onSuccess: () => { setError(null); refresh(); },
+    onSuccess: () => { setError(null); return refresh(); },
     onError,
   });
   const resolve = useMutation({
     mutationFn: () => resolveRequest(requestId, { outcome, note: note.trim() }),
-    onSuccess: () => { setError(null); refresh(); },
+    onSuccess: () => {
+      setError(null);
+      setNote('');
+      setConfirmed(false);
+      setOutcome('COMPLETED');
+      return refresh();
+    },
     onError,
   });
 

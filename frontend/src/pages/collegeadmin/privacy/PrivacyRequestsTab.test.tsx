@@ -52,4 +52,16 @@ describe('PrivacyRequestsTab', () => {
     renderWithProviders(<PrivacyRequestsTab />);
     expect(await screen.findByText('No requests match these filters.')).toBeInTheDocument();
   });
+
+  it('disables the status filter while Overdue only is ticked and says why', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PrivacyRequestsTab />);
+    await screen.findByText('#1');
+
+    expect(screen.getByLabelText('Status')).toBeEnabled();
+    await user.click(screen.getByLabelText('Overdue only'));
+
+    expect(screen.getByLabelText('Status')).toBeDisabled();
+    expect(screen.getByText('Overdue only ignores the status filter')).toBeInTheDocument();
+  });
 });

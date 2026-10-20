@@ -94,4 +94,30 @@ describe('PrivacyRetentionTab', () => {
     renderWithProviders(<PrivacyRetentionTab />);
     expect(await screen.findByText('Dry run')).toBeInTheDocument();
   });
+
+  it('keeps the live run locked while a dry run is pending', async () => {
+    vi.mocked(privacy.runRetention).mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    renderWithProviders(<PrivacyRetentionTab />);
+
+    await user.click(await screen.findByLabelText(/I understand a live run permanently anonymises accounts/));
+    await user.click(screen.getByRole('button', { name: 'Preview (dry run)' }));
+
+    await waitFor(() => expect(privacy.runRetention).toHaveBeenCalledWith(true));
+    expect(screen.getByRole('button', { name: /Run now \(live\)/ })).toBeDisabled();
+  });
+
+  it('re-locks the live run after it fails', async () => {
+    vi.mocked(privacy.runRetention).mockRejectedValue(new Error('boom'));
+    const user = userEvent.setup();
+    renderWithProviders(<PrivacyRetentionTab />);
+
+    const box = await screen.findByLabelText(/I understand a live run permanently anonymises accounts/);
+    await user.click(box);
+    await user.click(screen.getByRole('button', { name: 'Run now (live)' }));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(box).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Run now (live)' })).toBeDisabled();
+  });
 });

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { PrivacyRequestDetailPage } from './PrivacyRequestDetailPage';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import * as privacy from '../../../api/privacy';
@@ -133,5 +133,55 @@ describe('PrivacyRequestDetailPage', () => {
     await user.click(screen.getByRole('button', { name: 'Resolve request' }));
 
     expect(await screen.findByText('You cannot act on your own request')).toBeInTheDocument();
+  });
+
+  it('resets the confirmation when the outcome changes', async () => {
+    vi.mocked(privacy.getAdminRequest).mockResolvedValue(detail({ type: 'ERASURE' }));
+    const user = userEvent.setup();
+    show();
+
+    const resolve = await screen.findByRole('button', { name: 'Resolve request' });
+    await user.type(screen.getByLabelText('Resolution note'), 'note');
+    await user.click(screen.getByLabelText(/I understand this cannot be undone/));
+    expect(resolve).toBeEnabled();
+
+    await user.selectOptions(screen.getByLabelText('Outcome'), 'REJECTED');
+    await user.selectOptions(screen.getByLabelText('Outcome'), 'COMPLETED');
+    expect(resolve).toBeDisabled();
+  });
+
+  it('cannot resolve twice while the refresh is in flight', async () => {
+    vi.mocked(privacy.getAdminRequest)
+      .mockResolvedValueOnce(detail())
+      .mockImplementation(() => new Promise((r) => setTimeout(() => r(detail({ status: 'COMPLETED' })), 50)));
+    const user = userEvent.setup();
+    show();
+
+    await user.type(await screen.findByLabelText('Resolution note'), 'done');
+    const resolve = screen.getByRole('button', { name: 'Resolve request' });
+    await user.click(resolve);
+    await user.click(resolve);
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Resolve request' })).not.toBeInTheDocument());
+    expect(privacy.resolveRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not carry a typed note over to another request', async () => {
+    vi.mocked(privacy.getAdminRequest).mockResolvedValue(detail());
+    const user = userEvent.setup();
+    renderWithProviders(
+      <>
+        <Link to="/privacy-admin/requests/6">Next request</Link>
+        <Routes><Route path="/privacy-admin/requests/:id" element={<PrivacyRequestDetailPage />} /></Routes>
+      </>,
+      { route: '/privacy-admin/requests/5' },
+    );
+
+    await user.type(await screen.findByLabelText('Resolution note'), 'stale note');
+    await user.click(screen.getByRole('link', { name: 'Next request' }));
+
+    await waitFor(() => expect(privacy.getAdminRequest).toHaveBeenCalledWith(6));
+    expect(await screen.findByLabelText('Resolution note')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Resolve request' })).toBeDisabled();
   });
 });

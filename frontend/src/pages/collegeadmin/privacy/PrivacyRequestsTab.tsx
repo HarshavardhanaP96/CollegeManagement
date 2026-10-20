@@ -33,6 +33,7 @@ export function PrivacyRequestsTab() {
             label="Status"
             options={STATUS_OPTIONS}
             value={status}
+            disabled={overdue}
             onChange={(e) => { setStatus(e.target.value as RequestStatus | ''); setPage(0); }}
           />
         </div>
@@ -44,6 +45,7 @@ export function PrivacyRequestsTab() {
           />
           Overdue only
         </label>
+        {overdue && <p className="pb-2 text-xs text-slate-500">Overdue only ignores the status filter</p>}
       </div>
 
       {isLoading ? (

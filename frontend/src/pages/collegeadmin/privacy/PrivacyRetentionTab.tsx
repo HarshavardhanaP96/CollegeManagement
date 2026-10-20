@@ -25,7 +25,7 @@ export function PrivacyRetentionTab() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['privacy'] });
-  const onError = (err: unknown) => { setMessage(null); setError(getErrorMessage(err).message); };
+  const onError = (err: unknown) => { setLiveConfirmed(false); setMessage(null); setError(getErrorMessage(err).message); };
 
   const editFor = (p: RetentionPolicy): Edit =>
     edits[p.dataCategory] ?? { days: String(p.retentionDays), enabled: p.enabled };
@@ -117,7 +117,7 @@ export function PrivacyRetentionTab() {
       <Card title="Run retention">
         <div className="space-y-4">
           <div>
-            <Button variant="outline" onClick={() => run.mutate(true)} isLoading={run.isPending}>Preview (dry run)</Button>
+            <Button variant="outline" onClick={() => run.mutate(true)} isLoading={run.isPending && run.variables === true} disabled={run.isPending}>Preview (dry run)</Button>
             <p className="mt-1 text-xs text-slate-500">Counts what would change without changing anything.</p>
           </div>
           <div className="space-y-2 border-t border-slate-100 pt-4">
@@ -125,7 +125,12 @@ export function PrivacyRetentionTab() {
               <input type="checkbox" checked={liveConfirmed} onChange={(e) => setLiveConfirmed(e.target.checked)} />
               I understand a live run permanently anonymises accounts
             </label>
-            <Button variant="danger" disabled={!liveConfirmed} onClick={() => run.mutate(false)}>Run now (live)</Button>
+            <Button
+              variant="danger"
+              disabled={!liveConfirmed || run.isPending}
+              isLoading={run.isPending && run.variables === false}
+              onClick={() => run.mutate(false)}
+            >Run now (live)</Button>
           </div>
         </div>
       </Card>
