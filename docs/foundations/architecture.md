@@ -160,6 +160,17 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-20: Added the `privacy` module (DPDP workflows; see `docs/PRIVACY.md`).
+  (1) New vertical slice `com.edgepoint.privacy` with migration `V6__privacy_workflows.sql`;
+  (2) extension point `PersonalDataContributor`: each module that stores personal data
+  implements it (export, correct, anonymise) and is picked up automatically, so privacy code
+  needs no change for new modules (users, students, teachers ship with it);
+  (3) erasure anonymises and keeps the record (marks, attendance and results survive, keyed by
+  user id and roll number) instead of hard-deleting; (4) the nightly retention scheduler is
+  dry-run by default (`app.privacy.retention-dry-run=true`) and policies ship disabled;
+  (5) known limitations: tokens issued before an erasure stay valid until expiry, the scheduler
+  has no distributed lock (single replica), first-access purpose seeding can race once, no
+  optimistic locking on request resolution, no guardian consent or breach notification.
 - 2026-10-06: Closed the gap between this doc set and the actual infra/observability code:
   (1) added Flyway `V2`/`V3` migrations covering every table/column `ddl-auto: validate` needs
   (subjects/classes/marks/attendance/etc. plus a `courses` drift fix), so the `ddl-auto: update`

@@ -87,6 +87,25 @@ Self-service only, scoped to their own `userId`.
       `components/edgepoint/` prototype tree, so it's dead code today, not a
       live bug — but it will 404 immediately if that tree is ever wired up.
 
+## Privacy & data protection (DPDP)
+Tenant-scoped; design in `docs/superpowers/specs/2026-10-19-dpdp-privacy-workflows-design.md`,
+operator guide in [../PRIVACY.md](../PRIVACY.md).
+- [x] PRIV-006: Notice and consent. College admin publishes versioned privacy
+      notices; students and teachers grant or withdraw consent per purpose
+      (append-only ledger) and are asked again after each new notice.
+      (COMP-001)
+- [x] PRIV-007: Data-principal requests (access, correction, erasure,
+      grievance) with a due date (default 30 days from submission); college
+      admin reviews and resolves; erasure needs an approval note and cannot be
+      self-approved.
+- [x] PRIV-008: Retention. A per-college policy anonymises deactivated
+      accounts after N days; the nightly job is dry-run by default.
+- [x] PRIV-009: Erasure anonymises personal fields and disables the account;
+      marks, attendance and results are kept, linked by user id and roll number.
+- [ ] Open: the legal response-day figure (30 is an assumption), the real
+      retention periods (placeholder 1825 days, policies ship disabled), and
+      the functionality ID for the privacy module.
+
 ## Non-functional requirements
 - **Security:** JWT (HS256) bearer auth on every endpoint except
   `/auth/login` and `/auth/refresh-token`; `@PreAuthorize` per controller is
