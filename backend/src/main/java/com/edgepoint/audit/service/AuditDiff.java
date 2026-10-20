@@ -23,10 +23,16 @@ public final class AuditDiff {
         return isSensitive(name) || IGNORED.contains(name);
     }
 
+    /** Scalars only: associated entities/proxies must never be stringified (lazy loads, huge output). */
+    private static boolean isScalar(Object v) {
+        return v == null || v instanceof Number || v instanceof Boolean || v instanceof CharSequence
+                || v instanceof Enum<?> || v instanceof java.time.temporal.TemporalAccessor;
+    }
+
     public static Map<String, Object> snapshot(String[] names, Object[] state) {
         Map<String, Object> out = new LinkedHashMap<>();
         for (int i = 0; i < names.length; i++) {
-            if (skip(names[i]) || state[i] == null) continue;
+            if (skip(names[i]) || state[i] == null || !isScalar(state[i])) continue;
             out.put(names[i], display(state[i]));
         }
         return out;
@@ -35,7 +41,8 @@ public final class AuditDiff {
     public static Map<String, Object> changes(String[] names, Object[] before, Object[] after) {
         Map<String, Object> out = new LinkedHashMap<>();
         for (int i = 0; i < names.length; i++) {
-            if (skip(names[i]) || Objects.equals(before[i], after[i])) continue;
+            if (skip(names[i]) || !isScalar(before[i]) || !isScalar(after[i])
+                    || Objects.equals(before[i], after[i])) continue;
             Map<String, Object> change = new LinkedHashMap<>();
             change.put("from", display(before[i]));
             change.put("to", display(after[i]));
@@ -55,6 +62,6 @@ public final class AuditDiff {
 
     private static Object display(Object v) {
         if (v == null || v instanceof Number || v instanceof Boolean || v instanceof String) return v;
-        return v.toString();
+        return v.toString(); // enums and temporals
     }
 }

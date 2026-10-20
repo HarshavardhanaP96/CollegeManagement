@@ -189,6 +189,19 @@ one-screen map, not a replacement for that runbook.
   only read — because notification credentials are platform-sensitive
   (shared delivery infrastructure) even though they're scoped per college.
   Still active.
+- 2026-10-19: Per-event channel routing (`notification_channel_rules`, V4)
+  added. Unlike the credentials above, COLLEGEADMIN can write these for their
+  own college — they only choose *which* channel carries an event, not the
+  shared delivery credentials. Still active.
+- 2026-10-19: `NotificationDispatcher` added. Producers publish a
+  `NotificationMessage` Spring event; the dispatcher (`@Async`, AFTER_COMMIT)
+  sends via `SmtpEmailSender` / `WhatsAppCloudSender` only when rule + college
+  config + recipient address all allow it. Chosen over sync send (slow SMTP
+  would block requests) and a persisted outbox (more work); trade-off: a
+  failed send is logged and lost, no retry. Known gap: WhatsApp free-form
+  text only reaches users inside Meta's 24h window — business-initiated
+  sends need approved templates. Wired so far: ATTENDANCE_ABSENCE only.
+  Still active.
 - 2026-09-24: Marks/attendance/enrollment pipeline added; k8s environment
   configs fixed; observability (ELK) + Discord failure/slow-request
   alerting added. Still active.

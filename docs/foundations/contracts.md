@@ -20,7 +20,9 @@ Entities, by vertical-slice package (`com.edgepoint.<package>.domain`):
 - **student** — `StudentProfile`.
 - **teacher** — `TeacherProfile`.
 - **notification** — `NotificationConfig` (SMTP/WhatsApp secrets, AES-256-GCM
-  encrypted columns via `EncryptedStringConverter`).
+  encrypted columns via `EncryptedStringConverter`), `NotificationChannelRule`
+  (per-college, per-`NotificationEventType` email/WhatsApp flags; unique on
+  `(college_id, event_type)`; missing row = email on, WhatsApp off).
 
 Relationships: `College 1—N Department 1—N Course 1—N Subject`;
 `AcademicClass N—N Subject` via `ClassSubject`; `TeacherAssignment` binds one
@@ -79,6 +81,7 @@ override is noted).
 | `CollegeController` | `/colleges` | `SUPERADMIN` | `POST/GET/GET{id}/PUT{id}/DELETE{id}`, `GET /{id}/statistics` | — |
 | `NotificationConfigController` | `/colleges/{id}/notification-config` | *(none — mixed)* | `GET` | `SUPERADMIN, COLLEGEADMIN` |
 | | | | `PUT` | `SUPERADMIN` only |
+| `NotificationChannelRuleController` | `/colleges/{id}/notification-channel-rules` | *(none — own-college guard in service)* | `GET` (one entry per event type, defaults filled), `PUT` (list of `{eventType, emailEnabled, whatsappEnabled}`) | `SUPERADMIN, COLLEGEADMIN` (COLLEGEADMIN own college only → 403) |
 | `DepartmentController` | `/departments` | `SUPERADMIN, COLLEGEADMIN` | `POST /`, `PUT/{id}`, `POST /{id}/assign-hod`, `DELETE /{id}` | — |
 | | | | `GET /` (list) | +`HOD` |
 | | | | `GET /{id}` | class guard (no HOD) |

@@ -3,28 +3,41 @@ package com.edgepoint.audit.repository;
 import com.edgepoint.audit.domain.AuditAction;
 import com.edgepoint.audit.domain.AuditLog;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 
-public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
 
-    @Query("""
-            select a from AuditLog a
-            where (:collegeId is null or a.collegeId = :collegeId)
-              and (:action is null or a.action = :action)
-              and (:entityType is null or a.entityType = :entityType)
-              and (:fromTs is null or a.createdAt >= :fromTs)
-              and (:toTs is null or a.createdAt < :toTs)
-            order by a.createdAt desc, a.id desc
-            """)
-    Page<AuditLog> search(@Param("collegeId") Integer collegeId,
-                          @Param("action") AuditAction action,
-                          @Param("entityType") String entityType,
-                          @Param("fromTs") LocalDateTime fromTs,
-                          @Param("toTs") LocalDateTime toTs,
-                          Pageable pageable);
+    /**
+     * Newest first. Filters are added only when supplied: a "? is null or ..." JPQL
+     * pattern fails on PostgreSQL ("could not determine data type of parameter").
+     */
+    default Page<AuditLog> search(Integer collegeId, AuditAction action, String entityType,
+                                  LocalDateTime fromTs, LocalDateTime toTs, Pageable pageable) {
+        Specification<AuditLog> spec = Specification.where(null);
+        if (collegeId != null) {
+            spec = spec.and((r, q, cb) -> cb.equal(r.get("collegeId"), collegeId));
+        }
+        if (action != null) {
+            spec = spec.and((r, q, cb) -> cb.equal(r.get("action"), action));
+        }
+        if (entityType != null) {
+            spec = spec.and((r, q, cb) -> cb.equal(r.get("entityType"), entityType));
+        }
+        if (fromTs != null) {
+            spec = spec.and((r, q, cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), fromTs));
+        }
+        if (toTs != null) {
+            spec = spec.and((r, q, cb) -> cb.lessThan(r.get("createdAt"), toTs));
+        }
+        Pageable sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
+        return findAll(spec, sorted);
+    }
 }

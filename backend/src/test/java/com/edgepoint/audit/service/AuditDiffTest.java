@@ -58,4 +58,16 @@ class AuditDiffTest {
         assertThat(AuditDiff.isSoftDelete(names, new Object[]{false, "A"}, new Object[]{true, "A"})).isTrue();
         assertThat(AuditDiff.isSoftDelete(names, new Object[]{false, "A"}, new Object[]{false, "B"})).isFalse();
     }
+
+    @Test
+    @DisplayName("associated entities are never stringified into the audit trail")
+    void associationsSkipped() {
+        String[] names = {"deptName", "college"};
+        Object entity = new Object() {
+            @Override public String toString() { throw new IllegalStateException("must not be touched"); }
+        };
+
+        assertThat(AuditDiff.snapshot(names, new Object[]{"A", entity})).containsOnlyKeys("deptName");
+        assertThat(AuditDiff.changes(names, new Object[]{"A", null}, new Object[]{"A", entity})).isEmpty();
+    }
 }
