@@ -9,7 +9,7 @@ import {
 } from '../api/privacy';
 import { getErrorMessage } from '../api/client';
 import { queryKeys } from '../api/queryKeys';
-import { CORRECTABLE_FIELDS, REQUEST_TYPE_LABELS, formatDate } from '../lib/privacyLabels';
+import { CORRECTABLE_FIELDS, REQUEST_TYPE_LABELS, STATUS_LABELS, formatDate } from '../lib/privacyLabels';
 
 const TYPE_OPTIONS = (Object.keys(REQUEST_TYPE_LABELS) as RequestType[]).map((value) => ({
   value,
@@ -32,6 +32,7 @@ export function MyPrivacyPage() {
   const [pageError, setPageError] = useState<string | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
 
+  const effectiveField = fields.some((f) => f.value === field) ? field : fields[0].value;
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['privacy'] });
   const onError = (err: unknown) => setPageError(getErrorMessage(err).message);
 
@@ -70,7 +71,7 @@ export function MyPrivacyPage() {
     submit.mutate({
       type,
       details: details.trim() || undefined,
-      correction: type === 'CORRECTION' ? { [field]: value.trim() } : undefined,
+      correction: type === 'CORRECTION' ? { [effectiveField]: value.trim() } : undefined,
     });
   };
 
@@ -102,6 +103,8 @@ export function MyPrivacyPage() {
       <Card title="Your consents" description={notice.data?.data.version ? `Privacy notice version ${notice.data.data.version}` : undefined}>
         {notice.isLoading ? (
           <Loading />
+        ) : notice.isError ? (
+          <p role="alert" className="text-sm text-red-600">Could not load your consents.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {purposes.map((p) => (
@@ -142,11 +145,16 @@ export function MyPrivacyPage() {
             label="Request type"
             options={TYPE_OPTIONS}
             value={type}
-            onChange={(e) => { setType(e.target.value as RequestType); setFormError(null); }}
+            onChange={(e) => {
+              setType(e.target.value as RequestType);
+              setDetails('');
+              setValue('');
+              setFormError(null);
+            }}
           />
           {type === 'CORRECTION' && (
             <>
-              <Select label="Field to correct" options={fields} value={field} onChange={(e) => setField(e.target.value)} />
+              <Select label="Field to correct" options={fields} value={effectiveField} onChange={(e) => setField(e.target.value)} />
               <Input label="New value" value={value} onChange={(e) => setValue(e.target.value)} />
             </>
           )}
@@ -170,6 +178,8 @@ export function MyPrivacyPage() {
       <Card title="Your requests">
         {requests.isLoading ? (
           <Loading />
+        ) : requests.isError ? (
+          <p role="alert" className="text-sm text-red-600">Could not load your requests.</p>
         ) : (requests.data?.data ?? []).length === 0 ? (
           <p className="text-sm text-slate-500">You have not made any requests.</p>
         ) : (
@@ -206,20 +216,22 @@ export function MyPrivacyPage() {
 }
 
 function HistoryModal({ requestId, onClose }: { requestId: number; onClose: () => void }) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.privacy.myRequest(requestId),
     queryFn: () => getMyRequest(requestId),
   });
   const detail = data?.data;
   return (
     <Modal isOpen onClose={onClose} title={`Request #${requestId} history`}>
-      {isLoading || !detail ? (
+      {isError ? (
+        <p role="alert" className="text-sm text-red-600">Could not load the history.</p>
+      ) : isLoading || !detail ? (
         <Loading />
       ) : (
         <ol className="space-y-2 text-sm">
           {detail.events.map((e, i) => (
             <li key={i}>
-              <span className="font-medium">{e.toStatus.replace('_', ' ').toLowerCase()}</span>
+              <span className="font-medium">{STATUS_LABELS[e.toStatus]}</span>
               <span className="text-slate-500"> · {formatDate(e.occurredAt)}</span>
               {e.note && <p className="text-slate-600">{e.note}</p>}
             </li>

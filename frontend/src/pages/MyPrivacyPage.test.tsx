@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MyPrivacyPage } from './MyPrivacyPage';
 import { renderWithProviders } from '../test/renderWithProviders';
@@ -135,5 +135,63 @@ describe('MyPrivacyPage', () => {
     renderWithProviders(<MyPrivacyPage />);
     expect(await screen.findByText('Academic records')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /consent: Academic records/ })).not.toBeInTheDocument();
+  });
+  it('reconciles the correction field when the role changes', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<MyPrivacyPage />);
+    await user.selectOptions(await screen.findByLabelText('Request type'), 'CORRECTION');
+    await user.selectOptions(screen.getByLabelText('Field to correct'), 'parentName');
+
+    act(() => signInAs('TEACHER'));
+
+    await waitFor(() => expect(screen.getByLabelText('Field to correct')).toHaveValue('fullName'));
+    await user.type(screen.getByLabelText('New value'), 'New Name');
+    await user.click(screen.getByRole('button', { name: 'Submit request' }));
+    await waitFor(() =>
+      expect(privacy.createRequest).toHaveBeenCalledWith({ type: 'CORRECTION', correction: { fullName: 'New Name' } }),
+    );
+  });
+
+  it('shows an error when consents fail to load', async () => {
+    vi.mocked(privacy.getCurrentNotice).mockRejectedValue(new Error('boom'));
+    renderWithProviders(<MyPrivacyPage />);
+    expect(await screen.findByText('Could not load your consents.')).toBeInTheDocument();
+  });
+
+  it('shows an error, not the empty state, when requests fail to load', async () => {
+    vi.mocked(privacy.getMyRequests).mockRejectedValue(new Error('boom'));
+    renderWithProviders(<MyPrivacyPage />);
+    expect(await screen.findByText('Could not load your requests.')).toBeInTheDocument();
+    expect(screen.queryByText('You have not made any requests.')).not.toBeInTheDocument();
+  });
+
+  it('shows an error when the history fails to load', async () => {
+    vi.mocked(privacy.getMyRequest).mockRejectedValue(new Error('boom'));
+    const user = userEvent.setup();
+    renderWithProviders(<MyPrivacyPage />);
+    await user.click((await screen.findAllByRole('button', { name: 'History' }))[0]);
+    expect(await screen.findByText('Could not load the history.')).toBeInTheDocument();
+  });
+
+  it('labels history events with the friendly status', async () => {
+    vi.mocked(privacy.getMyRequest).mockResolvedValue(
+      envelope({ ...requests[2], events: [{ toStatus: 'PARTIALLY_COMPLETED', occurredAt: '2026-10-02T10:00:00', note: null }] }),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<MyPrivacyPage />);
+    await user.click((await screen.findAllByRole('button', { name: 'History' }))[2]);
+    expect(await screen.findByText('Partially completed', { selector: 'span.font-medium' })).toBeInTheDocument();
+  });
+
+  it('does not send text typed for another request type', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<MyPrivacyPage />);
+    await user.selectOptions(await screen.findByLabelText('Request type'), 'GRIEVANCE');
+    await user.type(screen.getByLabelText('Describe your grievance'), 'unhappy');
+    await user.selectOptions(screen.getByLabelText('Request type'), 'ACCESS');
+    await user.click(screen.getByRole('button', { name: 'Submit request' }));
+    await waitFor(() => expect(privacy.createRequest).toHaveBeenCalled());
+    expect(vi.mocked(privacy.createRequest).mock.calls[0][0]).not.toHaveProperty('details', 'unhappy');
+    expect(vi.mocked(privacy.createRequest).mock.calls[0][0].details).toBeUndefined();
   });
 });
