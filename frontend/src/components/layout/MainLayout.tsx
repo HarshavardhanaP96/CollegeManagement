@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { ConsentGate } from '../privacy/ConsentGate';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -34,6 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex-1 min-h-0 w-full">{children}</div>
         </main>
       </div>
+      <ConsentGate />
     </div>
   );
 }

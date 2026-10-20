@@ -54,6 +54,9 @@ import { StudentAttendancePage } from '../pages/student/StudentAttendancePage';
 import { SupportPage } from '../pages/SupportPage';
 import { CollegeConfigPage } from '../pages/CollegeConfigPage';
 import { AuditLogPage } from '../pages/collegeadmin/AuditLogPage';
+import { MyPrivacyPage } from '../pages/MyPrivacyPage';
+import { PrivacyAdminPage } from '../pages/collegeadmin/PrivacyAdminPage';
+import { PrivacyRequestDetailPage } from '../pages/collegeadmin/privacy/PrivacyRequestDetailPage';
 
 /**
  * Route → Component mapping.
@@ -94,6 +97,9 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/student-attendance':    StudentAttendancePage,
   '/audit-log':             AuditLogPage,
   '/support':               SupportPage,
+  '/my-privacy':                  MyPrivacyPage,
+  '/privacy-admin':               PrivacyAdminPage,
+  '/privacy-admin/requests/:id':  PrivacyRequestDetailPage,
 };
 
 function LayoutWrapper() {

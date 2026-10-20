@@ -17,6 +17,7 @@ import {
   LifeBuoy,
   Settings,
   ScrollText,
+  ShieldCheck,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -37,6 +38,7 @@ const ICONS: Record<string, LucideIcon> = {
   support: LifeBuoy,
   settings: Settings,
   auditLog: ScrollText,
+  privacy: ShieldCheck,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

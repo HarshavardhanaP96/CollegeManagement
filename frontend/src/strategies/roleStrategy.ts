@@ -156,6 +156,7 @@ const collegeAdminStrategy: RoleStrategy = {
     { key: 'classes',       label: 'Classes',       path: '/classes',       icon: 'classes', group: 'Academic' },
     { key: 'examTypes',     label: 'Exam Types',    path: '/exam-types',    icon: 'examTypes', group: 'Operations' },
     { key: 'collegeConfig', label: 'College Config',path: '/college-config',icon: 'settings', group: 'Management' },
+    { key: 'privacyAdmin',  label: 'Privacy',       path: '/privacy-admin', icon: 'privacy', group: 'Management' },
     { key: 'auditLog',      label: 'Audit log',     path: '/audit-log',     icon: 'auditLog', group: 'Management' },
     { key: 'support',       label: 'Support',       path: '/support',       icon: 'support', group: 'Support' },
   ],
@@ -248,6 +249,7 @@ const teacherStrategy: RoleStrategy = {
     { key: 'dashboard',   label: 'Dashboard',   path: '/',             icon: 'dashboard', group: 'Main' },
     { key: 'attendance',  label: 'Attendance',   path: '/attendance',   icon: 'attendance', group: 'My Work' },
     { key: 'marks',       label: 'Marks',        path: '/marks',        icon: 'marks', group: 'My Work' },
+    { key: 'privacy',     label: 'My Privacy',   path: '/my-privacy',   icon: 'privacy', group: 'Support' },
     { key: 'support',     label: 'Support',      path: '/support',      icon: 'support', group: 'Support' },
   ],
   permissions: {
@@ -302,6 +304,7 @@ const studentStrategy: RoleStrategy = {
     { key: 'profile',           label: 'My Profile',      path: '/profile',              icon: 'profile', group: 'My Data' },
     { key: 'student-marks',     label: 'My Marks',        path: '/student-marks',        icon: 'marks', group: 'My Data' },
     { key: 'student-attendance',label: 'My Attendance',   path: '/student-attendance',   icon: 'attendance', group: 'My Data' },
+    { key: 'privacy',           label: 'My Privacy',      path: '/my-privacy',           icon: 'privacy', group: 'Support' },
     { key: 'support',           label: 'Support',         path: '/support',              icon: 'support', group: 'Support' },
   ],
   permissions: {
