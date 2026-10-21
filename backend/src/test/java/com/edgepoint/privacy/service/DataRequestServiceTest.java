@@ -1,6 +1,8 @@
 package com.edgepoint.privacy.service;
 
+import com.edgepoint.core.domain.User;
 import com.edgepoint.core.exception.BusinessRuleViolationException;
+import com.edgepoint.core.repository.UserRepository;
 import com.edgepoint.core.exception.ResourceNotFoundException;
 import com.edgepoint.privacy.config.PrivacyProperties;
 import com.edgepoint.privacy.contributor.PersonalDataContributor;
@@ -50,6 +52,7 @@ class DataRequestServiceTest {
     @Mock ErasureService erasure;
     @Mock PrivacyAuditService audit;
     @Mock PrivacyTenant tenant;
+    @Mock UserRepository users;
 
     PrivacyProperties properties = new PrivacyProperties();
     ObjectMapper mapper = new ObjectMapper();
@@ -57,7 +60,7 @@ class DataRequestServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new DataRequestService(requests, events, List.of(account, student), erasure, audit, tenant, properties, mapper);
+        service = new DataRequestService(requests, events, List.of(account, student), erasure, audit, tenant, properties, mapper, users);
         when(tenant.collegeId()).thenReturn(COLLEGE);
         when(tenant.userId()).thenReturn(STUDENT);
         when(account.appliesTo(STUDENT)).thenReturn(true);
@@ -80,6 +83,7 @@ class DataRequestServiceTest {
         r.setRequestId(11); r.setCollegeId(COLLEGE); r.setUserId(ownerId); r.setType(type); r.setStatus(status);
         r.setSubmittedAt(LocalDateTime.now().minusDays(2)); r.setDueAt(LocalDateTime.now().plusDays(28));
         when(requests.findByRequestIdAndCollegeId(11, COLLEGE)).thenReturn(Optional.of(r));
+        when(requests.findForUpdate(11, COLLEGE)).thenReturn(Optional.of(r));
         return r;
     }
 
@@ -185,6 +189,7 @@ class DataRequestServiceTest {
     void aRequestFromAnotherCollegeLooksNonexistentToTheAdmin() {
         actAsAdmin();
         when(requests.findByRequestIdAndCollegeId(11, COLLEGE)).thenReturn(Optional.empty());
+        when(requests.findForUpdate(11, COLLEGE)).thenReturn(Optional.empty());
         when(tenant.collegeId(null)).thenReturn(COLLEGE);
         assertThatThrownBy(() -> service.review(11)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> service.resolve(11, RequestStatus.COMPLETED, "ok")).isInstanceOf(ResourceNotFoundException.class);
@@ -436,5 +441,80 @@ class DataRequestServiceTest {
                 .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessageContaining("erased");
         verify(requests, never()).save(any());
+    }
+
+    // ---------- I3: locking lookup ----------
+
+    @Test
+    void reviewResolveAndCancelTakeTheRowLockNotThePlainLookup() {
+        actAsAdmin();
+        existing(STUDENT, RequestType.GRIEVANCE, RequestStatus.SUBMITTED);
+        service.review(11);
+        existing(STUDENT, RequestType.GRIEVANCE, RequestStatus.IN_REVIEW);
+        service.resolve(11, RequestStatus.COMPLETED, "done");
+        when(tenant.userId()).thenReturn(STUDENT);
+        existing(STUDENT, RequestType.ACCESS, RequestStatus.SUBMITTED);
+        service.cancel(11);
+
+        verify(requests, times(3)).findForUpdate(11, COLLEGE);
+        verify(requests, never()).findByRequestIdAndCollegeId(any(), any());
+    }
+
+    // ---------- I2: erased owners and missing payloads ----------
+
+    @Test
+    void aCorrectionWithoutAStoredPayloadResolvesWithoutError() {
+        actAsAdmin();
+        DataRequest r = existing(STUDENT, RequestType.CORRECTION, RequestStatus.IN_REVIEW);
+        r.setCorrectionPayload(null);
+
+        service.resolve(11, RequestStatus.COMPLETED, "nothing to apply");
+
+        verify(account, never()).correct(any(), any());
+        assertThat(r.getStatus()).isEqualTo(RequestStatus.COMPLETED);
+    }
+
+    @Test
+    void correctionAndAccessCannotBeCompletedForAnErasedOwnerButCanBeRejected() {
+        actAsAdmin();
+        User erased = new User();
+        erased.setUserId(STUDENT);
+        erased.setAnonymisedAt(LocalDateTime.now());
+        when(users.findById(STUDENT)).thenReturn(Optional.of(erased));
+
+        existing(STUDENT, RequestType.CORRECTION, RequestStatus.IN_REVIEW);
+        assertThatThrownBy(() -> service.resolve(11, RequestStatus.COMPLETED, "ok"))
+                .isInstanceOf(BusinessRuleViolationException.class).hasMessageContaining("erased");
+        existing(STUDENT, RequestType.ACCESS, RequestStatus.IN_REVIEW);
+        assertThatThrownBy(() -> service.resolve(11, RequestStatus.COMPLETED, "ok"))
+                .isInstanceOf(BusinessRuleViolationException.class).hasMessageContaining("erased");
+
+        existing(STUDENT, RequestType.ACCESS, RequestStatus.IN_REVIEW);
+        assertThat(service.resolve(11, RequestStatus.REJECTED, "account erased").getStatus())
+                .isEqualTo(RequestStatus.REJECTED);
+    }
+
+    // ---------- I5: input caps ----------
+
+    @Test
+    void overLongCorrectionValuesAreRejectedAtSubmit() {
+        when(student.correctableFields()).thenReturn(Set.of("address", "parentName", "parentPhone", "parentEmail"));
+        String[][] cases = {{"phone", "9".repeat(21)}, {"fullName", "n".repeat(256)}, {"address", "a".repeat(2001)},
+                {"parentName", "n".repeat(256)}, {"parentPhone", "9".repeat(21)}, {"parentEmail", "e".repeat(256)}};
+        for (String[] c : cases) {
+            assertThatThrownBy(() -> service.submit(RequestType.CORRECTION, null, Map.of(c[0], c[1])))
+                    .as(c[0]).isInstanceOf(BusinessRuleViolationException.class);
+        }
+        assertThat(service.submit(RequestType.CORRECTION, null, Map.of("phone", "9".repeat(20))).getCorrectionPayload())
+                .isNotNull();
+        verify(requests, times(1)).save(any());
+    }
+
+    @Test
+    void aCorrectionMayNotCarryMoreThanSixFields() {
+        Map<String, String> many = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < 7; i++) many.put("f" + i, "v");
+        assertThatThrownBy(() -> service.submit(RequestType.CORRECTION, null, many))
+                .isInstanceOf(BusinessRuleViolationException.class).hasMessageContaining("at most 6");
     }
 }

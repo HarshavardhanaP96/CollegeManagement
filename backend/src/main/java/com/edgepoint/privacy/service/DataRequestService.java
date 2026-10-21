@@ -1,6 +1,7 @@
 package com.edgepoint.privacy.service;
 
 import com.edgepoint.core.exception.BusinessRuleViolationException;
+import com.edgepoint.core.repository.UserRepository;
 import com.edgepoint.core.exception.ResourceNotFoundException;
 import com.edgepoint.privacy.config.PrivacyProperties;
 import com.edgepoint.privacy.contributor.PersonalDataContributor;
@@ -29,6 +30,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataRequestService {
 
+    private static final int MAX_CORRECTION_FIELDS = 6;
+    private static final Map<String, Integer> MAX_LENGTH = Map.of(
+            "fullName", 255, "phone", 20, "parentName", 255, "parentPhone", 20, "parentEmail", 255, "address", 2000);
+
     private final DataRequestRepository requests;
     private final DataRequestEventRepository events;
     private final List<PersonalDataContributor> contributors;
@@ -37,6 +42,7 @@ public class DataRequestService {
     private final PrivacyTenant tenant;
     private final PrivacyProperties properties;
     private final ObjectMapper mapper;
+    private final UserRepository users;
 
     // ---------------------------------------------------------------- principal side
 
@@ -79,12 +85,12 @@ public class DataRequestService {
 
     @Transactional(readOnly = true)
     public DataRequestDetail detailMine(Integer requestId) {
-        return detail(loadOwn(requestId));
+        return detail(loadOwn(requestId, false));
     }
 
     @Transactional
     public DataRequest cancel(Integer requestId) {
-        DataRequest r = loadOwn(requestId);
+        DataRequest r = loadOwn(requestId, true);
         Integer user = tenant.userId();
         transition(r, RequestStatus.CANCELLED, user, null);
         r.setResolvedAt(LocalDateTime.now());
@@ -95,7 +101,7 @@ public class DataRequestService {
 
     @Transactional
     public String exportFor(Integer requestId) {
-        DataRequest r = loadOwn(requestId);
+        DataRequest r = loadOwn(requestId, false);
         if (r.getType() != RequestType.ACCESS || r.getStatus() != RequestStatus.COMPLETED || r.getExportPayload() == null) {
             throw new BusinessRuleViolationException("No export is available for this request");
         }
@@ -127,7 +133,7 @@ public class DataRequestService {
     public DataRequest review(Integer requestId) {
         Integer college = tenant.collegeId();
         Integer admin = tenant.userId();
-        DataRequest r = load(requestId, college);
+        DataRequest r = loadForUpdate(requestId, college);
         forbidSelfAction(r, admin);
         transition(r, RequestStatus.IN_REVIEW, admin, null);
         r.setAssignedTo(admin);
@@ -140,7 +146,7 @@ public class DataRequestService {
     public DataRequest resolve(Integer requestId, RequestStatus outcome, String note) {
         Integer college = tenant.collegeId();
         Integer admin = tenant.userId();
-        DataRequest r = load(requestId, college);
+        DataRequest r = loadForUpdate(requestId, college);
         forbidSelfAction(r, admin);
         if (note == null || note.isBlank()) {
             throw new BusinessRuleViolationException("A resolution note is required");
@@ -150,6 +156,11 @@ public class DataRequestService {
         }
         if (outcome == RequestStatus.PARTIALLY_COMPLETED && r.getType() != RequestType.ERASURE) {
             throw new BusinessRuleViolationException("Only erasure requests can be partially completed");
+        }
+        if (outcome != RequestStatus.REJECTED && (r.getType() == RequestType.CORRECTION || r.getType() == RequestType.ACCESS)
+                && users.findById(r.getUserId()).map(u -> u.getAnonymisedAt() != null).orElse(false)) {
+            throw new BusinessRuleViolationException(
+                    "This account has been erased; reject the request instead of completing it");
         }
         if (outcome != RequestStatus.REJECTED) {
             execute(r, admin);
@@ -219,6 +230,9 @@ public class DataRequestService {
         if (correction == null || correction.isEmpty()) {
             throw new BusinessRuleViolationException("Say which field to correct and the new value");
         }
+        if (correction.size() > MAX_CORRECTION_FIELDS) {
+            throw new BusinessRuleViolationException("A correction may change at most " + MAX_CORRECTION_FIELDS + " fields");
+        }
         Integer self = tenant.userId();
         Set<String> allowed = contributors.stream()
                 .filter(c -> c.appliesTo(self))
@@ -230,6 +244,10 @@ public class DataRequestService {
             }
             if (e.getValue() == null || e.getValue().isBlank()) {
                 throw new BusinessRuleViolationException("Value is required for " + e.getKey());
+            }
+            Integer max = MAX_LENGTH.get(e.getKey());
+            if (max != null && e.getValue().length() > max) {
+                throw new BusinessRuleViolationException(e.getKey() + " must be at most " + max + " characters");
             }
         }
         return toJson(correction);
@@ -265,9 +283,15 @@ public class DataRequestService {
                 .orElseThrow(() -> new ResourceNotFoundException("DataRequest", "id", requestId));
     }
 
+    private DataRequest loadForUpdate(Integer requestId, Integer college) {
+        return requests.findForUpdate(requestId, college)
+                .orElseThrow(() -> new ResourceNotFoundException("DataRequest", "id", requestId));
+    }
+
     /** The request must exist in the caller's college and belong to the caller; anything else is "not found". */
-    private DataRequest loadOwn(Integer requestId) {
-        DataRequest r = load(requestId, tenant.collegeId());
+    private DataRequest loadOwn(Integer requestId, boolean lock) {
+        Integer college = tenant.collegeId();
+        DataRequest r = lock ? loadForUpdate(requestId, college) : load(requestId, college);
         if (!r.getUserId().equals(tenant.userId())) {
             throw new ResourceNotFoundException("DataRequest", "id", requestId);
         }
@@ -288,6 +312,9 @@ public class DataRequestService {
     }
 
     private Map<String, String> fromJson(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
         try {
             return mapper.readValue(json, new TypeReference<Map<String, String>>() { });
         } catch (JsonProcessingException e) {

@@ -1,6 +1,9 @@
 package com.edgepoint.privacy.contributor;
 
 import com.edgepoint.privacy.domain.DataRequest;
+import com.edgepoint.privacy.domain.DataRequestEvent;
+import com.edgepoint.privacy.repository.DataRequestEventRepository;
+import org.mockito.ArgumentCaptor;
 import com.edgepoint.privacy.domain.RequestStatus;
 import com.edgepoint.privacy.domain.RequestType;
 import com.edgepoint.privacy.repository.DataRequestRepository;
@@ -24,11 +27,12 @@ import static org.mockito.Mockito.*;
 class DataRequestDataContributorTest {
 
     @Mock DataRequestRepository requests;
+    @Mock DataRequestEventRepository events;
     DataRequestDataContributor contributor;
 
     @BeforeEach
     void setUp() {
-        contributor = new DataRequestDataContributor(requests);
+        contributor = new DataRequestDataContributor(requests, events);
     }
 
     DataRequest request(int id) {
@@ -85,6 +89,44 @@ class DataRequestDataContributorTest {
         assertThat(contributor.correctableFields()).isEmpty();
         assertThat(contributor.appliesTo(42)).isFalse();
         contributor.correct(42, java.util.Map.of());
-        verifyNoInteractions(requests);
+        verifyNoInteractions(requests, events);
+    }
+
+    @Test
+    void openNonErasureRequestsAreClosedWithAnEventAndTheErasureRequestIsLeftAlone() {
+        DataRequest correction = request(1);
+        correction.setType(RequestType.CORRECTION); correction.setStatus(RequestStatus.SUBMITTED);
+        DataRequest access = request(2);
+        access.setType(RequestType.ACCESS); access.setStatus(RequestStatus.IN_REVIEW);
+        DataRequest erasure = request(3);
+        erasure.setType(RequestType.ERASURE); erasure.setStatus(RequestStatus.IN_REVIEW);
+        when(requests.findByUserIdOrderBySubmittedAtDesc(42)).thenReturn(List.of(correction, access, erasure));
+
+        contributor.anonymise(42);
+
+        for (DataRequest r : List.of(correction, access)) {
+            assertThat(r.getStatus()).isEqualTo(RequestStatus.REJECTED);
+            assertThat(r.getResolutionNote()).isEqualTo("Closed automatically: the account was erased");
+            assertThat(r.getRejectionReason()).isEqualTo("Closed automatically: the account was erased");
+            assertThat(r.getResolvedAt()).isNotNull();
+        }
+        assertThat(erasure.getStatus()).isEqualTo(RequestStatus.IN_REVIEW);
+        ArgumentCaptor<DataRequestEvent> event = ArgumentCaptor.forClass(DataRequestEvent.class);
+        verify(events, times(2)).save(event.capture());
+        assertThat(event.getAllValues()).allSatisfy(e -> {
+            assertThat(e.getToStatus()).isEqualTo(RequestStatus.REJECTED);
+            assertThat(e.getActorId()).isNull();
+        });
+        assertThat(event.getAllValues()).extracting(DataRequestEvent::getFromStatus)
+                .containsExactly(RequestStatus.SUBMITTED, RequestStatus.IN_REVIEW);
+    }
+
+    @Test
+    void closedRequestsAreNotClosedTwice() {
+        DataRequest done = request(1); // COMPLETED ACCESS
+        when(requests.findByUserIdOrderBySubmittedAtDesc(42)).thenReturn(List.of(done));
+        contributor.anonymise(42);
+        verify(events, never()).save(any());
+        assertThat(done.getStatus()).isEqualTo(RequestStatus.COMPLETED);
     }
 }
