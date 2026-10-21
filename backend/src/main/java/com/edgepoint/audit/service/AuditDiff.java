@@ -11,7 +11,25 @@ public final class AuditDiff {
     private static final Set<String> IGNORED = Set.of(
             "createdAt", "updatedAt", "createdBy", "updatedBy", "deletedAt", "deletedBy");
 
+    /** Entities that carry personal data and are covered by the privacy workflows: never audited generically. */
+    private static final Set<String> EXCLUDED_ENTITIES = Set.of("DataRequest");
+
+    /** Personal-data fields of entities whose audit rows must not hold the values (DPDP erasure). */
+    private static final Set<String> PII_ENTITIES = Set.of("User", "StudentProfile");
+    private static final Set<String> PII_FIELDS = Set.of(
+            "fullName", "email", "username", "phone", "parentName", "parentPhone", "parentEmail",
+            "address", "dateOfBirth");
+    static final String REDACTED = "[redacted]";
+
     private AuditDiff() {
+    }
+
+    public static boolean isExcluded(String entityType) {
+        return entityType != null && EXCLUDED_ENTITIES.contains(entityType);
+    }
+
+    private static boolean masked(String entityType, String field) {
+        return entityType != null && PII_ENTITIES.contains(entityType) && PII_FIELDS.contains(field);
     }
 
     static boolean isSensitive(String name) {
@@ -30,22 +48,31 @@ public final class AuditDiff {
     }
 
     public static Map<String, Object> snapshot(String[] names, Object[] state) {
+        return snapshot(null, names, state);
+    }
+
+    public static Map<String, Object> snapshot(String entityType, String[] names, Object[] state) {
         Map<String, Object> out = new LinkedHashMap<>();
         for (int i = 0; i < names.length; i++) {
             if (skip(names[i]) || state[i] == null || !isScalar(state[i])) continue;
-            out.put(names[i], display(state[i]));
+            out.put(names[i], masked(entityType, names[i]) ? REDACTED : display(state[i]));
         }
         return out;
     }
 
     public static Map<String, Object> changes(String[] names, Object[] before, Object[] after) {
+        return changes(null, names, before, after);
+    }
+
+    public static Map<String, Object> changes(String entityType, String[] names, Object[] before, Object[] after) {
         Map<String, Object> out = new LinkedHashMap<>();
         for (int i = 0; i < names.length; i++) {
             if (skip(names[i]) || !isScalar(before[i]) || !isScalar(after[i])
                     || Objects.equals(before[i], after[i])) continue;
             Map<String, Object> change = new LinkedHashMap<>();
-            change.put("from", display(before[i]));
-            change.put("to", display(after[i]));
+            boolean mask = masked(entityType, names[i]);
+            change.put("from", mask ? REDACTED : display(before[i]));
+            change.put("to", mask ? REDACTED : display(after[i]));
             out.put(names[i], change);
         }
         return out;

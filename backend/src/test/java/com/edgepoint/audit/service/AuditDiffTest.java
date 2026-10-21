@@ -70,4 +70,44 @@ class AuditDiffTest {
         assertThat(AuditDiff.snapshot(names, new Object[]{"A", entity})).containsOnlyKeys("deptName");
         assertThat(AuditDiff.changes(names, new Object[]{"A", null}, new Object[]{"A", entity})).isEmpty();
     }
+
+    private static final String[] USER_NAMES = {"username", "email", "fullName", "phone", "isActive"};
+
+    @Test
+    @DisplayName("PII fields of User are masked but the change is still recorded")
+    void piiFieldsAreMaskedForUser() {
+        Object[] before = {"asha", "asha@college.test", "Asha Rao", "9999999999", true};
+        Object[] after = {"asha", "asha2@college.test", "Asha R", "8888888888", false};
+
+        Map<String, Object> diff = AuditDiff.changes("User", USER_NAMES, before, after);
+
+        assertThat(diff).containsOnlyKeys("email", "fullName", "phone", "isActive");
+        assertThat(diff.get("email")).isEqualTo(Map.of("from", "[redacted]", "to", "[redacted]"));
+        assertThat(diff.get("phone")).isEqualTo(Map.of("from", "[redacted]", "to", "[redacted]"));
+        assertThat(diff.get("isActive")).isEqualTo(Map.of("from", true, "to", false));
+        assertThat(diff.toString()).doesNotContain("Asha").doesNotContain("9999999999");
+    }
+
+    @Test
+    @DisplayName("PII fields of StudentProfile are masked in snapshots")
+    void piiFieldsAreMaskedInSnapshots() {
+        String[] names = {"rollNumber", "parentName", "parentPhone", "parentEmail", "address", "dateOfBirth"};
+        Object[] state = {"R1", "Mr Rao", "7777777777", "p@x.test", "12 Main St", java.time.LocalDate.of(2005, 1, 2)};
+
+        Map<String, Object> snap = AuditDiff.snapshot("StudentProfile", names, state);
+
+        assertThat(snap.get("rollNumber")).isEqualTo("R1");
+        for (String f : new String[]{"parentName", "parentPhone", "parentEmail", "address", "dateOfBirth"}) {
+            assertThat(snap.get(f)).as(f).isEqualTo("[redacted]");
+        }
+    }
+
+    @Test
+    @DisplayName("other entity types keep their values; DataRequest is excluded from capture")
+    void otherEntitiesUnaffectedAndDataRequestExcluded() {
+        Object[] state = {"x", "y", "z", "w", true};
+        assertThat(AuditDiff.snapshot("Department", USER_NAMES, state).get("email")).isEqualTo("y");
+        assertThat(AuditDiff.isExcluded("DataRequest")).isTrue();
+        assertThat(AuditDiff.isExcluded("User")).isFalse();
+    }
 }
