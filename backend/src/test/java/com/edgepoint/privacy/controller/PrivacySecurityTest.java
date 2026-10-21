@@ -219,8 +219,37 @@ class PrivacySecurityTest {
             mvc.perform(get("/privacy/requests/1/export").with(user("tester").roles(role)))
                     .andExpect(status().isOk())
                     .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.startsWith("attachment")))
-                    .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith(JSON)));
+                    .andExpect(header().string("Content-Type", org.hamcrest.Matchers.startsWith(JSON)))
+                    .andExpect(header().string("Cache-Control", "no-store"))
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"));
         }
+    }
+
+    @Test
+    void overLongFreeTextIsRejectedWith400() throws Exception {
+        stubHappyPaths();
+        String tooLong = "x".repeat(4001);
+        mvc.perform(post("/privacy/requests").contentType(JSON)
+                        .content("{\"type\":\"GRIEVANCE\",\"details\":\"" + tooLong + "\"}")
+                        .with(user("tester").roles("STUDENT")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/privacy/admin/requests/1/resolve").contentType(JSON)
+                        .content("{\"outcome\":\"COMPLETED\",\"note\":\"" + tooLong + "\"}")
+                        .with(user("tester").roles("COLLEGEADMIN")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/privacy/admin/notices").contentType(JSON)
+                        .content("{\"body\":\"" + "x".repeat(20001) + "\"}")
+                        .with(user("tester").roles("COLLEGEADMIN")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void textAtTheLimitIsAccepted() throws Exception {
+        stubHappyPaths();
+        mvc.perform(post("/privacy/admin/requests/1/resolve").contentType(JSON)
+                        .content("{\"outcome\":\"COMPLETED\",\"note\":\"" + "x".repeat(4000) + "\"}")
+                        .with(user("tester").roles("COLLEGEADMIN")))
+                .andExpect(status().isOk());
     }
 
     @Test

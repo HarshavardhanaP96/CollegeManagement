@@ -88,6 +88,8 @@ public class PrivacyController {
     public ResponseEntity<String> export(@PathVariable Integer id) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"my-data-request-" + id + ".json\"")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header("X-Content-Type-Options", "nosniff")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(requestService.exportFor(id));
     }
