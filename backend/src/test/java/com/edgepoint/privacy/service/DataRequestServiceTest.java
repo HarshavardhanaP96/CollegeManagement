@@ -427,4 +427,14 @@ class DataRequestServiceTest {
         verify(student, never()).correct(any(), any());
         verify(audit, never()).record(any(), any(), any(), any(), any());
     }
+
+    @Test
+    void submitIsRefusedForAnErasedAccount() {
+        doThrow(new BusinessRuleViolationException("This account has been erased")).when(tenant).requireActiveUser();
+
+        assertThatThrownBy(() -> service.submit(RequestType.ACCESS, null, null))
+                .isInstanceOf(BusinessRuleViolationException.class)
+                .hasMessageContaining("erased");
+        verify(requests, never()).save(any());
+    }
 }

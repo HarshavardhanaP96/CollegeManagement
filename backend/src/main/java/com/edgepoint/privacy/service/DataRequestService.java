@@ -42,6 +42,7 @@ public class DataRequestService {
 
     @Transactional
     public DataRequest submit(RequestType type, String details, Map<String, String> correction) {
+        tenant.requireActiveUser();
         Integer college = tenant.collegeId();
         Integer user = tenant.userId();
         String payload = null;

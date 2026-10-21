@@ -52,6 +52,7 @@ public class ConsentService {
 
     @Transactional
     public PurposeView recordConsent(Integer purposeId, ConsentStatus status, String sourceIp) {
+        tenant.requireActiveUser();
         Integer college = tenant.collegeId();
         Integer user = tenant.userId();
         PrivacyPurpose purpose = purposes.findByPurposeIdAndCollegeId(purposeId, college)

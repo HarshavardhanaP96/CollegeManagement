@@ -222,4 +222,14 @@ class ConsentServiceTest {
 
         assertThat(service.listNotices(3)).containsExactly(notice);
     }
+
+    @Test
+    void recordConsentIsRefusedForAnErasedAccount() {
+        doThrow(new BusinessRuleViolationException("This account has been erased")).when(tenant).requireActiveUser();
+
+        assertThatThrownBy(() -> service.recordConsent(2, ConsentStatus.GRANTED, "1.2.3.4"))
+                .isInstanceOf(BusinessRuleViolationException.class)
+                .hasMessageContaining("erased");
+        verify(consents, never()).save(any());
+    }
 }

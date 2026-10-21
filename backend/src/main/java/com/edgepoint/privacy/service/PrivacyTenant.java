@@ -1,6 +1,7 @@
 package com.edgepoint.privacy.service;
 
 import com.edgepoint.core.exception.BusinessRuleViolationException;
+import com.edgepoint.core.repository.UserRepository;
 import com.edgepoint.core.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class PrivacyTenant {
 
     private final TenantContext context;
+    private final UserRepository users;
 
     public Integer collegeId() {
         return collegeId(null);
@@ -33,5 +35,15 @@ public class PrivacyTenant {
             throw new BusinessRuleViolationException("No authenticated user in context");
         }
         return id;
+    }
+
+    /** Refuses the call when the acting account has already been erased (its JWT may still be valid). */
+    public void requireActiveUser() {
+        Integer id = userId();
+        users.findById(id).ifPresent(u -> {
+            if (u.getAnonymisedAt() != null) {
+                throw new BusinessRuleViolationException("This account has been erased");
+            }
+        });
     }
 }
