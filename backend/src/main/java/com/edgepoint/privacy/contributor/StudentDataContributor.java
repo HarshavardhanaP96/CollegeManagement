@@ -15,8 +15,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class StudentDataContributor implements PersonalDataContributor {
 
-    /** parent_phone is NOT NULL, so anonymisation stores this fixed placeholder. */
-    static final String PHONE_PLACEHOLDER = "0000000000";
+    /** parent_phone is NOT NULL but may be empty; empty is skipped by the notification dispatcher. */
+    static final String PHONE_PLACEHOLDER = "";
 
     private final StudentProfileRepository profiles;
 

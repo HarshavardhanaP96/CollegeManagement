@@ -55,9 +55,13 @@ It is picked up automatically for access exports, corrections and erasure.
 - `HOD` and `SUPERADMIN` have no privacy pages in this release; a `SUPERADMIN` can read the admin API for one college with `?collegeId=`.
 - Guardian consent for minors and breach notification are not built.
 - The retention reference date for a deactivated account is `COALESCE(deleted_at, updated_at, created_at)`; there is no explicit deactivation timestamp.
-- The committed history contains two `V4` Flyway migrations (`V4__add_notification_channel_rules.sql` and `V4__create_audit_log.sql`). That clash predates this feature and must be resolved when the branch is merged onto current `main`, where the audit migration is `V5` and the privacy migration is `V6`.
 - Frontend `npm run build` and `npm run lint` already fail on the baseline (TypeScript errors and lint problems unrelated to this feature); this feature did not change the counts.
 - The end-to-end UI walkthrough was not performed: the dev setup has no way to seed a college admin or a student.
 - First-access seeding of the default purposes can race once for a brand-new college (two simultaneous first requests).
 - Go-live precondition for retention: run a single replica, or add a lock, before setting `app.privacy.retention-dry-run=false`.
-- Request resolution has no optimistic locking; two admins resolving the same request at once is last-write-wins.
+- Request review, resolve and cancel take a pessimistic row lock, so concurrent admins are serialised; the second sees the new status and is refused.
+- `PARENT_NOTIFICATIONS` consent is recorded and withdrawable but not yet enforced by the notification dispatcher (follow-up).
+- A manual retention run with `dryRun=false` from the admin UI ignores the global `app.privacy.retention-dry-run` switch; only the nightly job honours it. The policy must be enabled and the UI asks for confirmation.
+- Free text that remains after erasure (`Mark.remarks`, `AttendanceRecord.remarks`, `DataRequestEvent.note`, `resolutionNote`) is entered by staff and is retained.
+- The access export omits consent history.
+- Erasure also scrubs the generic audit log: `audit_log.changes` for the user's `User`/`StudentProfile` rows and `actor_username` on rows they performed. New audit rows never store the values of personal fields (shown as `[redacted]`), and `DataRequest` is not captured by the generic audit at all.

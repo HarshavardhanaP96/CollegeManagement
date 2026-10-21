@@ -120,6 +120,9 @@ public class AttendanceServiceImpl implements AttendanceService {
             try {
                 studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(att.getStudentUserId())
                         .ifPresent(student -> {
+                            if (student.getUser() != null && student.getUser().getAnonymisedAt() != null) {
+                                return; // erased: never message the parent about an anonymised account
+                            }
                             String name = student.getUser() != null ? student.getUser().getFullName() : student.getRollNumber();
                             eventPublisher.publishEvent(new NotificationMessage(
                                     collegeId, NotificationEventType.ATTENDANCE_ABSENCE,

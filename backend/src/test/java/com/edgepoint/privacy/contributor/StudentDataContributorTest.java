@@ -88,7 +88,7 @@ class StudentDataContributorTest {
         assertThat(profile.getAddress()).isNull();
         assertThat(profile.getParentName()).isNull();
         assertThat(profile.getParentEmail()).isNull();
-        assertThat(profile.getParentPhone()).isEqualTo("0000000000");
+        assertThat(profile.getParentPhone()).isEmpty(); // NOT NULL column, empty so the dispatcher skips SMS/WhatsApp
         assertThat(profile.getRollNumber()).isEqualTo("R-100");
     }
 

@@ -48,7 +48,7 @@ This migration is V6: `main` has since committed `V4__add_notification_channel_r
 **Changes to existing tables**
 - `users.anonymised_at TIMESTAMP`.
 - Anonymising `users`: `username = 'erased-<id>'`, `email = 'erased-<id>@invalid.local'`, `full_name = 'Erased User'`, random `password_hash`, `phone = NULL`, `is_active = false`, `anonymised_at = now`. (`username`/`email` are `NOT NULL` and unique, hence placeholders.)
-- Anonymising `student_profiles`: clear `date_of_birth`, `address`, `parent_name`, `parent_email`; set `parent_phone` (`NOT NULL`) to a fixed placeholder. `roll_number` stays as the pseudonymous key.
+- Anonymising `student_profiles`: clear `date_of_birth`, `address`, `parent_name`, `parent_email`; set `parent_phone` (`NOT NULL`) to the empty string. `roll_number` stays as the pseudonymous key.
 
 ## 4. Backend — package `com.edgepoint.privacy`
 

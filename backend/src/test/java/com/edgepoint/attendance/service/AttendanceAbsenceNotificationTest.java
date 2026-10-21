@@ -109,6 +109,18 @@ class AttendanceAbsenceNotificationTest {
         verify(attendanceRepository).saveAll(any());
     }
 
+    @Test
+    void erasedStudentsAreSkipped() {
+        StudentProfile erased = student("Erased User", "", "");
+        erased.getUser().setAnonymisedAt(java.time.LocalDateTime.now());
+        when(studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(101)).thenReturn(Optional.of(erased));
+
+        service.markAttendance(request(att(101, false)));
+
+        verify(publisher, never()).publishEvent(any(Object.class));
+        verify(attendanceRepository).saveAll(any());
+    }
+
     private static StudentAttendanceDTO att(int id, boolean present) {
         StudentAttendanceDTO d = new StudentAttendanceDTO();
         d.setStudentUserId(id);
