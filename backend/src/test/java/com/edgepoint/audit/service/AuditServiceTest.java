@@ -5,8 +5,8 @@ import com.edgepoint.audit.domain.AuditLog;
 import com.edgepoint.audit.dto.AuditLogDTO;
 import com.edgepoint.audit.repository.AuditLogRepository;
 import com.edgepoint.core.domain.User;
-import com.edgepoint.core.repository.UserRepository;
 import com.edgepoint.core.security.TenantContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,9 +19,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +34,6 @@ import static org.mockito.Mockito.*;
 class AuditServiceTest {
 
     @Mock private AuditLogRepository auditLogRepository;
-    @Mock private UserRepository userRepository;
     @Mock private TenantContext tenantContext;
     @InjectMocks private AuditServiceImpl auditService;
 
@@ -44,35 +44,36 @@ class AuditServiceTest {
         lenient().when(tenantContext.getRoleId()).thenReturn(2);
     }
 
-    @Test
-    @DisplayName("record stamps college and actor from the tenant context")
-    void recordUsesTenantContext() {
-        User actor = new User();
-        actor.setUsername("admin1");
-        when(userRepository.findById(42)).thenReturn(Optional.of(actor));
-
-        auditService.record(AuditAction.CREATE, "Department", "5", "{\"deptName\":\"Physics\"}");
-
-        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
-        verify(auditLogRepository).save(captor.capture());
-        AuditLog saved = captor.getValue();
-        assertThat(saved.getCollegeId()).isEqualTo(7);
-        assertThat(saved.getActorUserId()).isEqualTo(42);
-        assertThat(saved.getActorUsername()).isEqualTo("admin1");
-        assertThat(saved.getAction()).isEqualTo(AuditAction.CREATE);
-        assertThat(saved.getEntityType()).isEqualTo("Department");
-        assertThat(saved.getEntityId()).isEqualTo("5");
-        assertThat(saved.getChanges()).contains("Physics");
+    @AfterEach
+    void clearSecurity() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("record without a tenant college is skipped (cannot be attributed to a customer)")
-    void recordSkippedWithoutCollege() {
+    @DisplayName("newEntry stamps college and actor; username comes from the JWT principal, not a user lookup")
+    void newEntryUsesTenantContextAndPrincipal() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin1", null, List.of()));
+
+        AuditLog entry = auditService.newEntry(AuditAction.CREATE, "Department", "5", "{\"deptName\":\"Physics\"}");
+
+        assertThat(entry.getCollegeId()).isEqualTo(7);
+        assertThat(entry.getActorUserId()).isEqualTo(42);
+        assertThat(entry.getActorUsername()).isEqualTo("admin1");
+        assertThat(entry.getAction()).isEqualTo(AuditAction.CREATE);
+        assertThat(entry.getEntityType()).isEqualTo("Department");
+        assertThat(entry.getEntityId()).isEqualTo("5");
+        assertThat(entry.getChanges()).contains("Physics");
+        assertThat(entry.getCreatedAt()).isNotNull();
+        verifyNoInteractions(auditLogRepository);
+    }
+
+    @Test
+    @DisplayName("newEntry without a tenant college is skipped (cannot be attributed to a customer)")
+    void newEntrySkippedWithoutCollege() {
         when(tenantContext.getCollegeId()).thenReturn(null);
 
-        auditService.record(AuditAction.UPDATE, "Department", "5", "{}");
-
-        verifyNoInteractions(auditLogRepository);
+        assertThat(auditService.newEntry(AuditAction.UPDATE, "Department", "5", "{}")).isNull();
     }
 
     @Test
