@@ -1,6 +1,7 @@
 package com.edgepoint.attendance.service;
 
 import com.edgepoint.academic.domain.ClassSubject;
+import com.edgepoint.academic.domain.StudentEnrollment;
 import com.edgepoint.academic.domain.TeacherAssignment;
 import com.edgepoint.academic.repository.StudentEnrollmentRepository;
 import com.edgepoint.academic.repository.TeacherAssignmentRepository;
@@ -60,13 +61,13 @@ class AttendanceAbsenceNotificationTest {
         when(tenantContext.getCurrentUserId()).thenReturn(5);
         when(tenantContext.getCollegeId()).thenReturn(7);
         when(teacherAssignmentRepository.findByAssignmentIdAndIsDeletedFalse(11)).thenReturn(Optional.of(a));
-        when(enrollmentRepository.findActiveByClassId(3)).thenReturn(List.of());
+        when(enrollmentRepository.findActiveByClassId(3)).thenReturn(List.of(enrolled(101), enrolled(102)));
     }
 
     @Test
     void publishesOneMessagePerAbsentStudentWithParentContact() {
-        when(studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(101))
-                .thenReturn(Optional.of(student("Asha Rao", "parent@x.com", "+911111111111")));
+        when(studentProfileRepository.findByStudentUserIdInAndIsDeletedFalse(List.of(101)))
+                .thenReturn(List.of(student("Asha Rao", "parent@x.com", "+911111111111")));
 
         service.markAttendance(request(att(101, false), att(102, true)));
 
@@ -78,7 +79,7 @@ class AttendanceAbsenceNotificationTest {
         assertThat(m.recipientEmail()).isEqualTo("parent@x.com");
         assertThat(m.recipientPhone()).isEqualTo("+911111111111");
         assertThat(m.body()).contains("Asha Rao").contains("2026-10-19");
-        verify(studentProfileRepository, never()).findByStudentUserIdAndIsDeletedFalse(102);
+        verify(studentProfileRepository).findByStudentUserIdInAndIsDeletedFalse(List.of(101));
     }
 
     @Test
@@ -90,7 +91,7 @@ class AttendanceAbsenceNotificationTest {
 
     @Test
     void absentStudentWithoutProfile_isSkippedWithoutFailingTheRequest() {
-        when(studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(101)).thenReturn(Optional.empty());
+        when(studentProfileRepository.findByStudentUserIdInAndIsDeletedFalse(List.of(101))).thenReturn(List.of());
 
         service.markAttendance(request(att(101, false)));
 
@@ -100,13 +101,19 @@ class AttendanceAbsenceNotificationTest {
 
     @Test
     void publisherFailure_doesNotFailAttendanceMarking() {
-        when(studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(101))
-                .thenReturn(Optional.of(student("Asha Rao", "parent@x.com", "+911111111111")));
+        when(studentProfileRepository.findByStudentUserIdInAndIsDeletedFalse(List.of(101)))
+                .thenReturn(List.of(student("Asha Rao", "parent@x.com", "+911111111111")));
         doThrow(new RuntimeException("boom")).when(publisher).publishEvent(any(Object.class));
 
         service.markAttendance(request(att(101, false)));
 
         verify(attendanceRepository).saveAll(any());
+    }
+
+    private static StudentEnrollment enrolled(int id) {
+        StudentEnrollment e = new StudentEnrollment();
+        e.setStudentUserId(id);
+        return e;
     }
 
     private static StudentAttendanceDTO att(int id, boolean present) {
