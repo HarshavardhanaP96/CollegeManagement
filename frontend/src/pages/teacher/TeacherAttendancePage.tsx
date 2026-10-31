@@ -63,6 +63,7 @@ export function TeacherAttendancePage() {
 
   const presentCount = roster.filter((s) => markOf(s.studentUserId).isPresent).length;
   const absentCount = roster.length - presentCount;
+  const allPresent = roster.length > 0 && absentCount === 0;
 
   const resetEdits = () => {
     setEdits({});
@@ -97,7 +98,7 @@ export function TeacherAttendancePage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
         <div className="space-y-1">
           <h1 className="font-display text-3xl font-semibold text-slate-900">Mark attendance</h1>
-          <p className="text-slate-500 text-sm">Everyone starts as present. Mark the absentees and save.</p>
+          <p className="text-slate-500 text-sm">Ticked means present. Everyone starts ticked: untick the absentees and save.</p>
         </div>
       </div>
 
@@ -145,58 +146,50 @@ export function TeacherAttendancePage() {
                         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">Already saved for this date</span>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => markAll(true)}>
-                        Mark all present
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => markAll(false)}>
-                        Mark all absent
-                      </Button>
-                    </div>
                   </div>
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-emerald-600"
+                            aria-label="Select all students as present"
+                            checked={allPresent}
+                            ref={(el) => {
+                              if (el) el.indeterminate = presentCount > 0 && !allPresent;
+                            }}
+                            onChange={(e) => markAll(e.target.checked)}
+                          />
+                        </TableHead>
                         <TableHead>Roll No.</TableHead>
                         <TableHead>Student</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Remarks</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {roster.map((student) => {
                         const { isPresent, remarks } = markOf(student.studentUserId);
+                        const checkboxId = `present-${student.studentUserId}`;
                         return (
                           <TableRow key={student.studentUserId} className={isPresent ? undefined : 'bg-red-50/60'}>
-                            <TableCell>{student.rollNumber}</TableCell>
-                            <TableCell className="font-medium">{student.fullName}</TableCell>
                             <TableCell>
-                              <div className="flex gap-2" role="group" aria-label={`Attendance for ${student.fullName}`}>
-                                <button
-                                  type="button"
-                                  aria-pressed={isPresent}
-                                  onClick={() => setRecord(student.studentUserId, 'isPresent', true)}
-                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                                    isPresent
-                                      ? 'bg-emerald-600 text-white'
-                                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                  }`}
-                                >
-                                  Present
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-pressed={!isPresent}
-                                  onClick={() => setRecord(student.studentUserId, 'isPresent', false)}
-                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                                    !isPresent
-                                      ? 'bg-red-600 text-white'
-                                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                  }`}
-                                >
-                                  Absent
-                                </button>
-                              </div>
+                              <input
+                                id={checkboxId}
+                                type="checkbox"
+                                className="h-4 w-4 accent-emerald-600"
+                                checked={isPresent}
+                                onChange={(e) => setRecord(student.studentUserId, 'isPresent', e.target.checked)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <label htmlFor={checkboxId} className="cursor-pointer">{student.rollNumber}</label>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <label htmlFor={checkboxId} className="cursor-pointer">
+                                {student.fullName}
+                                {!isPresent && <span className="ml-2 text-xs font-semibold text-red-700">Absent</span>}
+                              </label>
                             </TableCell>
                             <TableCell>
                               <Input
