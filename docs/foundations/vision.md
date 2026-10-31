@@ -18,10 +18,13 @@ classroom (attendance, marks), and students self-serve their own record.
   (ELK + Discord alerting).
 - In scope (planned, not yet wired to a real backend — see
   [requirements.md](requirements.md) open items): fee/billing management
-  (templates, invoices), revenue reporting — currently only exist as frontend
-  mock data (`frontend/src/lib/mock-data.ts`) and a disconnected prototype
-  component tree (`frontend/src/components/edgepoint/`) not reachable from any
-  route.
+  (templates, invoices), revenue reporting — no code today. The unreachable
+  prototype that mocked them (`components/edgepoint/`, `lib/mock-data.ts`) was
+  deleted 2026-10-31; ideas worth keeping: fee templates per course + term
+  broken into components (tuition, lab, library, activities); invoices with
+  paid amount and Paid/Partial/Overdue status; a student "wallet" with
+  receipts; a SUPERADMIN revenue series per tenant. The prototype is in git
+  history (and `reference/EdgePoint.jsx`) if needed.
 
 ## Non-goals
 - Not now: parent/guardian portal, mobile app, LMS/course-content delivery,

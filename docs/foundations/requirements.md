@@ -79,21 +79,18 @@ Self-service only, scoped to their own `userId`.
 - [x] FR-S3: View own attendance, overall and by subject.
       (`StudentAttendanceController`)
 - [x] FR-S4: View own dashboard. (`StudentDashboardController`)
-- [ ] FR-S5 (gap): No fee/invoice view for students even though
-      `FEE_TEMPLATES`/`INVOICES`/`STUDENT_RECEIPTS` exist in frontend mock
-      data — billing has no real backend (`notification` and `core` packages
-      have no invoice domain object).
+- [ ] FR-S5 (gap): No fee/invoice view for students — billing has no real
+      backend (no invoice domain object anywhere). The old frontend mock data
+      for it was removed; see [vision.md](vision.md) scope for the ideas kept.
 
 ## Cross-role
 - [x] FR-X1: Login, logout, refresh token, change password, validate token —
       available to all authenticated roles. (`AuthController`)
 - [x] FR-X2: Submit a support request — any authenticated role.
       (`SupportController`)
-- [ ] FR-X3 (gap, orphaned): `frontend/src/api/institution.ts` calls
-      `/institutions` and `/institutions/:id`; no backend controller exists
-      for either. Only referenced from the disconnected
-      `components/edgepoint/` prototype tree, so it's dead code today, not a
-      live bug — but it will 404 immediately if that tree is ever wired up.
+- [x] FR-X3 (resolved 2026-10-31): the orphaned `frontend/src/api/institution.ts`
+      client (called `/institutions`, which has no backend) was deleted
+      together with the disconnected `components/edgepoint/` prototype tree.
 
 ## Non-functional requirements
 - **Security:** JWT (HS256) bearer auth on every endpoint except
