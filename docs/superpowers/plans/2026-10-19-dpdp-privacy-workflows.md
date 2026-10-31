@@ -1129,7 +1129,7 @@ CREATE TABLE IF NOT EXISTS privacy_audit_log (
 CREATE INDEX IF NOT EXISTS idx_privacy_audit_log_college ON privacy_audit_log(college_id, audit_id DESC);
 ```
 
-Verify against real PostgreSQL (the tests cannot, they run on H2): follow `docs/devsetup.md` to start the local Postgres with the repo's `docker/postgres/init-db.sql`, start the backend with the default (non-`dev`) profile, and confirm in the log that Flyway applied `V<N>` and that Hibernate `ddl-auto: validate` did not complain about the new tables. Expected: the app starts. If Docker/Postgres is unavailable, say so explicitly in the task report instead of claiming the migration is verified.
+Verify against real PostgreSQL (the tests cannot, they run on H2): follow `docs/OPERATIONS.md` §1 to start the local Postgres with the repo's `docker/postgres/init-db.sql`, start the backend with the default (non-`dev`) profile, and confirm in the log that Flyway applied `V<N>` and that Hibernate `ddl-auto: validate` did not complain about the new tables. Expected: the app starts. If Docker/Postgres is unavailable, say so explicitly in the task report instead of claiming the migration is verified.
 
 - [ ] **Step 9: Commit**
 
@@ -6748,7 +6748,7 @@ Expected: every test passes, the build and lint are clean.
 
 - [ ] **Step 5: Check it in the running app**
 
-Start the backend with the `dev` profile (H2) and the frontend dev server (see `docs/devsetup.md` and `.claude/launch.json` if present). The dev database starts empty, so look in `docs/devsetup.md` for how to create a college, a college admin and a student. If the repo offers no way to seed those, say so in the task report and verify what you can without them: the login page renders without console errors, and `npm run build` is clean. If seeding is possible, walk this path and report what you saw:
+Start the backend with the `dev` profile (H2) and the frontend dev server (see `docs/OPERATIONS.md` §1 and `.claude/launch.json` if present). The dev database starts empty, so look in `docs/OPERATIONS.md` §1 for how to create a college, a college admin and a student. If the repo offers no way to seed those, say so in the task report and verify what you can without them: the login page renders without console errors, and `npm run build` is clean. If seeding is possible, walk this path and report what you saw:
 
 1. College admin: Privacy → Privacy notice → publish a notice.
 2. Student: the consent modal appears and cannot be dismissed; tick one box, save; the modal disappears.

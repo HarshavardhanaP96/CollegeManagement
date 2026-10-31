@@ -14,5 +14,5 @@ re-syncing it.
 | Flyway migrations: what's there, how to write a new one | [DatabaseMigration.md](DatabaseMigration.md) |
 | Frontend architecture/implementation notes | [FRONTEND_IMPLEMENTATION_SUMMARY.md](FRONTEND_IMPLEMENTATION_SUMMARY.md) |
 
-See also [devsetup.md](devsetup.md) for the quick local compose commands and
+See also [OPERATIONS.md](OPERATIONS.md) §1 for the quick local compose commands and
 [docs/foundations/architecture.md](foundations/architecture.md) for the system-level picture.

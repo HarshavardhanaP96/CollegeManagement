@@ -51,7 +51,7 @@ Feature-vertical monolith backend + SPA frontend, multi-tenant by college.
   ArgoCD for test/prod deployment plus a cluster-shared logging/monitoring
   stack (`infra/k8s`, `infra/argocd`). See
   [docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
-  [docs/DEVOPS.md](../DEVOPS.md), [docs/OPERATIONS.md](../OPERATIONS.md).
+  [docs/OPERATIONS.md](../OPERATIONS.md).
 - **Provisioned but unused:** Redis and Kafka connection settings exist in
   `application.yml`; nothing in the codebase currently uses either. Stripe
   API key/webhook secret and the AWS S3 SDK (`backend/pom.xml`) are

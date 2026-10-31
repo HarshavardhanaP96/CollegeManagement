@@ -4,7 +4,7 @@ pipeline {
     parameters {
         // Set true to run the "Promote to prod" stage on this build. Promotion copies
         // whatever tag is already running in overlays/test — it never builds a new image —
-        // so prod only ever ships something that already ran in test. See DEVOPS.md.
+        // so prod only ever ships something that already ran in test. See docs/OPERATIONS.md.
         booleanParam(name: 'PROMOTE_TO_PROD', defaultValue: false,
                       description: 'Promote the current test image tag to prod (manual gate, no rebuild).')
     }
