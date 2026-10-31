@@ -41,7 +41,7 @@ summary + the rule for keeping new role/API work covered.
 - **Schema changes:** baseline schema is fixed
   (`infra/k8s/base/db/init-db.sql`, applied once); every schema change after
   that is an incremental Flyway migration under
-  `backend/src/main/resources/db/migration/` (`V1`–`V3` today). Never edit
+  `backend/src/main/resources/db/migration/` (`V1`–`V5` on `main` today). Never edit
   the baseline file for an already-deployed environment — add a new
   `V{n}__*.sql` instead, as `V2`/`V3` did to retire the old
   `ddl-auto: update` stopgap.
