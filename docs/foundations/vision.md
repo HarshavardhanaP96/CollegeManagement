@@ -39,7 +39,7 @@ classroom (attendance, marks), and students self-serve their own record.
   sees what) — no silent frontend/backend authorization drift like the
   `ClassController` issue already found and fixed (see
   [docs/ACCESS_CONTROL.md](../ACCESS_CONTROL.md)).
-- Backend test suite (`docs/Testing_Strategy.md`, `docs/TESTING.md`) stays
+- Backend test suite (`docs/TESTING.md`) stays
   green; new endpoints ship with controller + service tests, not just a
   manual check.
 

@@ -1,8 +1,7 @@
 # Test Strategy & Rollout
 
-Deep detail already lives in [docs/Testing_Strategy.md](../Testing_Strategy.md),
-[docs/TESTING.md](../TESTING.md), [docs/TestExecutionGuide.md](../TestExecutionGuide.md)
-(test strategy), and [docs/OPERATIONS.md](../OPERATIONS.md),
+Deep detail already lives in [docs/TESTING.md](../TESTING.md)
+(test strategy and execution guide), and [docs/OPERATIONS.md](../OPERATIONS.md),
 [docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md)
 (rollout/ops). This doc is the one-screen
 summary + the rule for keeping new role/API work covered.
