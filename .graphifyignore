@@ -1,7 +1,5 @@
 # ─── Reference / legacy code (not our source) ───
 reference/
-EdgePoint.jsx
-docx_output.txt
 prompt.txt
 
 # ─── Documentation (not code, wastes graph tokens) ───
@@ -29,8 +27,6 @@ infra/
 graphify-out/
 
 # ─── Misc root files ───
-SystemDesignUpdate.md
-PROJECT_CONTEXT.md
 Jenkinsfile
 scripts/
 
