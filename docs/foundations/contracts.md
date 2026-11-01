@@ -73,10 +73,10 @@ override is noted).
 
 | Controller | Base path | Class guard | Endpoint | Method override |
 |---|---|---|---|---|
-| `AuthController` | `/auth` | *(none — mixed)* | `POST /login` | Public |
-| | | | `POST /refresh-token` | Public |
-| | | | `POST /logout` | `isAuthenticated()` |
-| | | | `POST /change-password` | `isAuthenticated()` |
+| `AuthController` | `/auth` | *(none — mixed)* | `POST /login` (429 + `Retry-After` after 5 failures per account or 20 per client IP in 15 min) | Public |
+| | | | `POST /refresh-token` (rotates: presented token revoked, new pair returned; reusing a rotated token revokes all the user's refresh tokens) | Public |
+| | | | `POST /logout` (optional body `{refreshToken}` — revoked if it belongs to the caller) | `isAuthenticated()` |
+| | | | `POST /change-password` (revokes all the user's refresh tokens) | `isAuthenticated()` |
 | | | | `GET /validate-token` | `isAuthenticated()` |
 | `CollegeController` | `/colleges` | `SUPERADMIN` | `POST/GET/GET{id}/PUT{id}/DELETE{id}`, `GET /{id}/statistics` | — |
 | `NotificationConfigController` | `/colleges/{id}/notification-config` | *(none — mixed)* | `GET` | `SUPERADMIN, COLLEGEADMIN` |
