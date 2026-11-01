@@ -160,6 +160,25 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-30: Entity audit capture writes in the **business transaction**, as one batch.
+  Before, every Hibernate post-insert/update called a `REQUIRES_NEW` service that borrowed a
+  second pool connection, opened and committed its own transaction and looked the actor up in
+  `users` — N of each for an N-row save (a 60-student register), so ~20 concurrent bulk saves
+  could starve the 20-connection Hikari pool. Options weighed:
+  (A, chosen) buffer entries per Hibernate session and insert them as one JDBC batch in a
+  `BeforeTransactionCompletionProcess` (after Hibernate's final flush, on the same connection,
+  inside a savepoint so an audit failure is logged and rolled back alone, never failing the
+  business commit). Audit rows commit exactly when the business change commits; a rolled-back
+  change leaves no row, because it never happened.
+  (B) collect during the transaction and write once in `afterCompletion` via one `REQUIRES_NEW`:
+  rows survive rollback, but then record changes that never took effect (there is no `outcome`
+  column to say so), still need a second connection per transaction, and are lost if the
+  process dies between the business commit and the audit write.
+  (C) A plus a separate `FAILED`-outcome entry for rolled-back attempts: needs an `outcome`
+  column first (the audit standard asks for one); left as a follow-up.
+  The actor username now comes from the authenticated JWT subject (`SecurityContextHolder`)
+  instead of a `users` lookup per row. Login success/failure entries keep `REQUIRES_NEW`: a
+  failed login rolls back and must still be recorded. Still active.
 - 2026-10-06: Closed the gap between this doc set and the actual infra/observability code:
   (1) added Flyway `V2`/`V3` migrations covering every table/column `ddl-auto: validate` needs
   (subjects/classes/marks/attendance/etc. plus a `courses` drift fix), so the `ddl-auto: update`
