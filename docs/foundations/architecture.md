@@ -160,6 +160,20 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-31: Security config hardening. (1) CORS reads `app.cors.allowed-origins` (env
+  `APP_CORS_ALLOWED_ORIGINS`) instead of allowing every origin with credentials; production goes
+  through the frontend nginx proxy on the same origin, so it needs no extra origins. (2) Actuator:
+  `health` (+ liveness/readiness) and `info` stay public for k8s probes and the build-version
+  footer; `health` hides details unless the caller is SUPERADMIN; every other actuator endpoint
+  is SUPERADMIN-only. `prometheus` stays unauthenticated because the in-cluster scraper has no
+  credentials, and `frontend/nginx.conf` refuses to proxy any actuator path except `info`, so it
+  is not reachable from outside. Chosen over scrape credentials (more secrets to rotate) and a
+  separate management port (needs probe and scrape config changes in every overlay). (3) springdoc
+  is off by default and on in the `dev` profile only. (4) `JWT_SECRET` and
+  `SPRING_DATASOURCE_PASSWORD` have no hard-coded fallbacks: startup fails without them, except
+  that `dev`/`test` (and the dev compose file) set `app.security.ephemeral-jwt-key=true` to sign
+  with a random per-process key. (5) CSP, Referrer-Policy, HSTS (HTTPS only) and frame-ancestors
+  headers set explicitly. Still active.
 - 2026-10-30: Entity audit capture writes in the **business transaction**, as one batch.
   Before, every Hibernate post-insert/update called a `REQUIRES_NEW` service that borrowed a
   second pool connection, opened and committed its own transaction and looked the actor up in

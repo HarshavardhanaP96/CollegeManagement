@@ -26,6 +26,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/docker/.env}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # No JWT_SECRET locally: sign with a random key per run (tokens reset on restart).
+      APP_SECURITY_EPHEMERAL_JWT_KEY: "true"
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8080"]
       interval: 10s

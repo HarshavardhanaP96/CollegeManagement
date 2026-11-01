@@ -10,7 +10,8 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/edgepoint
     username: postgres
-    password: postgres
+    # No fallback: startup fails if unset. The dev (H2) and test profiles set their own.
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -58,8 +59,10 @@ spring:
   security:
     # Read by JwtService / AuthServiceImpl (@Value("${spring.security.jwt.*}")).
     # secret-key must be base64 — JwtService base64-decodes it before building the HMAC key.
+    # Empty means "not set": JwtService refuses to start unless app.security.ephemeral-jwt-key
+    # is true (dev and test profiles only).
     jwt:
-      secret-key: ${JWT_SECRET:iBD+TO3fXjqpq5xt3tvYaTwWC7arMYhdnJaJAXb+TVU=}
+      secret-key: ${JWT_SECRET:}
       expiration: ${JWT_EXPIRATION:86400000}
 
 app:
@@ -104,7 +107,8 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      roles: SUPERADMIN
   health:
     livenessstate:
       enabled: true
@@ -115,6 +119,13 @@ management:
       enabled: true
     env:
       enabled: true
+
+# API docs and Swagger UI are off by default; application-dev.yml turns them on.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 logging:
   level:

@@ -5,6 +5,8 @@ import com.edgepoint.core.domain.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class JwtService {
 
@@ -21,6 +24,24 @@ public class JwtService {
 
     @Value("${spring.security.jwt.expiration}")
     private Long expiration;
+
+    // Only the dev and test profiles set this; everywhere else a missing JWT_SECRET stops startup.
+    @Value("${app.security.ephemeral-jwt-key:false}")
+    private boolean ephemeralKeyAllowed;
+
+    private SecretKey signingKey;
+
+    @PostConstruct
+    void init() {
+        if (secretKey != null && !secretKey.isBlank()) {
+            signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+        } else if (ephemeralKeyAllowed) {
+            log.warn("JWT_SECRET not set: signing with a random per-process key; tokens die on restart");
+            signingKey = Jwts.SIG.HS256.key().build();
+        } else {
+            throw new IllegalStateException("JWT_SECRET must be set (base64, at least 32 bytes)");
+        }
+    }
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -72,7 +93,6 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return signingKey;
     }
 }
