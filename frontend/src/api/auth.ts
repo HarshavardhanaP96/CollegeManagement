@@ -51,8 +51,13 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   return data;
 }
 
-export async function logout(): Promise<ApiResponse<null>> {
-  const { data } = await apiClient.post<ApiResponse<null>>('/auth/logout');
+// Tokens are passed in because the caller clears localStorage before the request interceptor runs.
+export async function logout(accessToken: string | null, refreshToken: string | null): Promise<ApiResponse<null>> {
+  const { data } = await apiClient.post<ApiResponse<null>>(
+    '/auth/logout',
+    refreshToken ? { refreshToken } : undefined,
+    accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
+  );
   return data;
 }
 

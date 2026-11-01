@@ -37,6 +37,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
+        try {
+            authenticate(request, response, filterChain);
+        } finally {
+            // TenantContext is a ThreadLocal and servlet threads are pooled: never let it reach the next request.
+            tenantContext.clear();
+        }
+    }
+
+    private void authenticate(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
 
@@ -51,6 +63,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             if (jwtTokenUtil.validateToken(jwt)) {
                 Claims claims = jwtTokenUtil.extractAllClaims(jwt);
+                if (!JwtService.ACCESS_TOKEN_TYPE.equals(claims.get(JwtService.TOKEN_TYPE_CLAIM, String.class))) {
+                    log.debug("Rejected a non-access token presented as a bearer token");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 String username = claims.getSubject();
                 Integer userId = claims.get("userId", Integer.class);
                 Integer collegeId = claims.get("collegeId", Integer.class);

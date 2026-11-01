@@ -11,12 +11,14 @@ import com.edgepoint.core.dto.ChangePasswordRequest;
 import com.edgepoint.core.dto.LoginRequest;
 import com.edgepoint.core.dto.RefreshTokenRequest;
 import com.edgepoint.core.dto.LoginResponse;
+import com.edgepoint.core.exception.AuthenticationException;
 import com.edgepoint.core.security.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ import java.time.LocalDateTime;
 public class AuthController {
 
     private final AuthService authService;
+    private final LoginAttemptLimiter loginAttemptLimiter;
 
     @PostMapping("/login")
     @Operation(
@@ -58,12 +61,26 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403",
                     description = "Account inactive or deleted"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "429",
+                    description = "Too many failed attempts for this account or client; see Retry-After"
             )
     })
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request,
+                                                            HttpServletRequest httpRequest) {
         log.info("Login attempt for user: {}", request.getUsername());
 
-        LoginResponse response = authService.login(request);
+        String clientIp = httpRequest.getRemoteAddr();
+        loginAttemptLimiter.check(request.getUsername(), clientIp);
+        LoginResponse response;
+        try {
+            response = authService.login(request);
+        } catch (AuthenticationException e) {
+            loginAttemptLimiter.recordFailure(request.getUsername(), clientIp);
+            throw e;
+        }
+        loginAttemptLimiter.recordSuccess(request.getUsername());
 
         log.info("Login successful for user: {} with role: {}",
                 request.getUsername(), response.getUser().getRoleName());
@@ -82,7 +99,7 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "User logout",
-            description = "Logout current user (invalidates token on client side)"
+            description = "Logout current user; revokes the refresh token sent in the body, if any"
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -94,10 +111,11 @@ public class AuthController {
                     description = "Unauthorized"
             )
     })
-    public ResponseEntity<ApiResponse<Void>> logout() {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestBody(required = false) RefreshTokenRequest request) {
         log.info("User logout requested");
 
-        authService.logout();
+        authService.logout(request == null ? null : request.getRefreshToken());
 
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
@@ -112,7 +130,7 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Change password",
-            description = "Change password for currently authenticated user"
+            description = "Change password for currently authenticated user; revokes all of their refresh tokens"
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -148,7 +166,8 @@ public class AuthController {
     @PostMapping("/refresh-token")
     @Operation(
             summary = "Refresh JWT token",
-            description = "Get new access token using refresh token"
+            description = "Rotate the refresh token: the presented one is revoked and a new pair is returned. "
+                    + "Re-using a rotated token revokes all of the user's refresh tokens."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -160,6 +160,19 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-31: Refresh tokens are now server-side (`refresh_tokens`, Flyway `V8`; V6/V7 are
+  reserved by the bulk-attendance and privacy branches). Each refresh JWT carries a `jti`; only
+  its SHA-256 is stored. Refresh rotates (atomic `UPDATE … WHERE revoked_at IS NULL`, so two
+  concurrent uses can't both win), reuse of a rotated token revokes all of the user's tokens,
+  logout revokes the presented token, password change revokes all. Chosen over a JWT denylist
+  (unbounded, still can't detect theft) and over very short refresh lifetimes (forces re-login).
+  The frontend shares one in-flight refresh across concurrent 401s, since a duplicate refresh now
+  counts as reuse. Login is rate limited per account (5) and per client IP (20) in a sliding
+  15-minute window, returning a generic 429; counters are in memory per instance (move to
+  Redis/DB before running more than one replica). Existing refresh tokens issued before this
+  change have no `jti` and are rejected once, so users sign in again after the deploy. Access tokens carry `typ=access` and
+  `JwtAuthenticationFilter` ignores any other token, so a refresh token can't be used as a bearer
+  token; the filter also clears the `TenantContext` ThreadLocal after every request. Still active.
 - 2026-10-31: Security config hardening. (1) CORS reads `app.cors.allowed-origins` (env
   `APP_CORS_ALLOWED_ORIGINS`) instead of allowing every origin with credentials; production goes
   through the frontend nginx proxy on the same origin, so it needs no extra origins. (2) Actuator:

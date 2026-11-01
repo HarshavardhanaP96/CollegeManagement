@@ -14,10 +14,15 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Component
 public class JwtService {
+
+    // Refresh tokens are signed with the same key, so the filter must be able to tell them apart.
+    public static final String TOKEN_TYPE_CLAIM = "typ";
+    public static final String ACCESS_TOKEN_TYPE = "access";
 
     @Value("${spring.security.jwt.secret-key}")
     private String secretKey;
@@ -49,6 +54,7 @@ public class JwtService {
         claims.put("collegeId", user.getCollegeId());
         claims.put("roleId", user.getRoleId());
         claims.put("roleName", user.getRole().getRoleName());
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -61,6 +67,7 @@ public class JwtService {
 
     public String generateRefreshToken(User user) {
         return Jwts.builder()
+                .setId(UUID.randomUUID().toString()) // jti: the server-side handle used to rotate/revoke
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 7)) // 7 days

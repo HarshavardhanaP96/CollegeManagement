@@ -30,12 +30,13 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final TenantContext tenantContext;
     private final AuditService auditService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${spring.security.jwt.expiration}")
     private Long jwtExpiration;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.getUsername())
                 .orElseThrow(() -> new AuthenticationException("No account found with the provided username or email"));
@@ -55,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String accessToken = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = refreshTokenService.issue(user);
         auditService.recordLogin(user, true);
 
         UserResponseDTO userDTO = mapToUserDTO(user);
@@ -70,7 +71,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout() {
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokenService.revoke(refreshToken, tenantContext.getCurrentUserId());
+        }
         tenantContext.clear();
         log.info("User logged out successfully");
     }
@@ -98,19 +103,18 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setUpdatedBy(userId);
         userRepository.save(user);
+        refreshTokenService.revokeAll(userId);
 
         log.info("Password changed successfully for user: {}", userId);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    // Keep revocations (rotation, reuse detection) even when the refresh is refused.
+    @Transactional(noRollbackFor = AuthenticationException.class)
     public LoginResponse refreshToken(RefreshTokenRequest request) {
-        if (!jwtService.validateToken(request.getRefreshToken())) {
-            throw new AuthenticationException("Invalid or expired refresh token");
-        }
-
-        String username = jwtService.extractUsername(request.getRefreshToken());
-        User user = userRepository.findByUsernameAndIsDeletedFalse(username)
+        Integer userId = refreshTokenService.rotate(request.getRefreshToken());
+        User user = userRepository.findById(userId)
+                .filter(u -> !Boolean.TRUE.equals(u.getIsDeleted()))
                 .orElseThrow(() -> new AuthenticationException("User not found"));
 
         if (!user.getIsActive()) {
@@ -118,7 +122,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String newAccessToken = jwtService.generateToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken(user);
+        String newRefreshToken = refreshTokenService.issue(user);
 
         UserResponseDTO userDTO = mapToUserDTO(user);
 
