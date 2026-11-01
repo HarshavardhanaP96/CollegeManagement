@@ -1,11 +1,9 @@
 # Test Strategy & Rollout
 
-Deep detail already lives in [docs/Testing_Strategy.md](../Testing_Strategy.md),
-[docs/TESTING.md](../TESTING.md), [docs/TestExecutionGuide.md](../TestExecutionGuide.md)
-(test strategy), and [docs/OPERATIONS.md](../OPERATIONS.md),
-[docs/Ops-Guide.md](../Ops-Guide.md),
-[docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
-[docs/DEVOPS.md](../DEVOPS.md) (rollout/ops). This doc is the one-screen
+Deep detail already lives in [docs/TESTING.md](../TESTING.md)
+(test strategy and execution guide), and [docs/OPERATIONS.md](../OPERATIONS.md),
+[docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md)
+(rollout/ops). This doc is the one-screen
 summary + the rule for keeping new role/API work covered.
 
 ## Test strategy
@@ -41,7 +39,7 @@ summary + the rule for keeping new role/API work covered.
 - **Schema changes:** baseline schema is fixed
   (`infra/k8s/base/db/init-db.sql`, applied once); every schema change after
   that is an incremental Flyway migration under
-  `backend/src/main/resources/db/migration/` (`V1`–`V3` today). Never edit
+  `backend/src/main/resources/db/migration/` (`V1`–`V5` on `main` today). Never edit
   the baseline file for an already-deployed environment — add a new
   `V{n}__*.sql` instead, as `V2`/`V3` did to retire the old
   `ddl-auto: update` stopgap.

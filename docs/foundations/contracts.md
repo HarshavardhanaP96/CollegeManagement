@@ -103,12 +103,6 @@ override is noted).
 | `StudentDashboardController` | `/dashboard/student` | `SUPERADMIN, STUDENT` | `GET /` | — |
 | `SupportController` | `/support` | `isAuthenticated()` | `POST /` | — |
 
-**Not backed by a controller:** `frontend/src/api/institution.ts` calls
-`/institutions` and `/institutions/:id` — no matching controller exists
-anywhere in `backend/src/main/java/com/edgepoint`. Dead code today (only
-referenced from the disconnected `components/edgepoint/` tree); will 404 the
-moment that tree is wired up. See [requirements.md](requirements.md) FR-X3.
-
 **Asymmetry worth a second look:** `DepartmentController`/`CourseController`
 open their list+read endpoints to `HOD` via a method override but keep
 create/update/delete at the class-level (`SUPERADMIN, COLLEGEADMIN`) guard —

@@ -1,4 +1,3 @@
-<!-- Source: docs/Testing_Strategy.md -->
 # Testing Strategy - College Management System
 
 **Target Coverage:** 85%+  
@@ -290,7 +289,6 @@ Let's start implementing!
 
 ---
 
-<!-- Source: docs/TestExecutionGuide.md -->
 # Test Execution Guide - College Management System
 
 **Target Coverage:** 85%+  

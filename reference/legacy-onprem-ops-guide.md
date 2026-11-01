@@ -11,8 +11,8 @@
 > Kubernetes + ArgoCD for test/prod (`infra/`). Hardware sizing, the DB
 > engine, and the install steps below do not match how this app is actually
 > deployed today. For the real, current deployment process see
-> [DEVOPS.md](DEVOPS.md), [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
-> and [OBSERVABILITY.md](OBSERVABILITY.md) (the "Monitoring" line in §1 below
+> [OPERATIONS.md](../docs/OPERATIONS.md), [LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
+> and [OBSERVABILITY.md](../docs/OBSERVABILITY.md) (the "Monitoring" line in §1 below
 > is stale too — Prometheus + Grafana are no longer "optional," they're
 > stood up by `infra/k8s/monitoring` and scrape the app's real
 > `/api/v1/actuator/prometheus` endpoint). Kept here for whatever reference

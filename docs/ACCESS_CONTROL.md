@@ -212,12 +212,6 @@ control layer — flagging so they don't look like silent regressions:
   `attendanceRecords` state stays empty and the submit button stays disabled.
   The comment already in that file ("Student list will be loaded from the
   backend when marking attendance") describes the missing piece.
-- **`api/institution.ts` calls `/institutions` and `/institutions/:id`, which
-  have no matching backend controller at all.** It's currently only referenced
-  from `components/edgepoint/*`, a disconnected prototype tree not reachable
-  from any route (see `frontend/src/routes/index.tsx` — nothing there imports
-  from `components/edgepoint/`), so this doesn't affect the live app, but it
-  will 404 immediately if that tree is ever wired up or reused.
 - **Duplicate DTO classes** with the same simple name exist in different
   packages (`com.edgepoint.student.dto.StudentMarkDTO` vs
   `com.edgepoint.academic.dto.StudentMarkDTO`, similarly for

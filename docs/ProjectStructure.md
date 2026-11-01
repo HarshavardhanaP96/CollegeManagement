@@ -131,16 +131,11 @@ frontend/src/
 ├── api/                         # axios client + one module per resource
 │   ├── client.ts, index.ts
 │   └── {assignment,attendance,auth,class,college,course,dashboard,department,
-│          enrollment,institution,marks,notificationConfig,student,subject,teacher}.ts
+│          enrollment,marks,notificationConfig,student,subject,teacher}.ts
 ├── components/
 │   ├── common/                  # shared UI kit: Button, Card, DataTable, Modal, Select, Table,
 │   │                             #   ErrorBoundary, ProtectedRoute, FormPageLayout, table-toolbar, ui-kit
-│   ├── layout/                  # MainLayout, Sidebar, Header, Breadcrumb, navIconMap
-│   └── edgepoint/                # role portals + shared EdgePoint UI
-│       ├── EdgePointApp.tsx, SidebarLayout.tsx, TopBar.tsx, SuperAdminPortal.tsx, RegistryPortal.tsx
-│       ├── NotificationConfigPanel.tsx
-│       ├── faculty/{FacultyAttendance,FacultyClassDetail,FacultyCommandCenter,FacultyGradebook,FacultyPortal}.tsx
-│       └── student/{StudentAnalytics,StudentExams,StudentMarks,StudentPortal,StudentToday,StudentWallet}.tsx
+│   └── layout/                  # MainLayout, Sidebar, Header, Breadcrumb, navIconMap
 ├── pages/
 │   ├── {LoginPage,DashboardPage,AnalyticsPage,NotFoundPage}.tsx
 │   ├── superadmin/{CollegeCreatePage,CollegeListPage}.tsx
@@ -151,8 +146,7 @@ frontend/src/
 │   └── student/{StudentAttendancePage,StudentMarksPage,StudentProfilePage}.tsx
 ├── routes/index.tsx
 ├── store/authStore.ts            # Zustand
-├── strategies/roleStrategy.ts    # role-based nav/permission strategy
-└── lib/{mock-data,session}.ts
+└── strategies/roleStrategy.ts    # role-based nav/permission strategy
 ```
 
 ---

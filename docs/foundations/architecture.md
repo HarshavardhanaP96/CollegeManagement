@@ -51,7 +51,7 @@ Feature-vertical monolith backend + SPA frontend, multi-tenant by college.
   ArgoCD for test/prod deployment plus a cluster-shared logging/monitoring
   stack (`infra/k8s`, `infra/argocd`). See
   [docs/LOCAL_K8S_DEPLOYMENT_RUNBOOK.md](../LOCAL_K8S_DEPLOYMENT_RUNBOOK.md),
-  [docs/DEVOPS.md](../DEVOPS.md), [docs/OPERATIONS.md](../OPERATIONS.md).
+  [docs/OPERATIONS.md](../OPERATIONS.md).
 - **Provisioned but unused:** Redis and Kafka connection settings exist in
   `application.yml`; nothing in the codebase currently uses either. Stripe
   API key/webhook secret and the AWS S3 SDK (`backend/pom.xml`) are
@@ -225,11 +225,11 @@ one-screen map, not a replacement for that runbook.
   RBAC architecture pass above). Superseded by the 2026-09-23 entry.
 
 ## Known structural issues (found, not yet fixed)
-- `frontend/src/components/edgepoint/` is a disconnected prototype tree
-  (role portals, student/faculty views, fee/billing UI) not imported from
-  any route in `frontend/src/routes/index.tsx`. Decide whether to delete it
-  or migrate its ideas (billing UI in particular) into the real app before
-  it rots further out of sync with `roleStrategy.ts`.
+- Resolved (2026-10-31): `frontend/src/components/edgepoint/` was a
+  disconnected prototype tree (role portals, student/faculty views,
+  fee/billing UI) not imported from any route. Deleted along with its only
+  dependants (`api/institution.ts`, `lib/session.ts`, `lib/mock-data.ts`);
+  the billing ideas are noted in [vision.md](vision.md) scope.
 - Resolved (2026-10-06): `docs/APIdoc.md` and `docs/User-Guide.md` were
   duplicates/stale forks of `docs/API.md` and `docs/USER_GUIDE.md` — both
   deleted, the latter two are now the sole canonical copies.
