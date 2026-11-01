@@ -17,6 +17,10 @@ import java.util.UUID;
 @Component
 public class JwtService {
 
+    // Refresh tokens are signed with the same key, so the filter must be able to tell them apart.
+    public static final String TOKEN_TYPE_CLAIM = "typ";
+    public static final String ACCESS_TOKEN_TYPE = "access";
+
     @Value("${spring.security.jwt.secret-key}")
     private String secretKey;
 
@@ -29,6 +33,7 @@ public class JwtService {
         claims.put("collegeId", user.getCollegeId());
         claims.put("roleId", user.getRoleId());
         claims.put("roleName", user.getRole().getRoleName());
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
 
         return Jwts.builder()
                 .setClaims(claims)
