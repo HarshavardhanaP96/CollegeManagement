@@ -31,6 +31,5 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
             "AND ar.isDeleted = false")
     List<AttendanceRecord> findByStudentId(@Param("studentId") Integer studentId);
 
-    boolean existsByAssignmentIdAndStudentUserIdAndRecordDateAndIsDeletedFalse(
-            Integer assignmentId, Integer studentUserId, LocalDate recordDate);
+    List<AttendanceRecord> findByAssignmentIdAndRecordDateAndIsDeletedFalse(Integer assignmentId, LocalDate recordDate);
 }

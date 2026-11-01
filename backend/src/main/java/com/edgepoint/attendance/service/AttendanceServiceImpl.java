@@ -12,7 +12,6 @@ import com.edgepoint.attendance.domain.AttendanceRecord;
 import com.edgepoint.academic.domain.StudentEnrollment;
 import com.edgepoint.academic.domain.TeacherAssignment;
 import com.edgepoint.core.exception.BadRequestException;
-import com.edgepoint.core.exception.DuplicateResourceException;
 import com.edgepoint.core.exception.ResourceNotFoundException;
 import com.edgepoint.attendance.repository.AttendanceRecordRepository;
 import com.edgepoint.academic.repository.StudentEnrollmentRepository;
@@ -30,7 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -62,43 +65,61 @@ public class AttendanceServiceImpl implements AttendanceService {
         // Get enrolled students
         List<StudentEnrollment> enrollments = enrollmentRepository
                 .findActiveByClassId(assignment.getClassSubject().getClassId());
+        Set<Integer> enrolledIds = enrollments.stream()
+                .map(StudentEnrollment::getStudentUserId)
+                .collect(Collectors.toSet());
+
+        Set<Integer> seen = new HashSet<>();
+        for (StudentAttendanceDTO studentAtt : request.getStudentAttendances()) {
+            Integer studentId = studentAtt.getStudentUserId();
+            if (!enrolledIds.contains(studentId)) {
+                throw new BadRequestException("Student " + studentId + " is not enrolled in this class");
+            }
+            if (!seen.add(studentId)) {
+                throw new BadRequestException("Student " + studentId + " appears more than once");
+            }
+        }
+
+        // One query for the day's register; re-saving the day updates it instead of failing.
+        Map<Integer, AttendanceRecord> existingByStudent = attendanceRepository
+                .findByAssignmentIdAndRecordDateAndIsDeletedFalse(request.getAssignmentId(), request.getRecordDate())
+                .stream()
+                .collect(Collectors.toMap(AttendanceRecord::getStudentUserId, Function.identity()));
 
         int presentCount = 0;
         int absentCount = 0;
-        int markedCount = 0;
-
         List<AttendanceRecord> records = new ArrayList<>();
+        List<Integer> newlyAbsent = new ArrayList<>();
 
         for (StudentAttendanceDTO studentAtt : request.getStudentAttendances()) {
-            // Check for duplicates
-            if (attendanceRepository.existsByAssignmentIdAndStudentUserIdAndRecordDateAndIsDeletedFalse(
-                    request.getAssignmentId(), studentAtt.getStudentUserId(), request.getRecordDate())) {
-                throw new DuplicateResourceException(
-                        "Attendance already marked for student: " + studentAtt.getStudentUserId());
+            AttendanceRecord record = existingByStudent.get(studentAtt.getStudentUserId());
+            boolean wasAbsent = record != null && Boolean.FALSE.equals(record.getIsPresent());
+            if (record == null) {
+                record = new AttendanceRecord();
+                record.setAssignmentId(request.getAssignmentId());
+                record.setStudentUserId(studentAtt.getStudentUserId());
+                record.setRecordDate(request.getRecordDate());
+                record.setCreatedBy(teacherId);
+            } else {
+                record.setUpdatedBy(teacherId);
             }
-
-            AttendanceRecord record = new AttendanceRecord();
-            record.setAssignmentId(request.getAssignmentId());
-            record.setStudentUserId(studentAtt.getStudentUserId());
-            record.setRecordDate(request.getRecordDate());
             record.setIsPresent(studentAtt.getIsPresent());
             record.setRemarks(studentAtt.getRemarks());
-            record.setCreatedBy(teacherId);
-
             records.add(record);
 
             if (studentAtt.getIsPresent()) {
                 presentCount++;
             } else {
                 absentCount++;
+                if (!wasAbsent) newlyAbsent.add(studentAtt.getStudentUserId());
             }
-            markedCount++;
         }
 
         attendanceRepository.saveAll(records);
-        log.info("Attendance marked for {} students on {}", markedCount, request.getRecordDate());
+        int markedCount = records.size();
+        log.info("Attendance saved for {} students on {}", markedCount, request.getRecordDate());
 
-        notifyAbsences(request);
+        notifyAbsences(newlyAbsent, request.getRecordDate());
 
         return AttendanceSummaryDTO.builder()
                 .assignmentId(request.getAssignmentId())
@@ -113,24 +134,25 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     /** Best effort: a problem notifying a parent must never fail attendance marking. */
-    private void notifyAbsences(AttendanceCreateRequest request) {
+    private void notifyAbsences(List<Integer> absentStudentIds, LocalDate recordDate) {
+        if (absentStudentIds.isEmpty()) return;
         Integer collegeId = tenantContext.getCollegeId();
-        for (StudentAttendanceDTO att : request.getStudentAttendances()) {
-            if (Boolean.TRUE.equals(att.getIsPresent())) continue;
-            try {
-                studentProfileRepository.findByStudentUserIdAndIsDeletedFalse(att.getStudentUserId())
-                        .ifPresent(student -> {
-                            String name = student.getUser() != null ? student.getUser().getFullName() : student.getRollNumber();
-                            eventPublisher.publishEvent(new NotificationMessage(
-                                    collegeId, NotificationEventType.ATTENDANCE_ABSENCE,
-                                    student.getParentEmail(), student.getParentPhone(),
-                                    "Absence notice: " + name,
-                                    name + " (roll no. " + student.getRollNumber() + ") was marked absent on "
-                                            + request.getRecordDate() + "."));
-                        });
-            } catch (RuntimeException e) {
-                log.warn("Could not queue absence notification for student {}: {}", att.getStudentUserId(), e.getMessage());
+        try {
+            for (StudentProfile student : studentProfileRepository.findByStudentUserIdInAndIsDeletedFalse(absentStudentIds)) {
+                try {
+                    String name = student.getUser() != null ? student.getUser().getFullName() : student.getRollNumber();
+                    eventPublisher.publishEvent(new NotificationMessage(
+                            collegeId, NotificationEventType.ATTENDANCE_ABSENCE,
+                            student.getParentEmail(), student.getParentPhone(),
+                            "Absence notice: " + name,
+                            name + " (roll no. " + student.getRollNumber() + ") was marked absent on "
+                                    + recordDate + "."));
+                } catch (RuntimeException e) {
+                    log.warn("Could not queue absence notification for student {}: {}", student.getStudentUserId(), e.getMessage());
+                }
             }
+        } catch (RuntimeException e) {
+            log.warn("Could not load profiles for absence notifications: {}", e.getMessage());
         }
     }
 
@@ -226,11 +248,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         List<StudentEnrollment> enrollments = enrollmentRepository
                 .findActiveByClassId(assignment.getClassSubject().getClassId());
 
+        Map<Integer, StudentProfile> profiles = studentProfileRepository
+                .findByStudentUserIdInAndIsDeletedFalse(enrollments.stream().map(StudentEnrollment::getStudentUserId).toList())
+                .stream()
+                .collect(Collectors.toMap(StudentProfile::getStudentUserId, Function.identity()));
+
         return enrollments.stream()
                 .map(e -> {
-                    StudentProfile profile = studentProfileRepository
-                            .findByStudentUserIdAndIsDeletedFalse(e.getStudentUserId())
-                            .orElse(null);
+                    StudentProfile profile = profiles.get(e.getStudentUserId());
                     return RosterStudentDTO.builder()
                             .studentUserId(e.getStudentUserId())
                             .rollNumber(profile != null ? profile.getRollNumber() : null)
