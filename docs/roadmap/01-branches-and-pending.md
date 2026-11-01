@@ -23,9 +23,10 @@ All branches above, plus the leftover agent and backup branches, were deleted lo
 - [ ] `origin/feat/bulk-attendance` still exists on GitHub; delete it when no longer needed.
 - [ ] `feature/dpdp-privacy` is still checked out in `../CollegeManagement-privacy`; its work is in
       `main`, so the worktree and branch can be removed.
-- [ ] The privacy plan (`docs/superpowers/plans/2026-10-19-dpdp-privacy-workflows.md`) shows all
-      steps unticked although implemented; the privacy spec still names `V6__privacy_workflows.sql`
-      (now `V7`).
+- [x] The privacy spec and plan now carry an "implemented, shipped as `V7`" status note
+      (2026-11-01).
+- [x] API.md, DatabaseMigration.md, DEVELOPMENT.md, USER_GUIDE.md and the docs index updated for
+      refresh-token rotation, bulk attendance, audit log, privacy and Knowledge Base (2026-11-01).
 - [ ] Privacy out-of-scope items carried into [03](03-features-next.md) §7.
 - [ ] `V9__knowledge_base.sql` was only checked against H2; verify on PostgreSQL.
 - [ ] No frontend tests for the bulk attendance grid or the Knowledge Base pages (vitest exists now).

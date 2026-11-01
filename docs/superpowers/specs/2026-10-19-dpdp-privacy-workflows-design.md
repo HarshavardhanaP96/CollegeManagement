@@ -1,7 +1,7 @@
 # DPDP Privacy Workflows — Design
 
 **Date:** 2026-10-19
-**Status:** Draft for review
+**Status:** Implemented; merged to `main` on 2026-11-01. The migration shipped as `V7__privacy_workflows.sql` (renumbered again at merge because `V6__unique_attendance_per_day.sql` landed first); this spec keeps its original V6 wording below.
 **Traces to:** PRIV-006 (notice/consent), PRIV-007 (data-principal requests), PRIV-008/009 (retention & deletion), COMP-001 — see `docs/reviews/2026-10-19-spec-gap-review.md` §3.1. These have no CM functionality ID yet; a CHG record should assign one.
 
 ## 1. Goal and scope
@@ -28,7 +28,7 @@ Backend and UI are both in scope.
 | D6 | Consent-based purposes start as not granted; nothing is pre-ticked | Assumption |
 | D7 | Retention policies ship disabled with placeholder durations; the scheduler defaults to dry-run | Assumption |
 
-## 3. Data model — `V6__privacy_workflows.sql`
+## 3. Data model — `V6__privacy_workflows.sql` (shipped as `V7`)
 
 This migration is V6: `main` has since committed `V4__add_notification_channel_rules.sql` and `V5__create_audit_log.sql`, so V6 is the next free version. Conventions follow V2: `SERIAL` primary keys, standard audit columns, `IF NOT EXISTS`. The migration must run on Postgres (prod) and H2 (`dev` profile).
 

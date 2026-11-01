@@ -4,6 +4,12 @@
 **Testing Framework:** JUnit 5, Mockito, Spring Test  
 **Test Types:** Unit, Integration, End-to-End
 
+> **Current state (2026-11-01):** backend 282 tests run, 0 failed, 1 skipped; frontend Vitest
+> 64/64. Run them with `make test`. The coverage percentage and per-class test counts further down
+> are from the original plan and are out of date. The live strategy is in
+> [foundations/test-rollout.md](foundations/test-rollout.md); missing tests are tracked in
+> [roadmap/01-branches-and-pending.md](roadmap/01-branches-and-pending.md).
+
 ---
 
 ## Testing Pyramid

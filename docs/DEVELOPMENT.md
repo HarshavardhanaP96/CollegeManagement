@@ -386,10 +386,27 @@ public class UserServiceImpl implements UserService {
 
 ## 6. Security Implementation
 
+> The snippets in this section show the pattern. The real classes are `JwtService`,
+> `JwtAuthenticationFilter`, `RefreshTokenService` and `TenantContext` in
+> `backend/src/main/java/com/edgepoint/core/security/`; read them before changing auth.
+
+What the real code does beyond the snippets:
+- **Signing key:** `JwtService.init()` reads `spring.security.jwt.secret-key` (env `JWT_SECRET`)
+  and fails startup if it is missing. Only when `app.security.ephemeral-jwt-key=true` (set in
+  `docker-compose.dev.yml`) does it fall back to a random per-process key, so dev tokens die on
+  restart. Tests that build `JwtService` by hand must call `init()`.
+- **Token type:** access tokens carry `"typ": "access"`; the filter ignores any bearer token
+  without it, so a refresh token cannot be used as an access token.
+- **Refresh tokens:** stored in `refresh_tokens` (V8) by hashed `jti`, rotated on every
+  `/auth/refresh-token`; reusing a rotated token revokes all of the user's tokens. Logout and
+  password change revoke them too.
+- **TenantContext** is cleared in a `finally` block, because servlet threads are pooled.
+
 ### JWT Token Structure
 ```json
 {
   "sub": "username",
+  "typ": "access",
   "userId": 123,
   "collegeId": 5,
   "roleId": 3,
@@ -416,6 +433,7 @@ public class JwtTokenUtil {
         claims.put("collegeId", user.getCollegeId());
         claims.put("roleId", user.getRoleId());
         claims.put("roleName", user.getRole().getRoleName());
+        claims.put("typ", "access");
         
         return Jwts.builder()
                 .setClaims(claims)
@@ -490,29 +508,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response, 
                                     FilterChain filterChain) throws ServletException, IOException {
         
-        String token = extractToken(request);
-        
-        if (token != null && jwtTokenUtil.validateToken(token)) {
-            Claims claims = jwtTokenUtil.extractAllClaims(token);
-            String username = claims.getSubject();
+        try {
+            String token = extractToken(request);
             
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (token != null && jwtTokenUtil.validateToken(token)) {
+                Claims claims = jwtTokenUtil.extractAllClaims(token);
+                // Refresh tokens are not access tokens
+                if ("access".equals(claims.get("typ", String.class))) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(claims.getSubject());
+                    
+                    tenantContext.setContext(
+                        claims.get("userId", Integer.class),
+                        claims.get("collegeId", Integer.class),
+                        claims.get("roleId", Integer.class)
+                    );
+                    
+                    UsernamePasswordAuthenticationToken authentication = 
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            }
             
-            // Set tenant context
-            tenantContext.setContext(
-                claims.get("userId", Integer.class),
-                claims.get("collegeId", Integer.class),
-                claims.get("roleId", Integer.class)
-            );
-            
-            // Set authentication
-            UsernamePasswordAuthenticationToken authentication = 
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+        } finally {
+            tenantContext.clear(); // pooled threads: never leak to the next request
         }
-        
-        filterChain.doFilter(request, response);
-        tenantContext.clear(); // Clear after request
     }
     
     private String extractToken(HttpServletRequest request) {

@@ -38,6 +38,15 @@
 | `V1__init_notification.sql` | `notification_configs` (per-college SMTP/WhatsApp config, see [OBSERVABILITY.md](OBSERVABILITY.md) / `NotificationConfig`) |
 | `V2__add_academic_attendance_schema.sql` | `subjects`, `classes`, `class_subjects`, `teacher_assignments`, `student_enrollments`, `exam_types`, `marks`, `attendance_records` — every table the baseline never created but the `academic`/`attendance` JPA entities need |
 | `V3__fix_courses_schema_drift.sql` | `courses.college_id` + `courses.duration_years` — columns the `Course` entity requires that the baseline table never had |
+| `V4__add_notification_channel_rules.sql` | `notification_channel_rules` (which channel each notification type goes to, per college) |
+| `V5__create_audit_log.sql` | `audit_log` — append-only audit trail written by `AuditEventListener` and read through `GET /audit-logs` |
+| `V6__unique_attendance_per_day.sql` | Soft-deletes duplicate attendance rows left by the old check-then-insert race, then adds the partial unique index `uq_attendance_records_assignment_student_date` that backs the bulk attendance upsert |
+| `V7__privacy_workflows.sql` | DPDP tables: `privacy_purposes`, `privacy_notices`, `consent_records`, `data_requests`, `data_request_events`, `retention_policies`, `retention_runs`, `privacy_audit_log`; adds `users.anonymised_at` (see [PRIVACY.md](PRIVACY.md)) |
+| `V8__refresh_tokens.sql` | `refresh_tokens` — server-side refresh tokens (hashed jti, rotation, reuse detection) |
+| `V9__knowledge_base.sql` | `kb_categories`, `kb_articles`, `kb_article_feedback`, with unique slugs. Global tables, no `college_id` |
+
+> V9 has only been run against H2 in tests so far; verify it on a real Postgres before the next
+> deploy (tracked in [roadmap/01-branches-and-pending.md](roadmap/01-branches-and-pending.md)).
 
 `V2`/`V3` are why `ddl-auto: validate` (the real, safe default in `application.yml`) now actually
 works in the `test`/`prod` k8s overlays — before they existed, those overlays had to override to

@@ -1,5 +1,7 @@
 # DPDP Privacy Workflows Implementation Plan
 
+> **Status:** Implemented and merged to `main` on 2026-11-01. The checkboxes below were not ticked during execution; read them as done. The migration shipped as `V7__privacy_workflows.sql`, not `V6`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give each college consent/notice management, data-principal requests (access, correction, erasure, grievance) with an admin queue, and a scheduled retention job that anonymises expired accounts, with backend and UI.

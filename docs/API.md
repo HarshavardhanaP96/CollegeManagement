@@ -27,6 +27,9 @@
 18. [Error Handling](#18-error-handling)
 23. [Support API](#23-support-api)
 24. [Observability Endpoints](#24-observability-endpoints)
+25. [Audit Log API](#25-audit-log-api)
+26. [Privacy APIs](#26-privacy-apis)
+27. [Knowledge Base APIs](#27-knowledge-base-apis)
 
 ---
 
@@ -108,7 +111,11 @@ The access token payload contains:
 ### 1.2 Refresh Token
 **Endpoint:** `POST /auth/refresh-token`  
 **Access:** Public  
-**Description:** Refresh expired JWT token
+**Description:** Exchange a refresh token for a new access token and a new refresh token.
+Refresh tokens are stored server-side (`refresh_tokens`, V8) by hashed `jti`. Each refresh
+**rotates**: the presented token is revoked and a new pair is returned. Presenting a token that
+was already rotated is treated as theft and revokes **all** of that user's refresh tokens.
+Invalid, expired or revoked tokens get `401`.
 
 **Request Body:**
 ```json
@@ -138,6 +145,10 @@ The access token payload contains:
 **Access:** Authenticated  
 **Headers:** `Authorization: Bearer {token}`
 
+**Request Body (optional):** `{ "refreshToken": "..." }` — when sent, that refresh token is
+revoked. The access token itself stays valid until it expires (there is no access-token
+blacklist).
+
 **Success Response (200 OK):**
 ```json
 {
@@ -152,6 +163,8 @@ The access token payload contains:
 **Endpoint:** `POST /auth/change-password`  
 **Access:** Authenticated  
 **Headers:** `Authorization: Bearer {token}`
+
+Revokes all of the user's refresh tokens, so every other session has to log in again.
 
 **Request Body:**
 ```json
@@ -600,6 +613,12 @@ These endpoints provide full faculty lifecycle management.
 **Access:** SUPERADMIN, TEACHER  
 **Headers:** `Authorization: Bearer {token}`
 
+Saves the whole day's register for one assignment in one request, and is **idempotent**:
+re-saving the same assignment and date updates the existing rows instead of failing (backed by
+the unique index from V6). The caller must be the assigned teacher; a student not enrolled in
+the class, or listed twice, gets `400`. Parents are notified only for students newly marked
+absent, and never for erased (anonymised) students.
+
 **Request Body:**
 ```json
 {
@@ -690,6 +709,14 @@ These endpoints provide full faculty lifecycle management.
   "timestamp": "2024-12-12T12:25:00"
 }
 ```
+
+### 10.6 Get Roster
+**Endpoint:** `GET /attendance/assignment/{assignmentId}/roster`  
+**Access:** SUPERADMIN, TEACHER  
+**Headers:** `Authorization: Bearer {token}`
+
+Students enrolled in the assignment's class, i.e. who to mark. The attendance page loads this
+plus the day's saved records, then sends the full register to `POST /attendance`.
 
 ---
 
@@ -1029,6 +1056,9 @@ All authenticated endpoints require:
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+Only **access** tokens are accepted here. Access tokens carry `"typ": "access"`; a refresh token
+sent as a bearer token is ignored and the request is treated as unauthenticated.
+
 The JWT token contains `userId`, `collegeId`, `roleId`, and `roleName` claims used for:
 1. **Authentication** — Validating the token signature and expiry
 2. **Authorization** — Checking role via `@PreAuthorize("hasRole('ROLENAME')")`
@@ -1150,6 +1180,54 @@ for Kubernetes probes and Prometheus scraping — see `WebSecurityConfig`). Full
 | `GET /actuator/info` | App name, build version/time (from `build-info.properties`), and `apiVersion` |
 | `GET /actuator/metrics` | Spring Boot's own metrics browser |
 | `GET /actuator/prometheus` | Prometheus-format metrics for scraping |
+
+---
+
+## 25. Audit Log API
+
+**Endpoint:** `GET /audit-logs`  
+**Access:** SUPERADMIN, COLLEGEADMIN (a college admin only ever sees their own college)  
+**Headers:** `Authorization: Bearer {token}`
+
+Read-only, newest first. Rows are written automatically by `AuditEventListener` for creates,
+updates and deletes of business entities, with a redacted before/after diff in `changes`.
+
+**Query Parameters:** `collegeId`, `action`, `entityType`, `from`, `to` (YYYY-MM-DD), `page`
+(default 0), `size` (default 20, max 100).
+
+**Item shape:** `id`, `collegeId`, `actorUserId`, `actorUsername`, `action`, `entityType`,
+`entityId`, `changes`, `createdAt`.
+
+---
+
+## 26. Privacy APIs
+
+DPDP notice and consent, data-principal requests (access, correction, erasure), and retention.
+Prefix `/privacy`. Full endpoint table, roles and request states:
+[foundations/contracts.md](foundations/contracts.md); behaviour and configuration:
+[PRIVACY.md](PRIVACY.md).
+
+| Group | Endpoints |
+|---|---|
+| Self-service (any authenticated user; requests are STUDENT, TEACHER) | `GET /notice/current`, `GET /consents/me`, `POST /consents`, `POST /requests`, `GET /requests/me`, `GET /requests/{id}`, `POST /requests/{id}/cancel`, `GET /requests/{id}/export` |
+| Admin (SUPERADMIN read, COLLEGEADMIN act) | `GET /admin/requests`, `GET /admin/requests/{id}`, `POST /admin/requests/{id}/review`, `POST /admin/requests/{id}/resolve`, `GET`/`POST /admin/notices`, `GET`/`PUT /admin/retention-policies`, `POST /admin/retention/run?dryRun=`, `GET /admin/retention/runs`, `GET /admin/audit` |
+
+---
+
+## 27. Knowledge Base APIs
+
+Help articles shown to every role, authored by SUPERADMIN. Articles are global (no college).
+Details: [foundations/contracts.md](foundations/contracts.md).
+
+| Endpoint | Access | Purpose |
+|---|---|---|
+| `GET /knowledgebase/categories` | Authenticated | Categories |
+| `GET /knowledgebase/articles?category=&q=&page=&size=` | Authenticated | Published articles visible to the caller's role (no body) |
+| `GET /knowledgebase/articles/{slug}` | Authenticated | One article; `404` for drafts or other roles |
+| `POST /knowledgebase/articles/{id}/feedback` | Authenticated | `{ "helpful": true }`, one vote per user (upsert) |
+| `GET /knowledgebase/admin/articles?q=&status=`, `GET /knowledgebase/admin/articles/{id}` | SUPERADMIN | List and read any article |
+| `POST`, `PUT /knowledgebase/admin/articles[/{id}]`, `DELETE /knowledgebase/admin/articles/{id}` | SUPERADMIN | Create, edit (status DRAFT/PUBLISHED/ARCHIVED), delete |
+| `POST`, `PUT /knowledgebase/admin/categories[/{id}]`, `DELETE /knowledgebase/admin/categories/{id}` | SUPERADMIN | Manage categories; delete is `422` while it has articles, duplicate slug `409` |
 
 ---
 

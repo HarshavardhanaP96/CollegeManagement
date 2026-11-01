@@ -1,6 +1,6 @@
 # College Management System - User Guide
 
-**Version:** 1.0  
+**Version:** 1.1  
 **For:** SuperAdmin, CollegeAdmin, HOD, Teacher, Student  
 **Phase:** 1
 
@@ -121,8 +121,17 @@ After login, you'll see your personalized dashboard based on your role:
 ### 2.3 System Reports
 
 - **College Performance Reports:** Navigate to **Reports > Colleges**
-- **User Activity Logs:** Navigate to **Reports > Audit Logs**
+- **User Activity Logs:** Navigate to **Audit log**. Every create, update and delete is listed
+  newest first, with who did it and what changed; filter by college, action, entity or date.
 - **System Health:** Navigate to **Dashboard > System Status**
+
+### 2.4 Help Articles
+
+1. Navigate to **Help articles**
+2. Click **New article**, pick a category and the roles that should see it
+3. Save as **Draft** to keep it hidden, or **Published** to show it under **Help** for those roles
+4. **Archived** hides an article without deleting it. A category can only be deleted once it has
+   no articles.
 
 ---
 
@@ -201,6 +210,19 @@ After login, you'll see your personalized dashboard based on your role:
 - **Department-wise Statistics:** Navigate to **Reports > Departments**
 - **Student Enrollment Trends:** Navigate to **Reports > Enrollment**
 - **Teacher Distribution:** Navigate to **Reports > Teachers**
+- **Audit log:** Navigate to **Audit log** to see every change made in your college.
+
+### 3.4 Privacy (DPDP)
+
+Navigate to **Privacy**. The tabs let you:
+- **Requests:** work through access, correction, erasure and grievance requests from students and
+  teachers. Overdue requests are flagged. Take a request into review, then resolve it as
+  completed, partially completed or rejected.
+- **Privacy notice:** publish a new notice; users are asked to accept it on their next login.
+- **Retention:** set how long each kind of data is kept, preview a run (dry run) and run it.
+- **Audit log:** see every privacy action taken.
+
+Details in [PRIVACY.md](PRIVACY.md).
 
 ---
 
@@ -360,17 +382,12 @@ When you log in, you'll see:
 
 #### Marking Daily Attendance
 
-1. Navigate to **Attendance > Mark Attendance**
-2. Select:
-    - **Class:** Select class from dropdown
-    - **Subject:** Select subject (auto-populated based on your assignments)
-    - **Date:** Select date (defaults to today)
-3. You'll see list of all enrolled students
-4. Mark each student as:
-    - **Present** (Click green checkmark)
-    - **Absent** (Click red cross)
-5. Add **Remarks** if needed (optional)
-6. Click **"Submit Attendance"**
+1. Navigate to **Attendance**
+2. Pick the **Class-Subject** and the **Date** (defaults to today)
+3. Every enrolled student is shown as a checkbox, ticked (present) by default. Use
+   **Select all** or a row's checkbox to mark a whole group at once, then untick the absentees.
+4. Click **Save attendance**. The whole register is saved in one go and you'll see how many were
+   present and absent. Parents of students newly marked absent are notified.
 
 #### Viewing Attendance History
 
@@ -385,11 +402,10 @@ When you log in, you'll see:
 
 #### Editing Attendance
 
-1. Navigate to **Attendance > View History**
-2. Find the record you want to edit
-3. Click **"Edit"** button
-4. Change status or remarks
-5. Click **"Update"**
+1. Navigate to **Attendance** and pick the same class-subject and date
+2. The saved register loads, marked **Already saved for this date**
+3. Change the checkboxes and click **Update attendance**. Saving the same day again updates it;
+   it never creates duplicates.
 
 ### 5.3 Entering Marks
 
@@ -530,7 +546,22 @@ When you log in, you'll see:
     - Subject-wise comparison
     - Trend line showing improvement/decline
 
-### 6.4 Academic Calendar (Future Phase)
+### 6.4 My Privacy (students and teachers)
+
+Navigate to **My Privacy** to:
+- read the current privacy notice and turn optional consents on or off
+- raise a request: **Access my data** (download a copy), **Correct my data**, **Erase my data**,
+  or **Raise a grievance**
+- follow your requests' status, cancel one that hasn't been picked up yet, and download your
+  data once an access request is completed
+
+### 6.5 Help
+
+Every role has **Help** in the sidebar: search or browse articles written for your role, and mark
+whether an article was helpful. If it doesn't answer your question, use **Support** to send a
+message to the support team.
+
+### 6.6 Academic Calendar (Future Phase)
 
 - Exam schedules
 - Holiday calendar
@@ -543,7 +574,8 @@ When you log in, you'll see:
 ### General Questions
 
 **Q: I forgot my password. How can I reset it?**  
-A: Click on "Forgot Password" link on login page. Enter your email, and you'll receive a password reset link.
+A: There is no self-service reset yet. Ask your administrator to reset it. Once logged in, you
+can change it yourself; that logs you out of every other device.
 
 **Q: Can I access the system from mobile?**  
 A: Yes, the web portal is mobile-responsive. Mobile apps are planned for Phase 2.
@@ -554,7 +586,8 @@ A: Contact your administrator (CollegeAdmin for teachers/students, CollegeAdmin/
 ### For Teachers
 
 **Q: I made a mistake in attendance. Can I change it?**  
-A: Yes, navigate to Attendance > View History, find the record, and click Edit.
+A: Yes. Open **Attendance**, pick the same class-subject and date, fix it, and click
+**Update attendance**.
 
 **Q: What is the deadline for submitting marks?**  
 A: Check with your HOD/CollegeAdmin. Generally, marks must be submitted within 7 days of exam completion.
@@ -606,6 +639,7 @@ A: Yes, but only if there are no active classes or enrolled students.
 ## 8. Support & Contact
 
 ### Technical Support
+- **In the app:** check **Help** first, then send a message from **Support**
 - **Email:** support@example.com
 - **Phone:** +1-234-567-8900 (Mon-Fri, 9 AM - 6 PM)
 
@@ -645,6 +679,7 @@ We value your feedback! Submit suggestions via:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | Dec 2024 | Initial user guide for Phase 1 |
+| 1.1 | Nov 2026 | One-click attendance register, audit log, privacy (DPDP), Help articles; no self-service password reset |
 
 ---
 
