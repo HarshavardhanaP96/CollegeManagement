@@ -14,7 +14,7 @@ spec:
       annotations:
         # Scraped by infra/k8s/monitoring's Prometheus (kubernetes_sd_configs, pod role) —
         # see docs/OBSERVABILITY.md. /api/v1/actuator/prometheus is permitted without auth
-        # in WebSecurityConfig for exactly this.
+        # in WebSecurityConfig for exactly this; frontend/nginx.conf refuses to proxy it out.
         prometheus.io/scrape: "true"
         prometheus.io/path: "/api/v1/actuator/prometheus"
         prometheus.io/port: "8080"
