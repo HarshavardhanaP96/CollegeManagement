@@ -25,6 +25,15 @@ pipeline {
             }
         }
 
+        stage('Security Scan') {
+            // Secrets (history + tree), SAST, dependency and IaC scans via pinned Docker images;
+            // HIGH/CRITICAL findings fail the build. Same commands as `make scan-src` locally.
+            when { expression { !params.PROMOTE_TO_PROD } }
+            steps {
+                sh 'make scan-src'
+            }
+        }
+
         stage('Build Backend') {
             when { expression { !params.PROMOTE_TO_PROD } }
             steps {
@@ -46,6 +55,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm install'
+                    sh 'npm run lint'
                     sh 'npm run build'
                 }
             }
@@ -57,9 +67,12 @@ pipeline {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "docker-credentials-id") {
                         def backendApp = docker.build("${BACKEND_IMAGE}:${IMAGE_TAG}", "./backend")
-                        backendApp.push()
-
                         def frontendApp = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}", "./frontend")
+
+                        // Scan before pushing so a vulnerable image never reaches the registry.
+                        sh "make scan-image VERSION=${IMAGE_TAG}"
+
+                        backendApp.push()
                         frontendApp.push()
                     }
                 }
