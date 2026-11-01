@@ -17,6 +17,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      # No JWT_SECRET locally: sign with a random key per run (tokens reset on restart).
+      - APP_SECURITY_EPHEMERAL_JWT_KEY=true
     depends_on:
       - postgres
     networks:
