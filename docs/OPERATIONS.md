@@ -19,34 +19,37 @@ rollout/rollback summary and [infra/README.md](../infra/README.md) for the infra
 
 ## 1. Local setup (Docker Compose)
 
-Postgres + pgAdmin only (plus Elasticsearch/Logstash/Kibana if you want to exercise the full
-logging pipeline locally — see [OBSERVABILITY.md](OBSERVABILITY.md); they're optional for plain
-backend/frontend development):
+Everything runs through the root `Makefile` (`make help` lists every target). Compose files and
+their `.env` live in `infra/docker/`.
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml up -d
+make doctor   # creates infra/docker/.env from .env.example, checks Docker, ports, .env keys
+make up       # Postgres only
+make dev      # Postgres + backend + frontend from source with hot reload
+make down     # stop everything (including the obs/tools profiles)
 ```
 
-Full local stack, with backend/frontend in containers too (hot-reload, no local Java/Node
-install needed):
+Other targets: `make obs` (Elasticsearch/Logstash/Kibana, Kibana on :5601 — see
+[OBSERVABILITY.md](OBSERVABILITY.md); optional for plain backend/frontend development),
+`make test`, `make lint`, `make build`, `make scan` (gitleaks, semgrep, trivy via Docker),
+`make dast` (ZAP baseline, local only), `make deploy ENV=local` (Kind). Backend targets honour
+`JAVA_HOME=...` when the default `java` can't compile for 17. pgAdmin is in the `tools`
+profile: `docker compose -f infra/docker/docker-compose.yml --profile tools up -d`.
+
+Host ports bind to `127.0.0.1` only. Postgres/Elasticsearch/Logstash publish no host port by
+default; add the debug override when a host tool needs them:
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml -f infra/docker/docker-compose.dev.yml up -d
-```
-
-Stop it:
-
-```bash
-docker compose -f infra/docker/docker-compose.yml -f infra/docker/docker-compose.dev.yml down
+docker compose -f infra/docker/docker-compose.yml -f infra/docker/compose.debug.yaml up -d
 ```
 
 ### Database details (as created by this compose stack)
 - **Database Name**: `college_management`
 - **Username**: `postgres`
 - **Password**: `postgres`
-- **Host port**: `5433` (container's internal port is the standard `5432`; the dev-container
-  backend service reaches Postgres via the Docker network at `postgres:5432`, so this only
-  matters if you're connecting a tool from the host machine)
+- **Host port**: none by default. Add `infra/docker/compose.debug.yaml` to publish it on
+  `127.0.0.1:5433` (container port `5432`; the dev-container backend reaches Postgres on the
+  internal Docker network at `postgres:5432`, so this only matters for host tools)
 
 This is deliberately different from the app's own bare-metal/k8s default
 (`edgepoint`/`5432` in `backend/src/main/resources/application.yml`) — if you run the backend
@@ -65,7 +68,7 @@ instead of using `docker-compose.dev.yml`, override `SPRING_DATASOURCE_URL`/`_US
 | `student1` | STUDENT | Jane Smith |
 
 ### Tools
-- **pgAdmin**: `http://localhost:5050` (Login: `admin@admin.com` / `admin`)
+- **pgAdmin** (`--profile tools`): `http://localhost:5050` (login from `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` in `infra/docker/.env`)
 - **Kibana** (if the logging services are up): `http://localhost:5601`
 
 ---

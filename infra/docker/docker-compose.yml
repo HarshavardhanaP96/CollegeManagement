@@ -1,79 +1,156 @@
 name: collegemanagement
 
+# Local stack. Values come from infra/docker/.env (copy .env.example, or run `make doctor`).
+# Postgres is the only service started by default; pgAdmin is profile "tools", ELK is profile "obs".
+# Postgres/Elasticsearch/Logstash publish no host ports here; add compose.debug.yaml when you need them.
+
+x-hardening: &hardening
+  restart: unless-stopped
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 256
+
 services:
   postgres:
+    <<: *hardening
     image: postgres:15-alpine
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-db
+    user: "70:70" # the alpine image's postgres user; owns PGDATA in the image
+    read_only: true
+    tmpfs: [/tmp, /var/run/postgresql]
     environment:
-      POSTGRES_DB: college_management
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5433:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-college_management}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/docker/.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../k8s/base/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    networks:
-      - college-network
+      - ../k8s/base/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cpus: ${DB_CPUS:-1}
+    mem_limit: ${DB_MEM:-512m}
+    mem_reservation: 256m
+    networks: [backend]
 
-  # Optional: pgAdmin for easier DB management
   pgadmin:
-    image: dpage/pgadmin4
+    <<: *hardening
+    profiles: [tools]
+    image: dpage/pgadmin4:9.18.0
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-pgadmin
+    # Image default user (pgadmin, 5050). Not read_only: the entrypoint writes config into /pgadmin4.
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?set PGADMIN_DEFAULT_PASSWORD in infra/docker/.env}
+      PGADMIN_LISTEN_PORT: 5050 # unprivileged port, so no NET_BIND_SERVICE is needed
+      # example.com is a reserved domain; without this pgAdmin rejects the login email and hangs at setup.
+      PGADMIN_CONFIG_ALLOW_SPECIAL_EMAIL_DOMAINS: "['example.com']"
     ports:
-      - "5050:80"
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:5050"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5050/misc/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
-      - postgres
-    networks:
-      - college-network
+      postgres:
+        condition: service_healthy
+    cpus: 1
+    mem_limit: ${PGADMIN_MEM:-512m}
+    mem_reservation: 128m
+    networks: [frontend, backend]
 
+  # The Elastic images write into their own install dirs at startup, so they are not read_only.
+  # Logstash and Kibana already run as uid 1000.
   elasticsearch:
+    <<: *hardening
+    profiles: [obs]
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-elasticsearch
+    user: "1000:0" # as root the entrypoint chroots to drop privileges, which needs capabilities we drop
     environment:
       - node.name=elasticsearch
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - college-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s # first boot on 1 CPU takes 3-4 minutes
+    pids_limit: 2048 # JVM threads
+    cpus: ${ES_CPUS:-1}
+    mem_limit: ${ES_MEM:-1g}
+    mem_reservation: 768m
+    networks: [backend]
 
   logstash:
+    <<: *hardening
+    profiles: [obs]
     image: docker.elastic.co/logstash/logstash:7.17.10
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-logstash
-    ports:
-      - "5000:5000"
-      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xms256m -Xmx256m"
     volumes:
-      - ./elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9600 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
     depends_on:
-      - elasticsearch
-    networks:
-      - college-network
+      elasticsearch:
+        condition: service_healthy
+    pids_limit: 1024
+    cpus: 1
+    mem_limit: ${LOGSTASH_MEM:-768m}
+    mem_reservation: 512m
+    networks: [backend]
 
   kibana:
+    <<: *hardening
+    profiles: [obs]
     image: docker.elastic.co/kibana/kibana:7.17.10
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-kibana
     ports:
-      - "5601:5601"
+      - "127.0.0.1:${KIBANA_PORT:-5601}:5601"
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5601/api/status >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     depends_on:
-      - elasticsearch
-    networks:
-      - college-network
+      elasticsearch:
+        condition: service_healthy
+    pids_limit: 1024
+    cpus: 1
+    mem_limit: ${KIBANA_MEM:-1g}
+    mem_reservation: 512m
+    networks: [frontend, backend]
 
 networks:
-  college-network:
-    driver: bridge
+  frontend: {}
+  backend:
+    internal: true
 
 volumes:
   postgres_data:
+  pgadmin_data:
   elasticsearch_data:

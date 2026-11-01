@@ -1,0 +1,10 @@
+# gitleaks config for `make scan-src` and CI. Keeps the default rules.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "local-only files and documented example tokens"
+# Local .env holds dev values by design; dependency dirs aren't ours.
+paths = ['''(^|/)\.env$''', '''(^|/)node_modules/''']
+# docs/API.md shows truncated example JWTs ("eyJ...<header>..."): a header with no payload or signature.
+regexes = ['''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\.\.''']
