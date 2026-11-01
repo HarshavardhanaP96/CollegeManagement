@@ -1,0 +1,19 @@
+# Debug-only host ports for backing services. Loopback only.
+#   docker compose -f infra/docker/docker-compose.yml -f infra/docker/compose.debug.yaml up -d
+# Services on the internal `backend` network can't publish ports, so this also attaches them to `frontend`.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    networks: [backend, frontend]
+
+  elasticsearch:
+    ports:
+      - "127.0.0.1:${ES_PORT:-9200}:9200"
+    networks: [backend, frontend]
+
+  logstash:
+    ports:
+      - "127.0.0.1:${LOGSTASH_PORT:-5000}:5000"
+      - "127.0.0.1:${LOGSTASH_API_PORT:-9600}:9600"
+    networks: [backend, frontend]

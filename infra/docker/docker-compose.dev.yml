@@ -1,43 +1,75 @@
+# Dev override: backend and frontend from bind-mounted source with hot reload.
+#   docker compose -f infra/docker/docker-compose.yml -f infra/docker/docker-compose.dev.yml up -d
+# Runs as your host UID/GID (written to .env by `make doctor`) so build output in the source tree stays yours.
 services:
   backend:
     image: maven:3.8-openjdk-17-slim
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-backend-dev
+    user: "${UID:-1000}:${GID:-1000}"
     working_dir: /app
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${API_PORT:-8080}:8080"
     volumes:
-      # Bind mount the local backend source code directly into the container
       - ../../backend:/app
-      # Provide a named volume for Maven cache so dependencies aren't downloaded every time
-      - maven_cache:/root/.m2
-    command: mvn spring-boot:run
+    # Maven repo lives in backend/.m2 (git-ignored): a named volume would be root-owned and unwritable for UID.
+    command: mvn -Dmaven.repo.local=/app/.m2/repository spring-boot:run
     environment:
-      # Ensure it correctly points to the postgres container defined in main infra/docker/docker-compose.yml
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/college_management
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      HOME: /tmp
+      MAVEN_CONFIG: /app/.m2
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-college_management}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/docker/.env}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 180s # first run downloads dependencies
     depends_on:
-      - postgres
-    networks:
-      - college-network
+      postgres:
+        condition: service_healthy
+    pids_limit: 1024
+    cpus: ${API_CPUS:-2}
+    mem_limit: ${API_MEM:-1536m}
+    mem_reservation: 768m
+    networks: [frontend, backend] # frontend gives Maven internet access; backend reaches Postgres
 
   frontend:
     image: node:20-alpine
+    platform: ${DOCKER_PLATFORM:-}
     container_name: college-mgmt-frontend-dev
+    user: "${UID:-1000}:${GID:-1000}"
     working_dir: /app
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
     ports:
-      - "5173:5173"
+      - "127.0.0.1:${WEB_PORT:-5173}:5173"
     volumes:
-      # Bind mount local frontend code for real-time HMR (Hot Module Replacement)
+      # node_modules is installed into the bind mount by this container; on macOS/Windows hosts don't
+      # mix it with a host `npm ci` (native binaries differ). Keep the repo inside WSL2 on Windows.
       - ../../frontend:/app
-      # Prevent the host's node_modules from overwriting the container's volume 
-      # (especially useful because of OS differences in C++ compiled node modules)
-      - /app/node_modules
-    # Start up the vite dev server and expose it on 0.0.0.0 so we can access it from localhost
+    environment:
+      HOME: /tmp
+      npm_config_cache: /tmp/.npm
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    networks:
-      - college-network
-
-volumes:
-  maven_cache:
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+    pids_limit: 512
+    cpus: ${WEB_CPUS:-1}
+    mem_limit: ${WEB_MEM:-1g}
+    mem_reservation: 256m
+    networks: [frontend]

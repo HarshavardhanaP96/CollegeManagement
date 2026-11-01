@@ -12,3 +12,8 @@ build/
 graphify-out/
 # logs
 *.log
+# local env (copy from .env.example)
+.env
+# make dast reports, dev-container Maven repo
+.zap/
+backend/.m2/
