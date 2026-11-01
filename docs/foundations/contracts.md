@@ -23,6 +23,10 @@ Entities, by vertical-slice package (`com.edgepoint.<package>.domain`):
   encrypted columns via `EncryptedStringConverter`), `NotificationChannelRule`
   (per-college, per-`NotificationEventType` email/WhatsApp flags; unique on
   `(college_id, event_type)`; missing row = email on, WhatsApp off).
+- **knowledgebase** — global, no `college_id` (V9): `KbCategory`, `KbArticle`
+  (`status`, comma-separated `visible_roles` — null = everyone, denormalised
+  helpful/unhelpful counts), `KbArticleFeedback` (one vote per
+  `(article_id, user_id)`). Slugs unique among non-deleted rows; deletes are soft.
 
 Relationships: `College 1—N Department 1—N Course 1—N Subject`;
 `AcademicClass N—N Subject` via `ClassSubject`; `TeacherAssignment` binds one
@@ -102,6 +106,8 @@ override is noted).
 | `StudentProfileController` | `/profile` | `SUPERADMIN, STUDENT` | `GET /`, `PUT /` | — |
 | `StudentDashboardController` | `/dashboard/student` | `SUPERADMIN, STUDENT` | `GET /` | — |
 | `SupportController` | `/support` | `isAuthenticated()` | `POST /` | — |
+| `KnowledgeBaseController` | `/knowledgebase` | `isAuthenticated()` | `GET /categories`, `GET /articles?category={slug}&q=&page=&size=` (published + visible to caller's role; no body), `GET /articles/{slug}` (404 for drafts/other roles), `POST /articles/{id}/feedback` `{helpful}` (upsert) | — |
+| `KnowledgeBaseAdminController` | `/knowledgebase/admin` | `SUPERADMIN` | `GET /articles?q=&status=`, `GET /articles/{id}`, `POST /articles`, `PUT /articles/{id}` (status DRAFT/PUBLISHED/ARCHIVED), `DELETE /articles/{id}`, `POST /categories`, `PUT /categories/{id}`, `DELETE /categories/{id}` (422 while it still has articles; duplicate slug → 409) | — |
 
 **Asymmetry worth a second look:** `DepartmentController`/`CourseController`
 open their list+read endpoints to `HOD` via a method override but keep

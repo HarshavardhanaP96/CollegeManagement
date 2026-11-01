@@ -46,7 +46,8 @@ export type Resource =
   | 'profile'
   | 'support'
   | 'collegeConfig'
-  | 'auditLog';
+  | 'auditLog'
+  | 'knowledgebase';
 
 export interface DashboardCard {
   key: string;
@@ -90,6 +91,8 @@ const superAdminStrategy: RoleStrategy = {
     { key: 'examTypes',     label: 'Exam Types',     path: '/exam-types',        icon: 'examTypes', group: 'Operations' },
     { key: 'auditLog',      label: 'Audit log',      path: '/audit-log',         icon: 'auditLog', group: 'Management' },
     { key: 'support',       label: 'Support',        path: '/support',           icon: 'support', group: 'Support' },
+    { key: 'knowledgebase', label: 'Help',           path: '/knowledgebase',     icon: 'help', group: 'Support' },
+    { key: 'kbAdmin',       label: 'Help articles',  path: '/kb-admin',          icon: 'kbAdmin', group: 'Support' },
   ],
   permissions: {
     colleges: ALL_ACTIONS,
@@ -104,6 +107,7 @@ const superAdminStrategy: RoleStrategy = {
     examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    knowledgebase: ALL_ACTIONS,
     collegeConfig: ALL_ACTIONS,
     auditLog: ['read'],
   },
@@ -158,6 +162,7 @@ const collegeAdminStrategy: RoleStrategy = {
     { key: 'collegeConfig', label: 'College Config',path: '/college-config',icon: 'settings', group: 'Management' },
     { key: 'auditLog',      label: 'Audit log',     path: '/audit-log',     icon: 'auditLog', group: 'Management' },
     { key: 'support',       label: 'Support',       path: '/support',       icon: 'support', group: 'Support' },
+    { key: 'knowledgebase', label: 'Help',          path: '/knowledgebase', icon: 'help', group: 'Support' },
   ],
   permissions: {
     departments: ALL_ACTIONS,
@@ -171,6 +176,7 @@ const collegeAdminStrategy: RoleStrategy = {
     examTypes: ALL_ACTIONS,
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    knowledgebase: ['read'],
     collegeConfig: ['read'],
     auditLog: ['read'],
   },
@@ -210,6 +216,7 @@ const hodStrategy: RoleStrategy = {
     { key: 'teachers',    label: 'Teachers',    path: '/teachers',    icon: 'teachers', group: 'Department' },
     { key: 'classes',     label: 'Classes',     path: '/classes',     icon: 'classes', group: 'Department' },
     { key: 'support',     label: 'Support',     path: '/support',     icon: 'support', group: 'Support' },
+    { key: 'knowledgebase', label: 'Help',      path: '/knowledgebase', icon: 'help', group: 'Support' },
   ],
   permissions: {
     subjects: ALL_ACTIONS,
@@ -225,6 +232,7 @@ const hodStrategy: RoleStrategy = {
     examTypes: ['read'],
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    knowledgebase: ['read'],
   },
   dashboardCards: [
     {
@@ -249,6 +257,7 @@ const teacherStrategy: RoleStrategy = {
     { key: 'attendance',  label: 'Attendance',   path: '/attendance',   icon: 'attendance', group: 'My Work' },
     { key: 'marks',       label: 'Marks',        path: '/marks',        icon: 'marks', group: 'My Work' },
     { key: 'support',     label: 'Support',      path: '/support',      icon: 'support', group: 'Support' },
+    { key: 'knowledgebase', label: 'Help',       path: '/knowledgebase', icon: 'help', group: 'Support' },
   ],
   permissions: {
     attendance: ALL_ACTIONS,
@@ -259,6 +268,7 @@ const teacherStrategy: RoleStrategy = {
     examTypes: ['read'],
     profile: ALL_ACTIONS,
     support: ['create', 'read'],
+    knowledgebase: ['read'],
   },
   dashboardCards: [
     {
@@ -303,6 +313,7 @@ const studentStrategy: RoleStrategy = {
     { key: 'student-marks',     label: 'My Marks',        path: '/student-marks',        icon: 'marks', group: 'My Data' },
     { key: 'student-attendance',label: 'My Attendance',   path: '/student-attendance',   icon: 'attendance', group: 'My Data' },
     { key: 'support',           label: 'Support',         path: '/support',              icon: 'support', group: 'Support' },
+    { key: 'knowledgebase',     label: 'Help',            path: '/knowledgebase',        icon: 'help', group: 'Support' },
   ],
   permissions: {
     profile: ['read', 'update'],
@@ -310,6 +321,7 @@ const studentStrategy: RoleStrategy = {
     marks: ['read'],
     subjects: ['read'],
     support: ['create', 'read'],
+    knowledgebase: ['read'],
   },
   dashboardCards: [
     {
