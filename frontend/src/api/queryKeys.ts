@@ -39,6 +39,14 @@ export const queryKeys = {
     all: ['audit-log'] as const,
     list: (filters: object) => ['audit-log', filters] as const,
   },
+  knowledgebase: {
+    all: ['knowledgebase'] as const,
+    categories: ['knowledgebase', 'categories'] as const,
+    articles: (filters: object) => ['knowledgebase', 'articles', filters] as const,
+    article: (slug: string) => ['knowledgebase', 'article', slug] as const,
+    adminArticles: (filters: object) => ['knowledgebase', 'admin', filters] as const,
+    adminArticle: (id: number) => ['knowledgebase', 'admin', id] as const,
+  },
   departments: {
     all: ['departments'] as const,
     byId: (id: number) => ['departments', id] as const,

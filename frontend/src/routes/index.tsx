@@ -54,6 +54,10 @@ import { StudentAttendancePage } from '../pages/student/StudentAttendancePage';
 import { SupportPage } from '../pages/SupportPage';
 import { CollegeConfigPage } from '../pages/CollegeConfigPage';
 import { AuditLogPage } from '../pages/collegeadmin/AuditLogPage';
+import { KnowledgeBasePage } from '../pages/knowledgebase/KnowledgeBasePage';
+import { KnowledgeBaseArticlePage } from '../pages/knowledgebase/KnowledgeBaseArticlePage';
+import { KnowledgeBaseListPage } from '../pages/superadmin/KnowledgeBaseListPage';
+import { KnowledgeBaseEditorPage } from '../pages/superadmin/KnowledgeBaseEditorPage';
 
 /**
  * Route → Component mapping.
@@ -94,6 +98,11 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/student-attendance':    StudentAttendancePage,
   '/audit-log':             AuditLogPage,
   '/support':               SupportPage,
+  '/knowledgebase':         KnowledgeBasePage,
+  '/knowledgebase/:id':     KnowledgeBaseArticlePage,
+  '/kb-admin':              KnowledgeBaseListPage,
+  '/kb-admin/new':          KnowledgeBaseEditorPage,
+  '/kb-admin/:id':          KnowledgeBaseEditorPage,
 };
 
 function LayoutWrapper() {
