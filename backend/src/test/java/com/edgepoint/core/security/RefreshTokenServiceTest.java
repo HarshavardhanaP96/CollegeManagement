@@ -40,6 +40,7 @@ class RefreshTokenServiceTest {
         jwtService = new JwtService();
         ReflectionTestUtils.setField(jwtService, "secretKey", Base64.getEncoder().encodeToString(new byte[32]));
         ReflectionTestUtils.setField(jwtService, "expiration", 60_000L);
+        jwtService.init();
         service = new RefreshTokenService(repository, jwtService);
 
         user = new User();
@@ -110,6 +111,7 @@ class RefreshTokenServiceTest {
         JwtService expiredIssuer = new JwtService();
         ReflectionTestUtils.setField(expiredIssuer, "secretKey", Base64.getEncoder().encodeToString(new byte[32]));
         ReflectionTestUtils.setField(expiredIssuer, "expiration", -60_000L);
+        expiredIssuer.init();
         String token = expiredIssuer.generateRefreshToken(user);
 
         assertThatThrownBy(() -> service.rotate(token)).isInstanceOf(AuthenticationException.class);
