@@ -14,6 +14,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -58,6 +60,9 @@ public class User extends AuditableEntity {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Column(name = "anonymised_at")
+    private LocalDateTime anonymisedAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private StudentProfile studentProfile;

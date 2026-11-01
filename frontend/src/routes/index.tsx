@@ -58,6 +58,9 @@ import { KnowledgeBasePage } from '../pages/knowledgebase/KnowledgeBasePage';
 import { KnowledgeBaseArticlePage } from '../pages/knowledgebase/KnowledgeBaseArticlePage';
 import { KnowledgeBaseListPage } from '../pages/superadmin/KnowledgeBaseListPage';
 import { KnowledgeBaseEditorPage } from '../pages/superadmin/KnowledgeBaseEditorPage';
+import { MyPrivacyPage } from '../pages/MyPrivacyPage';
+import { PrivacyAdminPage } from '../pages/collegeadmin/PrivacyAdminPage';
+import { PrivacyRequestDetailPage } from '../pages/collegeadmin/privacy/PrivacyRequestDetailPage';
 
 /**
  * Route → Component mapping.
@@ -103,6 +106,9 @@ const routeComponentMap: Record<string, React.ComponentType> = {
   '/kb-admin':              KnowledgeBaseListPage,
   '/kb-admin/new':          KnowledgeBaseEditorPage,
   '/kb-admin/:id':          KnowledgeBaseEditorPage,
+  '/my-privacy':                  MyPrivacyPage,
+  '/privacy-admin':               PrivacyAdminPage,
+  '/privacy-admin/requests/:id':  PrivacyRequestDetailPage,
 };
 
 function LayoutWrapper() {

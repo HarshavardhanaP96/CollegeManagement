@@ -66,19 +66,23 @@ public class AuditEventListener implements PostInsertEventListener, PostUpdateEv
     @Override
     public void onPostInsert(PostInsertEvent event) {
         if (!(event.getEntity() instanceof AuditableEntity)) return;
+        String type = event.getEntity().getClass().getSimpleName();
+        if (AuditDiff.isExcluded(type)) return;
         String[] names = event.getPersister().getPropertyNames();
-        emit(event.getSession(), AuditAction.CREATE, event.getEntity(), event.getId(), AuditDiff.snapshot(names, event.getState()));
+        emit(event.getSession(), AuditAction.CREATE, event.getEntity(), event.getId(), AuditDiff.snapshot(type, names, event.getState()));
     }
 
     @Override
     public void onPostUpdate(PostUpdateEvent event) {
         if (!(event.getEntity() instanceof AuditableEntity)) return;
+        String type = event.getEntity().getClass().getSimpleName();
+        if (AuditDiff.isExcluded(type)) return;
         String[] names = event.getPersister().getPropertyNames();
         Object[] before = event.getOldState();
         Object[] after = event.getState();
         if (before == null) return;
         AuditAction action = AuditDiff.isSoftDelete(names, before, after) ? AuditAction.DELETE : AuditAction.UPDATE;
-        var changes = AuditDiff.changes(names, before, after);
+        var changes = AuditDiff.changes(type, names, before, after);
         if (changes.isEmpty()) return;
         emit(event.getSession(), action, event.getEntity(), event.getId(), changes);
     }

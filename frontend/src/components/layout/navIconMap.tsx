@@ -19,6 +19,7 @@ import {
   ScrollText,
   CircleHelp,
   FilePen,
+  ShieldCheck,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -41,6 +42,7 @@ const ICONS: Record<string, LucideIcon> = {
   auditLog: ScrollText,
   help: CircleHelp,
   kbAdmin: FilePen,
+  privacy: ShieldCheck,
 };
 
 export function NavIcon({ name, className, size = 20 }: { name?: string; className?: string; size?: number }) {

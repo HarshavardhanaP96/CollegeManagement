@@ -28,9 +28,9 @@ Backend and UI are both in scope.
 | D6 | Consent-based purposes start as not granted; nothing is pre-ticked | Assumption |
 | D7 | Retention policies ship disabled with placeholder durations; the scheduler defaults to dry-run | Assumption |
 
-## 3. Data model — `V5__privacy_workflows.sql`
+## 3. Data model — `V6__privacy_workflows.sql`
 
-An uncommitted `V4__add_notification_channel_rules.sql` already exists in the working tree, so this migration takes V5; renumber at implementation time if that changes. Conventions follow V2: `SERIAL` primary keys, standard audit columns, `IF NOT EXISTS`. The migration must run on Postgres (prod) and H2 (`dev` profile).
+This migration is V6: `main` has since committed `V4__add_notification_channel_rules.sql` and `V5__create_audit_log.sql`, so V6 is the next free version. Conventions follow V2: `SERIAL` primary keys, standard audit columns, `IF NOT EXISTS`. The migration must run on Postgres (prod) and H2 (`dev` profile).
 
 | Table | Purpose | Key columns |
 |---|---|---|
@@ -48,7 +48,7 @@ An uncommitted `V4__add_notification_channel_rules.sql` already exists in the wo
 **Changes to existing tables**
 - `users.anonymised_at TIMESTAMP`.
 - Anonymising `users`: `username = 'erased-<id>'`, `email = 'erased-<id>@invalid.local'`, `full_name = 'Erased User'`, random `password_hash`, `phone = NULL`, `is_active = false`, `anonymised_at = now`. (`username`/`email` are `NOT NULL` and unique, hence placeholders.)
-- Anonymising `student_profiles`: clear `date_of_birth`, `address`, `parent_name`, `parent_email`; set `parent_phone` (`NOT NULL`) to a fixed placeholder. `roll_number` stays as the pseudonymous key.
+- Anonymising `student_profiles`: clear `date_of_birth`, `address`, `parent_name`, `parent_email`; set `parent_phone` (`NOT NULL`) to the empty string. `roll_number` stays as the pseudonymous key.
 
 ## 4. Backend — package `com.edgepoint.privacy`
 
@@ -106,7 +106,7 @@ Responses use `ApiResponse<T>`; authorisation uses `@PreAuthorize`.
 - Invalid transitions raise `BusinessRuleViolationException`; unknown requests raise `ResourceNotFoundException`.
 - **TDD throughout** (red, green, refactor):
   - Unit: state machine, consent ledger, contributor anonymisation, retention selection.
-  - Integration: Flyway migration (V5) on Postgres and H2, controller role checks, cross-tenant isolation (a college cannot see another college's requests).
+  - Integration: Flyway migration (V6) on Postgres and H2, controller role checks, cross-tenant isolation (a college cannot see another college's requests).
   - Destructive path: after erasure, marks and attendance remain and personal fields are gone.
   - Frontend: consent gate and request form.
 
@@ -115,3 +115,20 @@ Responses use `ApiResponse<T>`; authorisation uses `@PreAuthorize`.
 - Counsel to confirm the response deadline (D5) and the legal-hold rules for academic records.
 - The college sets real retention durations (D7); the placeholders are not legal advice.
 - Assign a CM functionality ID via a CHG record.
+
+## 9. Implementation amendments (added while writing the plan)
+
+Findings from reading the code that change or sharpen the design above:
+
+1. **H2/dev and tests do not run Flyway.** `application-dev.yml` and `application-test.properties` set `spring.flyway.enabled=false` with `ddl-auto: create-drop`, so entities build the schema there. The SQL migration targets PostgreSQL only and is verified separately (Task 1, Step 8). This supersedes the "must run on H2" sentence in section 3.
+2. **Migration number** was renumbered from V5 to V6 because `main` committed `V5__create_audit_log.sql` while this branch was in progress.
+3. **`retention_policies.action`** only has `ANONYMISE` in this cut. `DELETE` would break the "keep academic records" decision (D2). **`trigger_event`** only has `ACCOUNT_DEACTIVATED`; the model has no graduation date.
+4. **Retention eligibility** = user with role `STUDENT` or `TEACHER`, `is_active = false`, `anonymised_at IS NULL`, and `COALESCE(deleted_at, updated_at, created_at)` older than the policy's `retention_days`. There is no explicit deactivation timestamp today, so this is the best available reference date.
+5. **Scheduler dry-run** is a global property `app.privacy.retention-dry-run` (default `true`), not a per-college switch. Policies are per college and ship disabled.
+6. **`data_requests.export_payload TEXT`** is added to hold the access bundle; **`data_request_events.occurred_at`** replaces the column called `at`.
+7. **Request status `CANCELLED`** is added to the lifecycle (the spec allowed cancelling but listed no status).
+8. **Extra endpoints:** `GET /privacy/requests/{id}` (requester's detail with history) and `GET /privacy/admin/requests/{id}` (admin detail), needed by the UI.
+9. **PARTIALLY_COMPLETED** is only valid for ERASURE requests and needs a note naming what was retained; every resolve needs a note.
+10. **SUPERADMIN** reads admin data for one college by passing `collegeId`; COLLEGEADMIN always gets their own college and any `collegeId` is ignored. Write endpoints are COLLEGEADMIN only.
+11. **Frontend tests** need a runner: the repo has none, so Vitest + Testing Library are added as devDependencies (Task 9).
+12. The existing generic `audit` package (uncommitted at planning time) is not reused: `privacy_audit_log` needs `subject_user_id` and must not depend on uncommitted code.

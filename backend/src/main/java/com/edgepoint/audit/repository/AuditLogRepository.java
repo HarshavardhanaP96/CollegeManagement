@@ -9,8 +9,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
 
@@ -40,4 +44,14 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSp
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
         return findAll(spec, sorted);
     }
+
+    /** Erasure: drop the field-level before/after values of the given entity rows. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AuditLog a set a.changes = null where a.entityType in :types and a.entityId = :entityId")
+    int scrubChanges(@Param("types") Collection<String> types, @Param("entityId") String entityId);
+
+    /** Erasure: forget the username of the actor on every row the user performed. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update AuditLog a set a.actorUsername = null where a.actorUserId = :userId")
+    int clearActorUsername(@Param("userId") Integer userId);
 }

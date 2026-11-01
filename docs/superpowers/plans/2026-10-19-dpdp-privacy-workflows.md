@@ -72,7 +72,7 @@ Append this to the end of the spec file:
 Findings from reading the code that change or sharpen the design above:
 
 1. **H2/dev and tests do not run Flyway.** `application-dev.yml` and `application-test.properties` set `spring.flyway.enabled=false` with `ddl-auto: create-drop`, so entities build the schema there. The SQL migration targets PostgreSQL only and is verified separately (Task 1, Step 8). This supersedes the "must run on H2" sentence in section 3.
-2. **Migration number** is not fixed at V5: it is the next free version when the work lands (another uncommitted V4 exists today).
+2. **Migration number** was renumbered from V5 to V6 because `main` committed `V5__create_audit_log.sql` while this branch was in progress.
 3. **`retention_policies.action`** only has `ANONYMISE` in this cut. `DELETE` would break the "keep academic records" decision (D2). **`trigger_event`** only has `ACCOUNT_DEACTIVATED`; the model has no graduation date.
 4. **Retention eligibility** = user with role `STUDENT` or `TEACHER`, `is_active = false`, `anonymised_at IS NULL`, and `COALESCE(deleted_at, updated_at, created_at)` older than the policy's `retention_days`. There is no explicit deactivation timestamp today, so this is the best available reference date.
 5. **Scheduler dry-run** is a global property `app.privacy.retention-dry-run` (default `true`), not a per-college switch. Policies are per college and ship disabled.

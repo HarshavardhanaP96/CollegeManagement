@@ -205,6 +205,44 @@ sequenceDiagram
     NC-->>SA: 200
 ```
 
+## Privacy module contracts
+Migration `V7__privacy_workflows.sql`. Every table carries `college_id`.
+
+| Table | Purpose |
+|---|---|
+| `privacy_purposes` | Purposes per college (`CONSENT` or `LEGITIMATE_USE`, `withdrawable`) |
+| `privacy_notices` | Versioned, immutable notice text |
+| `consent_records` | Append-only consent ledger (`GRANTED`/`WITHDRAWN`) |
+| `data_requests` | ACCESS / CORRECTION / ERASURE / GRIEVANCE requests with `due_at` |
+| `data_request_events` | Status history per request |
+| `retention_policies` | Per-college retention rules (ship disabled) |
+| `retention_runs` | One row per retention run (`dry_run`, counts) |
+| `privacy_audit_log` | Append-only privacy audit trail |
+
+Also `users.anonymised_at TIMESTAMP`.
+
+Endpoints, prefix `/privacy` (relative to `/api/v1`):
+
+| Endpoint | Roles | Purpose |
+|---|---|---|
+| `GET /notice/current` | authenticated | Active notice and purposes |
+| `GET /consents/me` | authenticated | My current consent per purpose |
+| `POST /consents` | authenticated | Grant or withdraw one purpose |
+| `POST /requests` | STUDENT, TEACHER | Raise a request |
+| `GET /requests/me` | STUDENT, TEACHER | My requests |
+| `GET /requests/{id}` | STUDENT, TEACHER | My request detail |
+| `POST /requests/{id}/cancel` | requester | Cancel while `SUBMITTED` |
+| `GET /requests/{id}/export` | requester | Download access bundle |
+| `GET /admin/requests` | SUPERADMIN, COLLEGEADMIN | Queue with filters, overdue flag |
+| `GET /admin/requests/{id}` | SUPERADMIN, COLLEGEADMIN | Request detail with events |
+| `POST /admin/requests/{id}/review` | COLLEGEADMIN | Move to `IN_REVIEW`, assign |
+| `POST /admin/requests/{id}/resolve` | COLLEGEADMIN | Complete, partially complete or reject |
+| `GET`, `POST /admin/notices` | SUPERADMIN read; COLLEGEADMIN publish | List and publish notices |
+| `GET`, `PUT /admin/retention-policies` | SUPERADMIN read; COLLEGEADMIN edit | Retention policies |
+| `POST /admin/retention/run?dryRun=` | COLLEGEADMIN | On-demand run |
+| `GET /admin/retention/runs` | SUPERADMIN, COLLEGEADMIN | Run history |
+| `GET /admin/audit` | SUPERADMIN, COLLEGEADMIN | Privacy audit trail |
+
 ## Error handling conventions
 - Every response is wrapped in a standard envelope:
   `{ success, message, data, timestamp }` (`ApiResponse`).
