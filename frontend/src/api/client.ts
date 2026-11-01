@@ -17,6 +17,27 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Refresh tokens are single-use (rotated server-side, reuse revokes every session), so concurrent
+// 401s must share one refresh call instead of each sending the same token.
+let refreshInFlight: Promise<string | null> | null = null;
+
+function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  refreshInFlight ??= axios
+    .post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken })
+    .then(({ data }) => {
+      if (!data.success || !data.data?.accessToken) return null;
+      localStorage.setItem('accessToken', data.data.accessToken);
+      if (data.data.refreshToken) {
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+      }
+      return data.data.accessToken as string;
+    })
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
 // Response interceptor — handle 401 errors (expired token)
 apiClient.interceptors.response.use(
   (response) => response,
@@ -30,18 +51,11 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-            refreshToken,
-          });
+          const accessToken = await refreshAccessToken(refreshToken);
 
-          if (data.success && data.data?.accessToken) {
-            localStorage.setItem('accessToken', data.data.accessToken);
-            if (data.data.refreshToken) {
-              localStorage.setItem('refreshToken', data.data.refreshToken);
-            }
-
+          if (accessToken) {
             // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return apiClient(originalRequest);
           }
         } catch {

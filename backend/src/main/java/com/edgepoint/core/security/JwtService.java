@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class JwtService {
@@ -40,6 +41,7 @@ public class JwtService {
 
     public String generateRefreshToken(User user) {
         return Jwts.builder()
+                .setId(UUID.randomUUID().toString()) // jti: the server-side handle used to rotate/revoke
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 7)) // 7 days

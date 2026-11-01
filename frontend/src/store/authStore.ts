@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AuthUser, LoginResponse } from '../api/auth';
+import { logout as logoutRequest, type AuthUser, type LoginResponse } from '../api/auth';
 
 interface AuthState {
   user: AuthUser | null;
@@ -30,6 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    // Ask the server to revoke the refresh token; local sign-out must not wait on or fail with it.
+    logoutRequest(localStorage.getItem('accessToken'), localStorage.getItem('refreshToken')).catch(() => undefined);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
