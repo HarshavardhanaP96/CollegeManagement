@@ -160,6 +160,17 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-10-31: Knowledge Base added (`com.edgepoint.knowledgebase`, migration
+  `V9__knowledge_base.sql`; V6–V8 are reserved by other branches). Content is
+  global, not per college. One `KnowledgeBaseService` backs a reader controller
+  (any authenticated user, role-filtered, drafts and hidden articles return
+  404 so their existence doesn't leak) and a SUPERADMIN-only admin controller.
+  Article and category writes are audited by the existing `AuditEventListener`
+  (they extend `AuditableEntity`); vote counters are updated with a bulk JPQL
+  update so a reader's vote isn't logged as an article edit. Known gap: the
+  audit log is college-scoped, so a SUPERADMIN with no college writes no audit
+  row for KB edits — needs a platform-level audit scope. Search is
+  `LIKE` on title/body (no search engine). Still active.
 - 2026-10-06: Closed the gap between this doc set and the actual infra/observability code:
   (1) added Flyway `V2`/`V3` migrations covering every table/column `ddl-auto: validate` needs
   (subjects/classes/marks/attendance/etc. plus a `courses` drift fix), so the `ddl-auto: update`

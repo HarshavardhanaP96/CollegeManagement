@@ -89,6 +89,11 @@ Self-service only, scoped to their own `userId`.
       available to all authenticated roles. (`AuthController`)
 - [x] FR-X2: Submit a support request — any authenticated role.
       (`SupportController`)
+- [x] FR-X4: Read help articles (Knowledge Base): browse by category, search,
+      rate "was this helpful?" — any authenticated role, filtered by the
+      article's visible roles. SUPERADMIN authors, publishes, archives and
+      deletes articles and categories. (`KnowledgeBaseController`,
+      `KnowledgeBaseAdminController`; `/knowledgebase`, `/kb-admin` in the UI)
 - [ ] FR-X3 (gap, orphaned): `frontend/src/api/institution.ts` calls
       `/institutions` and `/institutions/:id`; no backend controller exists
       for either. Only referenced from the disconnected
