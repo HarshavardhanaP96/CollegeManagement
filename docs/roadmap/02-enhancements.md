@@ -20,9 +20,10 @@ Improvements to what already exists. Priority: **P0** blocks production, **P1** 
 | S12 | **P0** Committed AES `encryption-key` values in `infra/k8s` secrets (on GitHub) | [ ] rotate, move to a secret manager, purge or accept history |
 | S13 | **P0** `ENCRYPTION_KEY` hard-coded fallback in `application.yml:86` | [ ] same treatment as S4/S5 |
 | S14 | **P1** Dockerfiles lack `USER`; k8s manifests lack `securityContext`/read-only root (~40 trivy/semgrep findings) | [ ] fix so the Jenkins scan stage passes |
-| S15 | **P1** `/auth/login` says "No account found…" (account enumeration) | [ ] one generic message for unknown user and bad password |
-| S16 | **P1** No `server.forward-headers-strategy`: per-IP limit sees the proxy IP, HSTS not sent behind nginx | [ ] set it and trust only the ingress |
-| S17 | **P1** Anonymous requests get 403 instead of 401 (no authentication entry point) | [ ] add an entry point returning 401 |
+| S15 | `/auth/login` said "No account found…" (account enumeration) | [x] one message for unknown, deleted and wrong password; dummy bcrypt check for unknown users |
+| S16 | No `server.forward-headers-strategy`: per-IP limit saw the proxy IP, HSTS not sent behind nginx | [x] `native`, trusting private-network proxies only; nginx passes the outer scheme on |
+| S17 | Anonymous requests got 403 instead of 401 (no authentication entry point) | [x] entry point returns 401 with the standard error body |
+| S19 | **P0** `frontend/Dockerfile` never copies `nginx.conf` (the `COPY` is commented out): the image serves stock nginx, so there is no `/api` proxy and the actuator block it relies on is not active; the bundle also defaults to `http://localhost:8080/api/v1` | [ ] copy the config, build with `VITE_API_BASE_URL=/api/v1`, check the k8s path end to end |
 | S18 | **P1** Login limiter counters are per instance (`shortcut:` comment) | [ ] move to Redis/DB before running >1 replica |
 | S8 | **P1** Tenant scoping uneven across services | [ ] repository-level tenant filter or a test per endpoint |
 | S9 | **P1** No IDOR/BOLA tests (college A reading college B by id) | [ ] one parameterised test per controller |

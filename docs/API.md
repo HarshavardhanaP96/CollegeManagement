@@ -94,6 +94,12 @@
 }
 ```
 
+Unknown username, deleted account and wrong password all get this same message (and similar
+response time), so login can't be used to find out which accounts exist. An inactive account is
+reported as inactive only when the password is correct. Too many attempts get `429` (5 per account
+and 20 per client IP per 15 minutes; the client IP comes from `X-Forwarded-For` when the request
+arrives through a private-network proxy).
+
 **JWT Token Claims:**
 The access token payload contains:
 ```json
@@ -993,8 +999,8 @@ plus the day's saved records, then sends the full register to `POST /attendance`
 | **201 Created** | Resource created | POST operations succeeded |
 | **204 No Content** | Success with no body | DELETE operations with no response |
 | **400 Bad Request** | Validation error | Invalid input data |
-| **401 Unauthorized** | Authentication failed | Invalid or missing token |
-| **403 Forbidden** | Authorization failed | User lacks permissions |
+| **401 Unauthorized** | Authentication failed | Missing, invalid or expired token, or a refresh token sent as a bearer token. Log in or refresh. |
+| **403 Forbidden** | Authorization failed | Logged in, but the role isn't allowed. Don't retry. |
 | **404 Not Found** | Resource not found | Requested resource doesn't exist |
 | **409 Conflict** | Resource conflict | Duplicate entry, constraint violation |
 | **422 Unprocessable Entity** | Business logic error | Valid syntax but business rule violation |
@@ -1023,10 +1029,11 @@ plus the day's saved records, then sends the full register to `POST /attendance`
 ### Examples
 
 #### Authentication Error (401)
+Returned for any protected endpoint called without a valid access token.
 ```json
 {
   "success": false,
-  "message": "Invalid or expired token",
+  "message": "Authentication failed. Please check your credentials.",
   "errors": null,
   "timestamp": "2024-12-12T13:35:00",
   "path": "/api/v1/student-marks/my-marks",
