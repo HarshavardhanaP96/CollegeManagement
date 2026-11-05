@@ -22,7 +22,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -147,5 +149,53 @@ class AuthServiceTest {
         authService.login(request);
 
         verify(auditService).recordLogin(user, true);
+    }
+
+    private String loginFailureMessage() {
+        AuthenticationException e = catchThrowableOfType(() -> authService.login(request), AuthenticationException.class);
+        assertThat(e).isNotNull();
+        return e.getMessage();
+    }
+
+    @Test
+    @DisplayName("unknown user and wrong password get the same generic message")
+    void unknownUserLooksLikeWrongPassword() {
+        when(passwordEncoder.matches(eq("pw"), any())).thenReturn(false);
+        String wrongPassword = loginFailureMessage();
+
+        request.setUsername("nobody");
+        String unknownUser = loginFailureMessage();
+
+        assertThat(unknownUser).isEqualTo(wrongPassword).isEqualTo("Invalid username or password");
+    }
+
+    @Test
+    @DisplayName("unknown user still runs a password hash check, so timing doesn't reveal the account")
+    void unknownUserStillHashes() {
+        request.setUsername("nobody");
+
+        loginFailureMessage();
+
+        verify(passwordEncoder).matches(eq("pw"), any());
+    }
+
+    @Test
+    @DisplayName("a deleted account gets the generic message")
+    void deletedAccountLooksLikeWrongPassword() {
+        user.setIsDeleted(true);
+        lenient().when(passwordEncoder.matches("pw", "hash")).thenReturn(true);
+
+        assertThat(loginFailureMessage()).isEqualTo("Invalid username or password");
+    }
+
+    @Test
+    @DisplayName("an inactive account is only revealed to someone who knows the password")
+    void inactiveRevealedOnlyWithCorrectPassword() {
+        user.setIsActive(false);
+        when(passwordEncoder.matches("pw", "hash")).thenReturn(false);
+        assertThat(loginFailureMessage()).isEqualTo("Invalid username or password");
+
+        when(passwordEncoder.matches("pw", "hash")).thenReturn(true);
+        assertThat(loginFailureMessage()).contains("inactive");
     }
 }

@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,24 +37,36 @@ public class AuthServiceImpl implements AuthService {
     @Value("${spring.security.jwt.expiration}")
     private Long jwtExpiration;
 
+    private static final String INVALID_CREDENTIALS = "Invalid username or password";
+
+    private volatile String dummyHash;
+
+    private String dummyHash() {
+        if (dummyHash == null) {
+            dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
+        }
+        return dummyHash;
+    }
+
     @Override
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByUsernameOrEmail(request.getUsername())
-                .orElseThrow(() -> new AuthenticationException("No account found with the provided username or email"));
+        // Unknown, deleted and wrong-password logins look identical, so the response can't be used
+        // to discover which accounts exist.
+        User user = userRepository.findByUsernameOrEmail(request.getUsername()).orElse(null);
+        if (user == null) {
+            passwordEncoder.matches(request.getPassword(), dummyHash()); // same hashing time as a real account
+            throw new AuthenticationException(INVALID_CREDENTIALS);
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash()) || user.getIsDeleted()) {
+            auditService.recordLogin(user, false);
+            throw new AuthenticationException(INVALID_CREDENTIALS);
+        }
 
         if (!user.getIsActive()) {
             auditService.recordLogin(user, false);
             throw new AuthenticationException("Your account is currently inactive. Please contact the administrator.");
-        }
-
-        if (user.getIsDeleted()) {
-            throw new AuthenticationException("This account has been deleted. Please contact the administrator.");
-        }
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            auditService.recordLogin(user, false);
-            throw new AuthenticationException("Wrong password. Please check your credentials and try again.");
         }
 
         String accessToken = jwtService.generateToken(user);
