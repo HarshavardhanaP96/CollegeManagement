@@ -2,6 +2,10 @@ server:
   port: 8080
   servlet:
     context-path: /api/v1
+  # Behind nginx/ingress: take client IP and scheme from X-Forwarded-For/-Proto, but only when the
+  # immediate peer is a private-network proxy (Tomcat's default internal-proxies), so the login
+  # limiter sees the real client IP and HSTS is sent for HTTPS terminated at the proxy.
+  forward-headers-strategy: native
 
 spring:
   application:
