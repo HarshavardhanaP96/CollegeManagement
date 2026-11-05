@@ -18,7 +18,7 @@ Improvements to what already exists. Priority: **P0** blocks production, **P1** 
 | S10 | Error responses might leak internals | [x] tests pin it; unknown paths now 404 instead of 500 |
 | S11 | Security headers | [x] CSP, HSTS (HTTPS), frame-ancestors, Referrer-Policy |
 | S12 | **P0** Committed AES `encryption-key` values in `infra/k8s` secrets (on GitHub) | [ ] rotate, move to a secret manager, purge or accept history |
-| S13 | **P0** `ENCRYPTION_KEY` hard-coded fallback in `application.yml:86` | [ ] same treatment as S4/S5 |
+| S13 | `ENCRYPTION_KEY` hard-coded fallback in `application.yml` | [x] no default; startup fails unless the key decodes to 32 bytes. Local key in pass, tests generate one. The test/prod overlay placeholders are not valid keys, so those pods won't start until S12 supplies real ones |
 | S14 | **P1** Dockerfiles lack `USER`; k8s manifests lack `securityContext`/read-only root (~40 trivy/semgrep findings) | [ ] fix so the Jenkins scan stage passes |
 | S15 | `/auth/login` said "No account found…" (account enumeration) | [x] one message for unknown, deleted and wrong password; dummy bcrypt check for unknown users |
 | S16 | No `server.forward-headers-strategy`: per-IP limit saw the proxy IP, HSTS not sent behind nginx | [x] `native`, trusting private-network proxies only; nginx passes the outer scheme on |

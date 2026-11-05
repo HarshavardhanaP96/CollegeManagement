@@ -395,6 +395,11 @@ What the real code does beyond the snippets:
   and fails startup if it is missing. Only when `app.security.ephemeral-jwt-key=true` (set in
   `docker-compose.dev.yml`) does it fall back to a random per-process key, so dev tokens die on
   restart. Tests that build `JwtService` by hand must call `init()`.
+- **Encryption key:** `EncryptedStringConverter` reads `app.security.encryption-key`
+  (env `ENCRYPTION_KEY`, base64 of 32 bytes) and fails startup if it is missing or the wrong
+  length; there is no default. Locally it lives in the `pass` entry
+  `projects/collegemanagement/root` (run with `secrun projects/collegemanagement/root -- …`).
+  Spring tests get a random key from `TestEncryptionKey` (test classpath only).
 - **Token type:** access tokens carry `"typ": "access"`; the filter ignores any bearer token
   without it, so a refresh token cannot be used as an access token.
 - **Refresh tokens:** stored in `refresh_tokens` (V8) by hashed `jti`, rotated on every

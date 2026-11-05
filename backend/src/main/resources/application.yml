@@ -86,8 +86,9 @@ app:
   security:
     # Base64-encoded AES-256 key used to encrypt secret columns at rest
     # (e.g. notification_configs.smtp_password / whatsapp_api_key).
-    # Dev-only default below — MUST be overridden via ENCRYPTION_KEY in every other environment.
-    encryption-key: ${ENCRYPTION_KEY:6JsyJxpJbSMdwIdlS8/5YLhoE/uf5V4++iLNuqCksFg=}
+    # No default: EncryptedStringConverter refuses to start without a 32-byte key. Locally it
+    # comes from pass (`secrun projects/collegemanagement/root -- ...`); tests generate a random one.
+    encryption-key: ${ENCRYPTION_KEY:}
 
   # Discord webhook for ops alerts (frequent failures, slow requests, support submissions).
   # Left blank by default — DiscordAlertService no-ops (logs a warning) when unset, so local

@@ -36,7 +36,17 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
 
     public EncryptedStringConverter(
             @Value("${app.security.encryption-key:}") String base64Key) {
-        this.key = base64Key.isBlank() ? null : new SecretKeySpec(Base64.getDecoder().decode(base64Key), "AES");
+        // Fail at startup, not on the first encrypted read: there is no safe default key.
+        if (base64Key.isBlank()) {
+            throw new IllegalStateException(
+                    "app.security.encryption-key (ENCRYPTION_KEY) is not configured; set a base64 AES-256 key");
+        }
+        byte[] raw = Base64.getDecoder().decode(base64Key);
+        if (raw.length != 32) {
+            throw new IllegalStateException(
+                    "app.security.encryption-key (ENCRYPTION_KEY) must decode to 32 bytes, got " + raw.length);
+        }
+        this.key = new SecretKeySpec(raw, "AES");
     }
 
     @Override
@@ -49,7 +59,7 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
             SecureRandom.getInstanceStrong().nextBytes(iv);
 
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.ENCRYPT_MODE, requireKey(), new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
 
             ByteBuffer buffer = ByteBuffer.allocate(iv.length + ciphertext.length);
@@ -74,19 +84,10 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
             buffer.get(ciphertext);
 
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.DECRYPT_MODE, requireKey(), new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
             return new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("Failed to decrypt value — wrong key or corrupted data", e);
         }
-    }
-
-    private SecretKeySpec requireKey() {
-        if (key == null) {
-            throw new IllegalStateException(
-                    "app.security.encryption-key (ENCRYPTION_KEY) is not configured; " +
-                            "cannot encrypt/decrypt secret columns");
-        }
-        return key;
     }
 }
