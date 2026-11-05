@@ -17,7 +17,8 @@ Infrastructure files are grouped here so deployment assets live in one place.
 make dev   # same as: docker compose -f infra/docker/docker-compose.yml -f infra/docker/docker-compose.dev.yml up -d
 ```
 
-Settings come from `infra/docker/.env` (copy `.env.example`, or `make doctor`). Optional profiles:
+Settings come from `infra/docker/.env` (copy `.env.example`, or `make doctor`); local secrets come from
+`pass` via `secrun projects/collegemanagement/root -- make dev` (see [docs/OPERATIONS.md](../docs/OPERATIONS.md#local-secrets-pass)). Optional profiles:
 `tools` (pgAdmin), `obs` (ELK). `compose.debug.yaml` publishes Postgres/ES/Logstash on loopback.
 
 ## Local Kubernetes

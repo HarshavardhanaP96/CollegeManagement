@@ -60,6 +60,9 @@ Improvements to what already exists. Priority: **P0** blocks production, **P1** 
 - [x] Jenkins security stage (gitleaks, semgrep, trivy fs/config, image scan before push) and frontend lint.
 - [x] Docker Compose hardening: limits, non-root, `cap_drop`, internal network, no DB/ES host ports
       (`compose.debug.yaml` when needed), profiles `tools`/`obs`.
+- [x] Local secrets in the central `pass` store (`projects/collegemanagement/root`), loaded with
+      `secrun … -- make <target>`; `make doctor` accepts them (2026-11-05). Create the entry once:
+      see [OPERATIONS.md](../OPERATIONS.md#local-secrets-pass).
 - [ ] Jenkins scan stage passes (blocked by S12–S14).
 - [ ] Run trivy `fs`/`image` and ZAP (`make dast`) for real; only config-validated so far.
 - [ ] vitest in CI; frontend still has 19 older type errors (12 are duplicate `ApiResponse`

@@ -69,8 +69,9 @@ def upsert_env(text, values):
     return "\n".join(lines) + "\n"
 
 
-def missing_keys(env, example):
-    return [k for k in example if k not in env]
+def missing_keys(env, example, environ):
+    # A key exported by `secrun projects/collegemanagement/root -- make doctor` counts as set.
+    return [k for k in example if k not in env and k not in environ]
 
 
 def port_free(port):
@@ -159,8 +160,9 @@ def main(argv=None):
     print("== config ==")
     example = root / ".env.example"
     if example.exists():
-        for k in missing_keys(env, parse_env(example.read_text())):
-            report("FAIL", f".env is missing key {k} (see .env.example)")
+        for k in missing_keys(env, parse_env(example.read_text()), os.environ):
+            report("FAIL", f"{k} is not set: add it to .env, or keep it in pass and run "
+                           f"`secrun projects/collegemanagement/root -- make doctor` (see .env.example)")
     if env_path.exists() and not env_ignored(root):
         report("FAIL", ".env is not listed in .gitignore: secrets could be committed")
 
