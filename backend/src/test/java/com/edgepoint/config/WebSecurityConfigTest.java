@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -66,8 +67,24 @@ class WebSecurityConfigTest {
     @Test
     @DisplayName("other actuator endpoints require authentication")
     void metricsRequireAuthentication() throws Exception {
-        // The app has no 401 entry point, so anonymous denials come back as 403 like every other path.
-        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("anonymous API calls get 401 with the standard JSON error body")
+    void anonymousGets401Json() throws Exception {
+        mockMvc.perform(get("/colleges"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.path").value("/colleges"));
+    }
+
+    @Test
+    @WithMockUser(roles = "STUDENT")
+    @DisplayName("an authenticated user without the role still gets 403")
+    void wrongRoleStillGets403() throws Exception {
+        mockMvc.perform(get("/colleges")).andExpect(status().isForbidden());
     }
 
     @Test

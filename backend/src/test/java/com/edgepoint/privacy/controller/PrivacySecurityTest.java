@@ -60,8 +60,7 @@ class PrivacySecurityTest {
 
     @Test
     void anonymousCallersAreRejected() throws Exception {
-        // the app has no custom entry point, so Spring Security's default answers 403 for anonymous callers
-        mvc.perform(get("/privacy/notice/current")).andExpect(status().isForbidden());
+        mvc.perform(get("/privacy/notice/current")).andExpect(status().isUnauthorized());
     }
 
     @Test
