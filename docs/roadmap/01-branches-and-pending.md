@@ -1,8 +1,19 @@
 # Branches & Pending Work
 
-Updated 2026-11-01. `main` and `dev` are both at `1ec51ce` on GitHub.
+Updated 2026-11-07. `main` and `dev` are both at `f61bfe3` on GitHub; no other branches remain,
+locally or on GitHub.
 
-## Merged in the roadmap merge
+## Merged 2026-11-07: security fixes
+
+| Branch | What it brought | Migration |
+|---|---|---|
+| `fix/security-hardening` | S13 no built-in `ENCRYPTION_KEY` (fail fast, tests generate a key), S15 one generic login error, S16 forwarded client IP/scheme from internal proxies, S17 401 with the standard error body for anonymous calls | — |
+| `chore/local-secrets-pass` | Local secrets in the central `pass` store (`projects/collegemanagement/root`), loaded with `secrun`; `make doctor` accepts them | — |
+
+Tests on the merged code: backend 293 run / 0 failed / 1 skipped; preflight tests pass. Both
+branches were deleted after the merge.
+
+## Merged 2026-11-01: roadmap merge
 
 | Branch | What it brought | Migration |
 |---|---|---|
@@ -20,9 +31,8 @@ All branches above, plus the leftover agent and backup branches, were deleted lo
 
 ## Still open from that work
 - [ ] Rotate the committed encryption keys (see 02 §1).
-- [ ] `origin/feat/bulk-attendance` still exists on GitHub; delete it when no longer needed.
-- [ ] `feature/dpdp-privacy` is still checked out in `../CollegeManagement-privacy`; its work is in
-      `main`, so the worktree and branch can be removed.
+- [x] `origin/feat/bulk-attendance` deleted on GitHub (2026-11-07).
+- [x] `feature/dpdp-privacy` worktree and branch removed (2026-11-07).
 - [x] The privacy spec and plan now carry an "implemented, shipped as `V7`" status note
       (2026-11-01).
 - [x] API.md, DatabaseMigration.md, DEVELOPMENT.md, USER_GUIDE.md and the docs index updated for
