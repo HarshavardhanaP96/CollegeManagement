@@ -36,7 +36,8 @@ Local credentials are kept in one place for all projects: the `pass` password st
 Kubernetes Secrets or a secret manager (section 2).
 
 - Entry `projects/collegemanagement/root` holds the secret keys from `infra/docker/.env.example`
-  (`POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD`) as `KEY=VALUE` lines.
+  (`POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD`, `ENCRYPTION_KEY`) as `KEY=VALUE` lines. The
+  backend refuses to start without `ENCRYPTION_KEY` (base64 of 32 bytes: `openssl rand -base64 32`).
 - `secrun projects/collegemanagement/root -- <command>` asks for the GPG passphrase, exports those keys for that
   one command and runs it. Values are never printed or written to disk. Shell variables override
   `infra/docker/.env`, so the non-secret settings (UID/GID, ports) stay in `.env`.
