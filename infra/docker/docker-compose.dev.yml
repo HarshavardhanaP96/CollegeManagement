@@ -24,7 +24,8 @@ services:
       MAVEN_CONFIG: /app/.m2
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-college_management}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/docker/.env}
+      # From pass via secrun (projects/collegemanagement/root) or .env; the backend fails to connect without it.
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       # No JWT_SECRET locally: sign with a random key per run (tokens reset on restart).
       APP_SECURITY_EPHEMERAL_JWT_KEY: "true"

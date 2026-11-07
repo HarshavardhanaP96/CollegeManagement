@@ -39,6 +39,18 @@ class EnvIgnored(unittest.TestCase):
             self.assertFalse(preflight.env_ignored(Path(d)))
 
 
+class MissingKeys(unittest.TestCase):
+    # Secrets can come from `pass` via secrun (exported env vars) instead of .env.
+    def test_key_exported_by_secrun_is_not_missing(self):
+        example = {"POSTGRES_PASSWORD": "x", "API_PORT": "8080"}
+        env = {"API_PORT": "8080"}
+        self.assertEqual(preflight.missing_keys(env, example, {"POSTGRES_PASSWORD": "s"}), [])
+
+    def test_key_in_neither_is_missing(self):
+        example = {"POSTGRES_PASSWORD": "x"}
+        self.assertEqual(preflight.missing_keys({}, example, {}), ["POSTGRES_PASSWORD"])
+
+
 class OpenPorts(unittest.TestCase):
     def test_loopback_bound_ports_are_not_flagged(self):
         compose = 'services:\n  a:\n    ports:\n      - "127.0.0.1:${X:-1}:1"\n      - "5433:5432"\n'

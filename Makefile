@@ -1,5 +1,6 @@
 # Standard command interface (ops-baseline). Run `make` or `make help`.
 # Compose files and their .env live in infra/docker; backend is Maven, frontend is npm.
+# Local secrets live in pass: run targets as `secrun projects/collegemanagement/root -- make <target>`.
 
 # Backend needs a JDK 17+ javac. Override when the default java can't build, e.g.
 #   make test JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64

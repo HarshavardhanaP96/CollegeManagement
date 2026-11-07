@@ -160,6 +160,13 @@ for the actual overlay-by-overlay deploy sequence — this diagram is the
 one-screen map, not a replacement for that runbook.
 
 ## Key decisions (append-only log, newest first)
+- 2026-11-05: Local development secrets live in the developer's `pass` store (entry
+  `projects/collegemanagement/root`, KEY=VALUE lines), the same central store used for the
+  other local projects, and reach Compose through `secrun <entry> -- make <target>`, which
+  exports them for one command only. `infra/docker/.env` keeps non-secret settings and the fake
+  fallbacks from `.env.example`; compose no longer uses `${VAR:?}` on secrets so `make down`/`logs`
+  work without decrypting. Local only: test/prod still need Kubernetes Secrets fed by a secret
+  manager (roadmap S12). Still active.
 - 2026-10-31: Knowledge Base added (`com.edgepoint.knowledgebase`, migration
   `V9__knowledge_base.sql`; V6–V8 are reserved by other branches). Content is
   global, not per college. One `KnowledgeBaseService` backs a reader controller

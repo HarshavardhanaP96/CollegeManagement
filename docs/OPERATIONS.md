@@ -24,10 +24,31 @@ their `.env` live in `infra/docker/`.
 
 ```bash
 make doctor   # creates infra/docker/.env from .env.example, checks Docker, ports, .env keys
-make up       # Postgres only
-make dev      # Postgres + backend + frontend from source with hot reload
-make down     # stop everything (including the obs/tools profiles)
+secrun projects/collegemanagement/root -- make up    # Postgres only
+secrun projects/collegemanagement/root -- make dev   # Postgres + backend + frontend from source with hot reload
+make down     # stop everything (including the obs/tools profiles); no secrets needed
 ```
+
+### Local secrets (pass)
+
+Local credentials are kept in one place for all projects: the `pass` password store, read by
+`secrun` (`~/.local/bin/secrun`). This is for local development only; test and production use
+Kubernetes Secrets or a secret manager (section 2).
+
+- Entry `projects/collegemanagement/root` holds the secret keys from `infra/docker/.env.example`
+  (`POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD`) as `KEY=VALUE` lines.
+- `secrun projects/collegemanagement/root -- <command>` asks for the GPG passphrase, exports those keys for that
+  one command and runs it. Values are never printed or written to disk. Shell variables override
+  `infra/docker/.env`, so the non-secret settings (UID/GID, ports) stay in `.env`.
+- Create the entry once (multi-line; end with Ctrl-D):
+
+  ```bash
+  pass insert -m projects/collegemanagement/root
+  ```
+
+  then delete those keys from `infra/docker/.env`. `make doctor` accepts keys exported by secrun,
+  so run it as `secrun projects/collegemanagement/root -- make doctor` once they are out of `.env`.
+- Without pass, keep them in `infra/docker/.env` (the fake values from `.env.example` work).
 
 Other targets: `make obs` (Elasticsearch/Logstash/Kibana, Kibana on :5601 — see
 [OBSERVABILITY.md](OBSERVABILITY.md); optional for plain backend/frontend development),
@@ -68,7 +89,7 @@ instead of using `docker-compose.dev.yml`, override `SPRING_DATASOURCE_URL`/`_US
 | `student1` | STUDENT | Jane Smith |
 
 ### Tools
-- **pgAdmin** (`--profile tools`): `http://localhost:5050` (login from `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` in `infra/docker/.env`)
+- **pgAdmin** (`--profile tools`): `http://localhost:5050` (login from `PGADMIN_DEFAULT_EMAIL` in `infra/docker/.env` and `PGADMIN_DEFAULT_PASSWORD` in pass `projects/collegemanagement/root`)
 - **Kibana** (if the logging services are up): `http://localhost:5601`
 
 ---
